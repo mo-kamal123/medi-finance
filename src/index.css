@@ -1,6 +1,27 @@
 @import "tailwindcss";
 
 
+body{
+  font-family: "Tajawal", sans-serif;
+}
+
 .main-font{
   font-family: "Tajawal", sans-serif;
+}
+
+
+@theme {
+  --color-body: #f7fafc;
+  --color-borders: #e1e1e4;
+  --color-main: #236167;
+  --color-primary: #236167;
+  --color-sec: #d2d6da;
+  --color-dark: #0b0c0c;
+}
+
+.auth-bg {
+  background-image: url('./app/assets/authbg.jpg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
 }
