@@ -1,18 +1,29 @@
-import { useEffect } from "react"
-import { Navigate } from "react-router-dom"
-import { getTree } from "../../features/auth/api/auh-api"
-import { getFromLocalStorage } from "../../shared/utils/local-storage-actions"
+import { Navigate, Outlet } from 'react-router-dom';
+import Navbar from '../../shared/components/navbar';
+import Sidebar from '../../shared/components/sidebar';
 
 const RootLayout = () => {
-    const loggedIn = getFromLocalStorage('token') || true
-    if (!loggedIn) {
-        return <Navigate to={'/auth'} />
-    }
-    return (
-      <div>
-        
-      </div>
-    )
+  const loggedIn = true;
+
+  if (!loggedIn) {
+    return <Navigate to="/auth" />;
   }
-  
-  export default RootLayout
+
+  return (
+    <div className="flex h-screen w-full">
+      {/* Sidebar */}
+      <Sidebar />
+
+      {/* Right side (Navbar + Content) */}
+      <div className="flex flex-col flex-1">
+        <Navbar />
+
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default RootLayout;

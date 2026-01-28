@@ -9,6 +9,10 @@ body{
   font-family: "Tajawal", sans-serif;
 }
 
+.sub-font{
+  font-family: "Montserrat", sans-serif;
+}
+
 
 @theme {
   --color-body: #f7fafc;
