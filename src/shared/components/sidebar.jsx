@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import SidebarItem from '../ui/sidebar-item';
 import { useSelector } from 'react-redux';
-import logo from '../../app/assets/logo.png'
+import logo from '../../app/assets/logo.png';
 
 const Sidebar = () => {
   const [active, setActive] = useState(null);
@@ -44,7 +44,7 @@ const Sidebar = () => {
   return (
     <aside
       className={`
-        bg-[#003646] h-svh text-white shadow-[-6px_0_20px_rgba(0,0,0,0.35)]
+        bg-[#134c5e] h-svh text-white shadow-[-6px_0_20px_rgba(0,0,0,0.35)]
         transition-all duration-300 ease-in-out
         ${openSidebar ? 'w-72 p-4' : 'w-20 p-2'}
       `}
@@ -57,13 +57,13 @@ const Sidebar = () => {
       >
         {/* <Calculator size={20} /> */}
         {openSidebar && (
-          <div className='w-full '>
+          <div className="w-full ">
             {/* <div className="text-3xl text-center font-semibold sub-font text-white">
               Medi Finance
             </div> */}
           </div>
         )}
-        <img src={logo} alt="logo" className='w-100' />
+        <img src={logo} alt="logo" className="w-100" />
       </div>
 
       <ul className={`   ${openSidebar ? 'space-y-1' : 'space-y-1 mt-14'}`}>
@@ -90,7 +90,8 @@ const Sidebar = () => {
                   : 'text-white/80 hover:bg-white/10 hover:text-white'
               }
               ${!openSidebar ? 'justify-center px-0' : ''}
-            `}
+            `
+            }
           >
             <Settings size={18} />
             {openSidebar && <span>الإعدادات</span>}
