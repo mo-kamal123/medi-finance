@@ -6,8 +6,8 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: login,
     onSuccess: (data) => {
-        addToLocalStorage('token', data.token)
-        console.log('data');
-    }
+      addToLocalStorage('token', data.token);
+      console.log('data');
+    },
   });
 };

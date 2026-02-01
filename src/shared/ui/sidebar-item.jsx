@@ -1,13 +1,7 @@
 import { ChevronLeft } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
-const SidebarItem = ({
-  item,
-  active,
-  toggle,
-  openSidebar,
-  setSubActive,
-}) => {
+const SidebarItem = ({ item, active, toggle, openSidebar, setSubActive }) => {
   const isOpen = active === item.name;
   const Icon = item.icon;
 
@@ -17,19 +11,13 @@ const SidebarItem = ({
       <button
         onClick={() => toggle(item.name)}
         className={`flex items-center w-full rounded-xl transition-colors
+        ${openSidebar ? 'justify-between px-3 py-2.5' : 'justify-center p-3'}
         ${
-          openSidebar
-            ? 'justify-between px-3 py-2.5'
-            : 'justify-center p-3'
-        }
-        ${
-          isOpen
-            ? 'bg-white/10 text-white'
-            : 'text-white/80 hover:bg-white/10'
+          isOpen ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/10'
         }`}
       >
         <div className="flex items-center gap-3">
-          <Icon size={openSidebar? 18 : 25} />
+          <Icon size={openSidebar ? 18 : 25} />
           {openSidebar && <span>{item.name}</span>}
         </div>
 
