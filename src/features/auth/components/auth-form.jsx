@@ -1,5 +1,3 @@
-import React from 'react';
-
 const AuthForm = ({ loginData, onChange, onSubmit }) => {
   return (
     <form className="space-y-5" onSubmit={onSubmit}>
@@ -13,7 +11,7 @@ const AuthForm = ({ loginData, onChange, onSubmit }) => {
           value={loginData.username}
           className="w-full px-4 py-3 text-gray-900 bg-white border border-gray-200 rounded-lg transition-all duration-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-start"
           onChange={(e) => onChange('username', e.target.value)}
-          />
+        />
       </div>
 
       <div className="space-y-2">

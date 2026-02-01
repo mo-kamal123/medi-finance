@@ -4,7 +4,7 @@ import { useLogin } from '../hooks/useLogin';
 
 const Login = () => {
   const [loginData, setLoginData] = useState({ username: '', password: '' });
-  const {mutate: login}  = useLogin()
+  const { mutate: login } = useLogin();
   const handleChange = (inputKey, value) => {
     setLoginData((prev) => ({
       ...prev,
@@ -14,7 +14,7 @@ const Login = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    login(loginData)
+    login(loginData);
     console.log(loginData);
   };
   return (
@@ -22,9 +22,7 @@ const Login = () => {
       {/* Title */}
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-semibold text-gray-900">تسجيل الدخول</h1>
-        <p className="text-gray-600 text-sm">
-          أهلاً بك، الرجاء إدخال بياناتك
-        </p>
+        <p className="text-gray-600 text-sm">أهلاً بك، الرجاء إدخال بياناتك</p>
       </div>
 
       {/* Form */}
