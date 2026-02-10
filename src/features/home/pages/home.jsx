@@ -62,7 +62,7 @@ const Home = () => {
       title: 'شجرة الحسابات',
       description: 'إدارة الحسابات والتصنيفات',
       icon: FolderTree,
-      link: '/',
+      link: '/accounts-tree',
       color: 'bg-primary',
     },
     {
