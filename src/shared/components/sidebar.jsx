@@ -33,10 +33,10 @@ const Sidebar = () => {
       ],
     },
     {
-      name: 'إدارة',
+      name: 'الفواتير',
       icon: Users,
       sub: [
-        { name: 'المستخدمين', link: '/', icon: Users },
+        { name: 'فواتير المورديين', link: '/invoices', icon: Users },
         { name: 'الصلاحيات', link: '/', icon: Settings },
       ],
     },
