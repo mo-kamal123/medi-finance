@@ -69,7 +69,7 @@ const Home = () => {
       title: 'القيود اليومية',
       description: 'تسجيل القيود المحاسبية',
       icon: FileText,
-      link: '/',
+      link: '/entries',
       color: 'bg-blue-500',
     },
     {

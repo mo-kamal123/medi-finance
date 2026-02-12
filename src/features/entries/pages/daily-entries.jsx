@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
 import { Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import Table from "../../../shared/ui/table";
 
 const dailyEntriesData = [
   { id: 1, date: "2026-02-10", description: "مبيعات نقدية", type: "income", amount: 1500 },
@@ -9,6 +11,7 @@ const dailyEntriesData = [
 const DailyEntriesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const navigate = useNavigate();
 
   const filteredEntries = useMemo(() => {
     return dailyEntriesData.filter((entry) => {
@@ -19,8 +22,44 @@ const DailyEntriesPage = () => {
   }, [searchQuery, typeFilter]);
 
   const onAddEntry = () => {
-    console.log("إضافة إدخال يومي جديد");
+    navigate("/entries/new");
   };
+
+  // ✅ تعريف الأعمدة
+  const columns = [
+    {
+      header: "التاريخ",
+      key: "date",
+    },
+    {
+      header: "الوصف",
+      key: "description",
+    },
+    {
+      header: "النوع",
+      key: "type",
+      type: "custom",
+      render: (row) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs ${
+            row.type === "income"
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-600"
+          }`}
+        >
+          {row.type === "income" ? "إيراد" : "مصروف"}
+        </span>
+      ),
+    },
+    {
+      header: "المبلغ",
+      key: "amount",
+      type: "custom",
+      render: (row) => (
+        <span className="font-medium">{row.amount} ر.س</span>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6 p-6">
@@ -63,38 +102,12 @@ const DailyEntriesPage = () => {
         </select>
       </div>
 
-      {/* Table */}
+      {/* ✅ Reusable Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600">
-            <tr>
-              <th className="p-3 text-right">التاريخ</th>
-              <th className="p-3 text-right">الوصف</th>
-              <th className="p-3 text-right">النوع</th>
-              <th className="p-3 text-right">المبلغ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredEntries.map((entry) => (
-              <tr key={entry.id} className="border-t">
-                <td className="p-3">{entry.date}</td>
-                <td className="p-3">{entry.description}</td>
-                <td className="p-3">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs ${
-                      entry.type === "income"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-600"
-                    }`}
-                  >
-                    {entry.type === "income" ? "إيراد" : "مصروف"}
-                  </span>
-                </td>
-                <td className="p-3 font-medium">{entry.amount} ر.س</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <Table
+          columns={columns}
+          data={filteredEntries}
+        />
       </div>
     </div>
   );

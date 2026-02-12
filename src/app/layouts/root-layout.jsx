@@ -1,9 +1,10 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import Navbar from '../../shared/components/navbar';
 import Sidebar from '../../shared/components/sidebar';
+import { getFromLocalStorage } from '../../shared/utils/local-storage-actions';
 
 const RootLayout = () => {
-  const loggedIn = true;
+  const loggedIn = getFromLocalStorage('token');
 
   if (!loggedIn) {
     return <Navigate to="/auth" />;

@@ -2,7 +2,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { getFromLocalStorage } from '../../shared/utils/local-storage-actions';
 
 const AuthLayout = () => {
-  const loggedIn = true;
+  const loggedIn = getFromLocalStorage('token');
   if (loggedIn) {
     return <Navigate to={'/'} replace />;
   }

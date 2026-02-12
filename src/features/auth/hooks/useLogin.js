@@ -7,7 +7,7 @@ export const useLogin = () => {
     mutationFn: login,
     onSuccess: (data) => {
       addToLocalStorage('token', data.token);
-      console.log('data');
+      console.log(data.data.token);
     },
   });
 };
