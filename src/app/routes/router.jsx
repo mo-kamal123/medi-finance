@@ -5,6 +5,7 @@ import { authRoutes } from '../../features/auth/routes/routes';
 import Home from '../../features/home/pages/home';
 import { accountsTreeRoutes } from '../../features/tree/accouts-tree/routes/routes';
 import costCenterRoutes from '../../features/tree/cost-tree/routes/routes';
+import InvoicesRoutes from '../../features/invoices/routes/routes';
 
 export const router = createBrowserRouter([
   { path: '/auth', element: <AuthLayout />, children: [...authRoutes] },
@@ -15,6 +16,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Home /> },
       ...accountsTreeRoutes,
       ...costCenterRoutes,
+      ... InvoicesRoutes
     ],
   },
 ]);
