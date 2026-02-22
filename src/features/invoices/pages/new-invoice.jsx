@@ -1,25 +1,25 @@
-import { useState } from "react";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const NewInvoice = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    invoiceNumber: "",
-    invoiceDate: "",
-    dueDate: "",
-    invoiceTypeID: "",
-    customerID: "",
-    supplierID: "",
+    invoiceNumber: '',
+    invoiceDate: '',
+    dueDate: '',
+    invoiceTypeID: '',
+    customerID: '',
+    supplierID: '',
     taxAmount: 0,
     discountAmount: 0,
-    financialPeriodID: "",
-    status: "pending",
-    createdBy: "admin",
+    financialPeriodID: '',
+    status: 'pending',
+    createdBy: 'admin',
     details: [
       {
-        productServiceID: "",
+        productServiceID: '',
         quantity: 1,
         unitPrice: 0,
         discountPercentage: 0,
@@ -45,7 +45,7 @@ const NewInvoice = () => {
       details: [
         ...prev.details,
         {
-          productServiceID: "",
+          productServiceID: '',
           quantity: 1,
           unitPrice: 0,
           discountPercentage: 0,
@@ -82,7 +82,7 @@ const NewInvoice = () => {
       })),
     };
 
-    console.log("Payload to API:", payload);
+    console.log('Payload to API:', payload);
     // await axios.post("/api/invoices", payload);
   };
 
@@ -124,9 +124,9 @@ const NewInvoice = () => {
             value={formData.invoiceTypeID}
             onChange={handleChange}
             options={[
-              { value: "", label: "اختر" },
-              { value: "1", label: "فاتورة بيع" },
-              { value: "2", label: "فاتورة شراء" },
+              { value: '', label: 'اختر' },
+              { value: '1', label: 'فاتورة بيع' },
+              { value: '2', label: 'فاتورة شراء' },
             ]}
           />
 
@@ -189,7 +189,7 @@ const NewInvoice = () => {
                 placeholder="Product ID"
                 value={item.productServiceID}
                 onChange={(e) =>
-                  handleDetailChange(index, "productServiceID", e.target.value)
+                  handleDetailChange(index, 'productServiceID', e.target.value)
                 }
                 className="input-modern"
               />
@@ -197,14 +197,18 @@ const NewInvoice = () => {
                 type="number"
                 placeholder="الكمية"
                 value={item.quantity}
-                onChange={(e) => handleDetailChange(index, "quantity", e.target.value)}
+                onChange={(e) =>
+                  handleDetailChange(index, 'quantity', e.target.value)
+                }
                 className="input-modern"
               />
               <input
                 type="number"
                 placeholder="سعر الوحدة"
                 value={item.unitPrice}
-                onChange={(e) => handleDetailChange(index, "unitPrice", e.target.value)}
+                onChange={(e) =>
+                  handleDetailChange(index, 'unitPrice', e.target.value)
+                }
                 className="input-modern"
               />
               <input
@@ -212,7 +216,11 @@ const NewInvoice = () => {
                 placeholder="خصم %"
                 value={item.discountPercentage}
                 onChange={(e) =>
-                  handleDetailChange(index, "discountPercentage", e.target.value)
+                  handleDetailChange(
+                    index,
+                    'discountPercentage',
+                    e.target.value
+                  )
                 }
                 className="input-modern"
               />
@@ -220,7 +228,9 @@ const NewInvoice = () => {
                 type="number"
                 placeholder="ضريبة %"
                 value={item.taxPercentage}
-                onChange={(e) => handleDetailChange(index, "taxPercentage", e.target.value)}
+                onChange={(e) =>
+                  handleDetailChange(index, 'taxPercentage', e.target.value)
+                }
                 className="input-modern"
               />
               <button
@@ -256,7 +266,7 @@ const NewInvoice = () => {
 };
 
 // Normal input with label above
-const NormalInput = ({ label, name, value, onChange, type = "text" }) => (
+const NormalInput = ({ label, name, value, onChange, type = 'text' }) => (
   <div className="w-full flex flex-col mb-4">
     <label htmlFor={name} className="mb-1 text-gray-700 font-medium">
       {label}
@@ -295,6 +305,5 @@ const NormalSelect = ({ label, name, value, onChange, options }) => (
     </select>
   </div>
 );
-
 
 export default NewInvoice;

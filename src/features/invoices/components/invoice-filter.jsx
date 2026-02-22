@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { Search } from 'lucide-react';
 
 const InvoiceFilters = ({
   searchQuery,
@@ -8,7 +8,6 @@ const InvoiceFilters = ({
 }) => {
   return (
     <div className="flex flex-col md:flex-row gap-4 mb-4 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-      
       {/* 🔍 Search */}
       <div className="relative flex-1">
         <Search

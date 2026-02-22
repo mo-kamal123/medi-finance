@@ -1,18 +1,16 @@
-import AccountForm from "../components/AccountForm";
+import AccountForm from '../components/AccountForm';
 
 const NewAccount = ({ parentAccounts }) => {
   const handleCreate = async (data) => {
-    console.log("Create:", data);
+    console.log('Create:', data);
     // API POST
   };
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-4xl mx-auto">
-
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-
           {/* Header */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800">
@@ -29,7 +27,6 @@ const NewAccount = ({ parentAccounts }) => {
             parentAccounts={parentAccounts}
             onSubmit={handleCreate}
           />
-
         </div>
       </div>
     </div>

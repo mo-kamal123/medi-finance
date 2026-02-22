@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Eye, Plus, Trash2 } from "lucide-react";
+import { useState, useMemo } from 'react';
+import { Eye, Plus, Trash2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import Table from '../../../shared/ui/table';
 
@@ -120,7 +120,6 @@ const DailyEntriesPage = () => {
       type: 'custom',
       render: (row) => (
         <div className="flex items-center gap-3">
-    
           {/* View */}
           <Link
             to={`/entries/${row.journalEntryID}`}
@@ -129,7 +128,7 @@ const DailyEntriesPage = () => {
           >
             <Eye size={18} />
           </Link>
-    
+
           {/* Delete */}
           <button
             onClick={() => console.log('Delete', row.journalEntryID)}
@@ -138,11 +137,9 @@ const DailyEntriesPage = () => {
           >
             <Trash2 size={18} />
           </button>
-    
         </div>
       ),
-    }
-    
+    },
   ];
 
   return (
