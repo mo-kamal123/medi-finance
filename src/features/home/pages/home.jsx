@@ -80,10 +80,10 @@ const Home = () => {
       color: 'bg-emerald-500',
     },
     {
-      title: 'الحاسبة المالية',
-      description: 'أدوات حسابية سريعة',
+      title: 'الفواتير',
+      description: 'اداره الفواتير للعملاء والمورديين',
       icon: Calculator,
-      link: '/',
+      link: '/invoices',
       color: 'bg-purple-500',
     },
   ];

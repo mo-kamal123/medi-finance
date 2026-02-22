@@ -1,158 +1,251 @@
 import { useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const NewInvoice = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
-    number: "",
-    client: "",
-    date: "",
+    invoiceNumber: "",
+    invoiceDate: "",
+    dueDate: "",
+    invoiceTypeID: "",
+    customerID: "",
+    supplierID: "",
+    taxAmount: 0,
+    discountAmount: 0,
+    financialPeriodID: "",
     status: "pending",
-    amount: "",
-    notes: "",
+    createdBy: "admin",
+    details: [
+      {
+        productServiceID: "",
+        quantity: 1,
+        unitPrice: 0,
+        discountPercentage: 0,
+        taxPercentage: 0,
+      },
+    ],
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDetailChange = (index, field, value) => {
+    const updated = [...formData.details];
+    updated[index][field] = value;
+    setFormData((prev) => ({ ...prev, details: updated }));
+  };
+
+  const addDetailRow = () => {
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      details: [
+        ...prev.details,
+        {
+          productServiceID: "",
+          quantity: 1,
+          unitPrice: 0,
+          discountPercentage: 0,
+          taxPercentage: 0,
+        },
+      ],
     }));
+  };
+
+  const removeDetailRow = (index) => {
+    const updated = formData.details.filter((_, i) => i !== index);
+    setFormData((prev) => ({ ...prev, details: updated }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Invoice Data:", formData);
+
+    const payload = {
+      ...formData,
+      invoiceDate: new Date(formData.invoiceDate).toISOString(),
+      dueDate: new Date(formData.dueDate).toISOString(),
+      invoiceTypeID: Number(formData.invoiceTypeID),
+      customerID: Number(formData.customerID),
+      supplierID: Number(formData.supplierID),
+      financialPeriodID: Number(formData.financialPeriodID),
+      taxAmount: Number(formData.taxAmount),
+      discountAmount: Number(formData.discountAmount),
+      details: formData.details.map((item) => ({
+        productServiceID: Number(item.productServiceID),
+        quantity: Number(item.quantity),
+        unitPrice: Number(item.unitPrice),
+        discountPercentage: Number(item.discountPercentage),
+        taxPercentage: Number(item.taxPercentage),
+      })),
+    };
+
+    console.log("Payload to API:", payload);
+    // await axios.post("/api/invoices", payload);
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-8 p-6 md:p-10 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="flex items-center gap-3 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <ArrowLeft className="cursor-pointer text-gray-500 hover:text-gray-800" />
+      <div className="flex items-center gap-4">
+        <ArrowLeft
+          className="cursor-pointer text-gray-500 hover:text-gray-800 transition"
+          onClick={() => navigate(-1)}
+        />
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-gray-900">
             إنشاء فاتورة جديدة
           </h1>
-          <p className="text-gray-600 text-sm">
-            قم بإدخال بيانات الفاتورة الجديدة وحفظها.
+          <p className="text-gray-500 mt-1">
+            قم بإدخال بيانات الفاتورة الجديدة وحفظها بسهولة
           </p>
         </div>
       </div>
 
-      {/* Form Card */}
+      {/* Form */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 space-y-6"
+        className="bg-white shadow-lg rounded-2xl p-8 space-y-8"
       >
+        {/* Main Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Invoice Number */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              رقم الفاتورة
-            </label>
-            <input
-              type="text"
-              name="number"
-              value={formData.number}
-              onChange={handleChange}
-              className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="INV-001"
-              required
-            />
-          </div>
+          <NormalInput
+            label="رقم الفاتورة"
+            name="invoiceNumber"
+            value={formData.invoiceNumber}
+            onChange={handleChange}
+          />
 
-          {/* Client Name */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              اسم العميل
-            </label>
-            <input
-              type="text"
-              name="client"
-              value={formData.client}
-              onChange={handleChange}
-              className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="شركة المثال"
-              required
-            />
-          </div>
+          <NormalSelect
+            label="نوع الفاتورة"
+            name="invoiceTypeID"
+            value={formData.invoiceTypeID}
+            onChange={handleChange}
+            options={[
+              { value: "", label: "اختر" },
+              { value: "1", label: "فاتورة بيع" },
+              { value: "2", label: "فاتورة شراء" },
+            ]}
+          />
 
-          {/* Date */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              تاريخ الفاتورة
-            </label>
-            <input
-              type="date"
-              name="date"
-              value={formData.date}
-              onChange={handleChange}
-              className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-              required
-            />
-          </div>
+          <NormalInput
+            label="تاريخ الإصدار"
+            name="invoiceDate"
+            type="date"
+            value={formData.invoiceDate}
+            onChange={handleChange}
+          />
 
-          {/* Status */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              الحالة
-            </label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+          <NormalInput
+            label="تاريخ الاستحقاق"
+            name="dueDate"
+            type="date"
+            value={formData.dueDate}
+            onChange={handleChange}
+          />
+
+          <NormalInput
+            label="معرف العميل"
+            name="customerID"
+            type="number"
+            value={formData.customerID}
+            onChange={handleChange}
+          />
+
+          <NormalInput
+            label="معرف المورد"
+            name="supplierID"
+            type="number"
+            value={formData.supplierID}
+            onChange={handleChange}
+          />
+        </div>
+
+        {/* Details */}
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold text-gray-800">
+              تفاصيل الخدمات
+            </h2>
+            <button
+              type="button"
+              onClick={addDetailRow}
+              className="flex items-center gap-2 text-white bg-primary hover:bg-primary/90 px-3 py-1 rounded-lg transition"
             >
-              <option value="pending">قيد الانتظار</option>
-              <option value="paid">مدفوعة</option>
-              <option value="overdue">متأخرة</option>
-            </select>
+              <Plus size={16} />
+              إضافة خدمه
+            </button>
           </div>
 
-          {/* Amount */}
-          <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium text-gray-700">
-              المبلغ
-            </label>
-            <input
-              type="number"
-              name="amount"
-              value={formData.amount}
-              onChange={handleChange}
-              className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="0.00"
-              required
-            />
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium text-gray-700">
-              ملاحظات
-            </label>
-            <textarea
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              rows={4}
-              className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="أي ملاحظات إضافية..."
-            />
-          </div>
+          {formData.details.map((item, index) => (
+            <div
+              key={index}
+              className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end border border-gray-300 rounded-xl p-4 bg-gray-50"
+            >
+              <input
+                type="text"
+                placeholder="Product ID"
+                value={item.productServiceID}
+                onChange={(e) =>
+                  handleDetailChange(index, "productServiceID", e.target.value)
+                }
+                className="input-modern"
+              />
+              <input
+                type="number"
+                placeholder="الكمية"
+                value={item.quantity}
+                onChange={(e) => handleDetailChange(index, "quantity", e.target.value)}
+                className="input-modern"
+              />
+              <input
+                type="number"
+                placeholder="سعر الوحدة"
+                value={item.unitPrice}
+                onChange={(e) => handleDetailChange(index, "unitPrice", e.target.value)}
+                className="input-modern"
+              />
+              <input
+                type="number"
+                placeholder="خصم %"
+                value={item.discountPercentage}
+                onChange={(e) =>
+                  handleDetailChange(index, "discountPercentage", e.target.value)
+                }
+                className="input-modern"
+              />
+              <input
+                type="number"
+                placeholder="ضريبة %"
+                value={item.taxPercentage}
+                onChange={(e) => handleDetailChange(index, "taxPercentage", e.target.value)}
+                className="input-modern"
+              />
+              <button
+                type="button"
+                onClick={() => removeDetailRow(index)}
+                className="text-red-500 hover:text-red-700 transition"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
+          ))}
         </div>
 
         {/* Buttons */}
         <div className="flex justify-end gap-4">
           <button
             type="button"
-            className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+            onClick={() => navigate(-1)}
+            className="px-6 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 transition"
           >
             إلغاء
           </button>
-
           <button
             type="submit"
-            className="px-6 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white font-medium transition-colors"
+            className="px-8 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition"
           >
             حفظ الفاتورة
           </button>
@@ -161,5 +254,47 @@ const NewInvoice = () => {
     </div>
   );
 };
+
+// Normal input with label above
+const NormalInput = ({ label, name, value, onChange, type = "text" }) => (
+  <div className="w-full flex flex-col mb-4">
+    <label htmlFor={name} className="mb-1 text-gray-700 font-medium">
+      {label}
+    </label>
+    <input
+      id={name}
+      type={type}
+      name={name}
+      value={value}
+      onChange={onChange}
+      className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-gray-900"
+      required
+    />
+  </div>
+);
+
+// Normal select with label above
+const NormalSelect = ({ label, name, value, onChange, options }) => (
+  <div className="w-full flex flex-col mb-4">
+    <label htmlFor={name} className="mb-1 text-gray-700 font-medium">
+      {label}
+    </label>
+    <select
+      id={name}
+      name={name}
+      value={value}
+      onChange={onChange}
+      className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-gray-900"
+      required
+    >
+      {options.map((opt, i) => (
+        <option key={i} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
 
 export default NewInvoice;

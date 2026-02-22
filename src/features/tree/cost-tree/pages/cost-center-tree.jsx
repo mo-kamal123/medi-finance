@@ -1,12 +1,21 @@
 import { useMemo, useState } from 'react';
-import { Search, Download, RefreshCw } from 'lucide-react';
+import { Search, Download, RefreshCw, PlusIcon } from 'lucide-react';
 import TreeNode from '../../components/tree-node';
 import { buildTree } from '../../utils/buildTree';
 import { costTree } from '../../utils/constants';
+import { filterTree } from '../../utils/filterTree';
+import SearchFilter from '../../../../shared/components/search-filter';
+import { useNavigate } from 'react-router-dom';
+import ConfirmModal from '../../../../shared/ui/modal';
 
 const CostCenterTree = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState('all');
   const [expandedAll, setExpandedAll] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedCenter, setSelectedCenter] = useState(null);
+
+  const navigate = useNavigate();
 
   // Build tree
   const treeData = useMemo(() => {
@@ -17,53 +26,41 @@ const CostCenterTree = () => {
     });
   }, []);
 
-  // Search filter
-  const filterTree = (nodes, query) => {
-    if (!query) return nodes;
+  // Unique cost center types
+  const accountTypes = useMemo(() => {
+    const types = new Set(costTree.map((c) => c.costCenterType || 'عام'));
+    return Array.from(types).sort();
+  }, []);
 
-    return nodes
-      .map((node) => {
-        const matches =
-          node.nameAr.toLowerCase().includes(query.toLowerCase()) ||
-          node.code.includes(query);
-
-        const filteredChildren = node.children
-          ? filterTree(node.children, query)
-          : [];
-
-        if (matches) {
-          return { ...node, children: filteredChildren };
-        } else if (filteredChildren.length > 0) {
-          return { ...node, children: filteredChildren };
-        }
-
-        return null;
-      })
-      .filter(Boolean);
-  };
-
+  // Filtered tree
   const filteredTree = useMemo(() => {
-    return filterTree(treeData, searchQuery);
-  }, [treeData, searchQuery]);
+    return filterTree(treeData, searchQuery, filterType);
+  }, [treeData, searchQuery, filterType]);
 
   // Actions
   const editCenter = (center) => {
-    console.log('تعديل مركز التكلفة:', center);
+    navigate(`${center.costCenterID}`);
   };
 
   const addSubCenter = (center) => {
-    console.log('إضافة مركز فرعي إلى:', center);
+    navigate(`new?parentID=${center.costCenterID}`);
   };
 
-  const disableCenter = (center) => {
-    console.log('تعطيل مركز التكلفة:', center);
+  const handleDisableClick = (center) => {
+    setSelectedCenter(center);
+    setModalOpen(true);
+  };
+
+  const handleConfirmDisable = () => {
+    console.log('تم تعطيل مركز التكلفة:', selectedCenter);
+    // هنا تستدعي API لتعطيل المركز
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-1">
               شجرة مراكز التكلفة
@@ -75,27 +72,23 @@ const CostCenterTree = () => {
               <Download size={16} />
               تصدير
             </button>
-            <button className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium flex items-center gap-2">
-              <RefreshCw size={16} />
-              تحديث
+            <button onClick={() => navigate('new')} className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium flex items-center gap-2">
+              <PlusIcon size={16} />
+              انشاء
             </button>
           </div>
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search
-            size={18}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-          <input
-            type="text"
-            placeholder="ابحث عن مركز تكلفة..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pr-10 pl-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
+        {/* Search and Filter */}
+        <SearchFilter
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          filterValue={filterType}
+          onFilterChange={setFilterType}
+          filterOptions={accountTypes}
+          searchPlaceholder="ابحث عن مركز..."
+          allLabel="جميع الأنواع"
+        />
       </div>
 
       {/* Tree */}
@@ -128,7 +121,7 @@ const CostCenterTree = () => {
                   { label: 'إضافة مركز فرعي', onClick: addSubCenter },
                   {
                     label: 'تعطيل المركز',
-                    onClick: disableCenter,
+                    onClick: () => handleDisableClick(center),
                     danger: true,
                   },
                 ]}
@@ -141,6 +134,17 @@ const CostCenterTree = () => {
           )}
         </div>
       </div>
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onConfirm={handleConfirmDisable}
+        title="تعطيل مركز التكلفة"
+        description={`هل أنت متأكد من رغبتك في تعطيل المركز: ${selectedCenter?.nameAr || ""}؟`}
+        confirmText="نعم، تعطيل"
+        cancelText="إلغاء"
+      />
     </div>
   );
 };

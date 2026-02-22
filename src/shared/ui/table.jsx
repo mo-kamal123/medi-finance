@@ -1,4 +1,3 @@
-
 const Table = ({
   columns = [],
   data = [],
@@ -7,51 +6,89 @@ const Table = ({
   footer,
 }) => {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm border rounded-lg overflow-hidden">
+    <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm bg-white">
+      <table className="w-full text-sm border-collapse">
+        
         {/* Header */}
         <thead className="bg-primary/90 text-white">
           <tr>
             {columns.map((col, index) => (
-              <th key={index} className="p-3 text-right">
+              <th
+                key={index}
+                className="p-3 text-right  font-semibold"
+              >
                 {col.header}
               </th>
             ))}
-            {onDelete && <th></th>}
+            {onDelete && (
+              <th className="border border-gray-200"></th>
+            )}
           </tr>
         </thead>
 
         {/* Body */}
         <tbody>
-          {data.map((row, rowIndex) => (
-            <tr key={rowIndex} className="border-t border-gray-300">
-              {columns.map((col, colIndex) => (
-                <td key={colIndex} className="p-2">
-                  {renderCell(col, row, rowIndex, onChange)}
-                </td>
-              ))}
-
-              {onDelete && (
-                <td className="p-2 text-center">
-                  <button
-                    type="button"
-                    onClick={() => onDelete(rowIndex)}
-                    className="text-red-500 hover:text-red-700"
+          {data.length > 0 ? (
+            data.map((row, rowIndex) => (
+              <tr
+                key={rowIndex}
+                className="hover:bg-gray-50 transition-colors even:bg-gray-50/40"
+              >
+                {columns.map((col, colIndex) => (
+                  <td
+                    key={colIndex}
+                    className="p-3 border border-gray-200 align-middle"
                   >
-                    حذف
-                  </button>
-                </td>
-              )}
+                    {renderCell(
+                      col,
+                      row,
+                      rowIndex,
+                      onChange
+                    )}
+                  </td>
+                ))}
+
+                {onDelete && (
+                  <td className="p-3 border border-gray-200 text-center">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onDelete(rowIndex)
+                      }
+                      className="text-red-500 hover:text-red-700 transition-colors"
+                    >
+                      حذف
+                    </button>
+                  </td>
+                )}
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td
+                colSpan={
+                  columns.length +
+                  (onDelete ? 1 : 0)
+                }
+                className="text-center p-6 text-gray-400 border border-gray-200"
+              >
+                لا توجد بيانات
+              </td>
             </tr>
-          ))}
+          )}
         </tbody>
 
         {/* Footer */}
-        {footer && <tfoot>{footer}</tfoot>}
+        {footer && (
+          <tfoot className="bg-gray-50 font-semibold">
+            {footer}
+          </tfoot>
+        )}
       </table>
     </div>
   );
 };
+
 
 const renderCell = (col, row, rowIndex, onChange) => {
   switch (col.type) {

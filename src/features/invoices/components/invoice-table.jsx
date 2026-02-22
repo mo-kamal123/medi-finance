@@ -11,23 +11,45 @@ const InvoiceTable = ({ invoices }) => {
               <th className="px-4 py-3 text-sm font-medium text-white">
                 رقم الفاتورة
               </th>
+
               <th className="px-4 py-3 text-sm font-medium text-white">
-                العميل
+                الشركة / العميل
               </th>
+
               <th className="px-4 py-3 text-sm font-medium text-white">
-                التاريخ
+                نوع الفاتورة
               </th>
+
               <th className="px-4 py-3 text-sm font-medium text-white">
-                المبلغ
+                تاريخ الإصدار
               </th>
+
+              <th className="px-4 py-3 text-sm font-medium text-white">
+                تاريخ الاستحقاق
+              </th>
+
+              <th className="px-4 py-3 text-sm font-medium text-white">
+                الإجمالي
+              </th>
+
+              <th className="px-4 py-3 text-sm font-medium text-white">
+                الخصم
+              </th>
+
+              <th className="px-4 py-3 text-sm font-medium text-white">
+                الصافي
+              </th>
+
               <th className="px-4 py-3 text-sm font-medium text-white">
                 الحالة
               </th>
+
               <th className="px-4 py-3 text-sm font-medium text-white">
-                إجراءات
+                الإجراءات
               </th>
             </tr>
           </thead>
+
           <tbody className="divide-y divide-gray-100">
             {invoices.map((invoice) => (
               <InvoiceRow key={invoice.id} invoice={invoice} />
