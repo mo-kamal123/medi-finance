@@ -1,14 +1,21 @@
 import { useMemo, useState } from 'react';
-import { Search, Filter, Download, RefreshCw } from 'lucide-react';
+import { Download, PlusIcon, RefreshCw } from 'lucide-react';
 import { accountsTree } from '../../utils/constants';
 import TreeNode from '../../components/tree-node';
 import { buildTree } from '../../utils/buildTree';
+import { filterTree } from '../../utils/filterTree';
+import SearchFilter from '../../../../shared/components/search-filter';
+import { useNavigate } from 'react-router-dom';
+import ConfirmModal from '../../../../shared/ui/modal';
 
 const AccountsTree = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [expandedAll, setExpandedAll] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedNode, setSelectedNode] = useState(null);
 
+  const navigate = useNavigate();
   // Build tree structure
   const treeData = useMemo(() => {
     return buildTree(accountsTree, {
@@ -17,33 +24,6 @@ const AccountsTree = () => {
       sortKey: 'accountCode',
     });
   }, []);
-  // Filter accounts based on search and type
-  const filterTree = (accounts, query, type) => {
-    if (!query && type === 'all') return accounts;
-
-    return accounts
-      .map((account) => {
-        const matchesSearch =
-          !query ||
-          account.nameAr.toLowerCase().includes(query.toLowerCase()) ||
-          account.nameEn.toLowerCase().includes(query.toLowerCase()) ||
-          account.accountCode.includes(query);
-
-        const matchesType = type === 'all' || account.accountType === type;
-
-        const filteredChildren = account.children
-          ? filterTree(account.children, query, type)
-          : [];
-
-        if (matchesSearch && matchesType) {
-          return { ...account, children: filteredChildren };
-        } else if (filteredChildren.length > 0) {
-          return { ...account, children: filteredChildren };
-        }
-        return null;
-      })
-      .filter(Boolean);
-  };
 
   const filteredTree = useMemo(() => {
     return filterTree(treeData, searchQuery, filterType);
@@ -68,15 +48,23 @@ const AccountsTree = () => {
   }, [accountTypes]);
 
   const editAccount = (account) => {
+    navigate(`${account.accountID}`);
     console.log('تعديل الحساب:', account);
   };
 
   const addSubAccount = (account) => {
     console.log('إضافة حساب فرعي إلى:', account);
+    navigate(`new`);
   };
 
   const disableAccount = (account) => {
     console.log('تعطيل الحساب:', account);
+    setSelectedNode(account);
+    setModalOpen(true);
+  };
+  const handleConfirmDisable = () => {
+    console.log('تم تعطيل:');
+    // استدعاء API لتعطيل الحساب أو المركز
   };
 
   return (
@@ -97,9 +85,12 @@ const AccountsTree = () => {
               <Download size={16} />
               تصدير
             </button>
-            <button className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-              <RefreshCw size={16} />
-              تحديث
+            <button
+              onClick={() => navigate('new')}
+              className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            >
+              <PlusIcon size={16} />
+              انشاء
             </button>
           </div>
         </div>
@@ -131,39 +122,15 @@ const AccountsTree = () => {
         </div>
 
         {/* Search and Filter */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 relative">
-            <Search
-              size={18}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-            <input
-              type="text"
-              placeholder="ابحث عن حساب..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pr-10 pl-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-start"
-            />
-          </div>
-          <div className="relative">
-            <Filter
-              size={18}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-            />
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="w-full sm:w-48 pr-10 pl-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none bg-white text-start"
-            >
-              <option value="all">جميع الأنواع</option>
-              {accountTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <SearchFilter
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          filterValue={filterType}
+          onFilterChange={setFilterType}
+          filterOptions={accountTypes}
+          searchPlaceholder="ابحث عن حساب..."
+          allLabel="جميع الأنواع"
+        />
       </div>
 
       {/* Tree View */}
@@ -210,6 +177,15 @@ const AccountsTree = () => {
           )}
         </div>
       </div>
+      <ConfirmModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onConfirm={handleConfirmDisable}
+        title="تعطيل الحساب"
+        description={`هل أنت متأكد من رغبتك في تعطيل الحساب: ${selectedNode?.nameAr || ''}؟`}
+        confirmText="نعم، تعطيل"
+        cancelText="إلغاء"
+      />
     </div>
   );
 };

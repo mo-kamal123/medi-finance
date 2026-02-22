@@ -28,7 +28,7 @@ const Sidebar = () => {
       sub: [
         { name: 'شجرة الحسابات', link: '/accounts-tree', icon: FolderTree },
         { name: 'شجرة التكاليف', link: '/cost-tree', icon: FolderTree },
-        { name: 'القيود اليومية', link: '/', icon: FileText },
+        { name: 'القيود اليومية', link: '/entries', icon: FileText },
         { name: 'التقارير', link: '/', icon: BarChart3 },
       ],
     },

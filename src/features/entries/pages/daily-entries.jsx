@@ -1,26 +1,149 @@
 import { useState, useMemo } from "react";
-import { Plus } from "lucide-react";
+import { Eye, Plus, Trash2 } from "lucide-react";
+import { Link, useNavigate } from 'react-router-dom';
+import Table from '../../../shared/ui/table';
 
 const dailyEntriesData = [
-  { id: 1, date: "2026-02-10", description: "مبيعات نقدية", type: "income", amount: 1500 },
-  { id: 2, date: "2026-02-10", description: "شراء مستلزمات", type: "expense", amount: 500 },
+  {
+    journalEntryID: 12,
+    journalEntryNumber: 'erwe',
+    entryDate: '2022-01-01T00:00:00',
+    journalType: '1',
+    descriptionAr: 'sdf',
+    descriptionEn: 'sdfs',
+    referenceNumber: '23423',
+    financialPeriodID: 1,
+    totalDebit: 32,
+    totalCredit: 232,
+    isPosted: true,
+    postedDate: '2002-01-01T00:00:00',
+    isReversed: true,
+    reversalEntryID: 1,
+    status: '1',
+    createdBy: 'msaad',
+    createdAt: '2026-02-17T11:31:37.96',
+    modifiedBy: null,
+    modifiedAt: null,
+    financialPeriodNameAr: null,
+    financialPeriodNameEn: null,
+    reversalEntryNumber: null,
+    details: [],
+  },
 ];
 
 const DailyEntriesPage = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const navigate = useNavigate();
 
   const filteredEntries = useMemo(() => {
     return dailyEntriesData.filter((entry) => {
-      const matchesSearch = entry.description.includes(searchQuery);
-      const matchesType = typeFilter === "all" || entry.type === typeFilter;
-      return matchesSearch && matchesType;
+      const matchesSearch =
+        entry.descriptionAr?.includes(searchQuery) ||
+        entry.journalEntryNumber?.includes(searchQuery);
+
+      return matchesSearch;
     });
-  }, [searchQuery, typeFilter]);
+  }, [searchQuery]);
 
   const onAddEntry = () => {
-    console.log("إضافة إدخال يومي جديد");
+    navigate('/entries/new');
   };
+
+  // ✅ تعريف الأعمدة
+  const columns = [
+    {
+      header: 'رقم القيد',
+      key: 'journalEntryNumber',
+    },
+    {
+      header: 'التاريخ',
+      key: 'entryDate',
+      type: 'custom',
+      render: (row) => new Date(row.entryDate).toLocaleDateString('ar-EG'),
+    },
+    {
+      header: 'النوع',
+      key: 'journalType',
+      type: 'custom',
+      render: (row) => (
+        <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
+          {row.journalType === '1' ? 'قيد يومية' : 'نوع آخر'}
+        </span>
+      ),
+    },
+    {
+      header: 'الوصف',
+      key: 'descriptionAr',
+    },
+    {
+      header: 'الفترة المالية',
+      key: 'financialPeriodNameAr',
+      type: 'custom',
+      render: (row) => row.financialPeriodNameAr || '-',
+    },
+    {
+      header: 'مدين',
+      key: 'totalDebit',
+      type: 'custom',
+      render: (row) => (
+        <span className="text-green-600 font-medium">{row.totalDebit} ر.س</span>
+      ),
+    },
+    {
+      header: 'دائن',
+      key: 'totalCredit',
+      type: 'custom',
+      render: (row) => (
+        <span className="text-red-600 font-medium">{row.totalCredit} ر.س</span>
+      ),
+    },
+    {
+      header: 'الحالة',
+      key: 'isPosted',
+      type: 'custom',
+      render: (row) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs ${
+            row.isPosted
+              ? 'bg-green-100 text-green-700'
+              : 'bg-yellow-100 text-yellow-700'
+          }`}
+        >
+          {row.isPosted ? 'مرحّل' : 'غير مرحّل'}
+        </span>
+      ),
+    },
+    {
+      header: 'الإجراءات',
+      key: 'actions',
+      type: 'custom',
+      render: (row) => (
+        <div className="flex items-center gap-3">
+    
+          {/* View */}
+          <Link
+            to={`/entries/${row.journalEntryID}`}
+            className="text-blue-600 hover:text-blue-800 transition-colors"
+            title="عرض"
+          >
+            <Eye size={18} />
+          </Link>
+    
+          {/* Delete */}
+          <button
+            onClick={() => console.log('Delete', row.journalEntryID)}
+            className="text-red-600 hover:text-red-800 transition-colors"
+            title="حذف"
+          >
+            <Trash2 size={18} />
+          </button>
+    
+        </div>
+      ),
+    }
+    
+  ];
 
   return (
     <div className="space-y-6 p-6">
@@ -63,38 +186,9 @@ const DailyEntriesPage = () => {
         </select>
       </div>
 
-      {/* Table */}
+      {/* ✅ Reusable Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600">
-            <tr>
-              <th className="p-3 text-right">التاريخ</th>
-              <th className="p-3 text-right">الوصف</th>
-              <th className="p-3 text-right">النوع</th>
-              <th className="p-3 text-right">المبلغ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredEntries.map((entry) => (
-              <tr key={entry.id} className="border-t">
-                <td className="p-3">{entry.date}</td>
-                <td className="p-3">{entry.description}</td>
-                <td className="p-3">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs ${
-                      entry.type === "income"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-600"
-                    }`}
-                  >
-                    {entry.type === "income" ? "إيراد" : "مصروف"}
-                  </span>
-                </td>
-                <td className="p-3 font-medium">{entry.amount} ر.س</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <Table columns={columns} data={filteredEntries} />
       </div>
     </div>
   );

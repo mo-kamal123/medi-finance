@@ -4,10 +4,11 @@ import { addToLocalStorage } from '../../../shared/utils/local-storage-actions';
 
 export const useLogin = () => {
   return useMutation({
+
     mutationFn: login,
     onSuccess: (data) => {
-      addToLocalStorage('token', data.token);
-      console.log('data');
+      addToLocalStorage('token', data.data.token);
+      console.log(data.data.token);
     },
   });
 };
