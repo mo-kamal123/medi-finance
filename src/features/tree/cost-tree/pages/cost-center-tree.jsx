@@ -72,7 +72,10 @@ const CostCenterTree = () => {
               <Download size={16} />
               تصدير
             </button>
-            <button onClick={() => navigate('new')} className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium flex items-center gap-2">
+            <button
+              onClick={() => navigate('new')}
+              className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium flex items-center gap-2"
+            >
               <PlusIcon size={16} />
               انشاء
             </button>
@@ -141,7 +144,7 @@ const CostCenterTree = () => {
         onClose={() => setModalOpen(false)}
         onConfirm={handleConfirmDisable}
         title="تعطيل مركز التكلفة"
-        description={`هل أنت متأكد من رغبتك في تعطيل المركز: ${selectedCenter?.nameAr || ""}؟`}
+        description={`هل أنت متأكد من رغبتك في تعطيل المركز: ${selectedCenter?.nameAr || ''}؟`}
         confirmText="نعم، تعطيل"
         cancelText="إلغاء"
       />

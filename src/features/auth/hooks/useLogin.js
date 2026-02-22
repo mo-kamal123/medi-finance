@@ -4,7 +4,6 @@ import { addToLocalStorage } from '../../../shared/utils/local-storage-actions';
 
 export const useLogin = () => {
   return useMutation({
-
     mutationFn: login,
     onSuccess: (data) => {
       addToLocalStorage('token', data.data.token);

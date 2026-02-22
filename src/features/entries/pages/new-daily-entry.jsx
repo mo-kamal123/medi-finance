@@ -1,22 +1,22 @@
-import { useState } from "react";
-import { Plus, Trash2, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { Plus, Trash2, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const NewJournalEntryPage = () => {
   const navigate = useNavigate();
 
   // Header Data
-  const [journalEntryNumber, setJournalEntryNumber] = useState("");
-  const [entryDate, setEntryDate] = useState("");
-  const [journalType, setJournalType] = useState("1");
-  const [descriptionAr, setDescriptionAr] = useState("");
-  const [referenceNumber, setReferenceNumber] = useState("");
+  const [journalEntryNumber, setJournalEntryNumber] = useState('');
+  const [entryDate, setEntryDate] = useState('');
+  const [journalType, setJournalType] = useState('1');
+  const [descriptionAr, setDescriptionAr] = useState('');
+  const [referenceNumber, setReferenceNumber] = useState('');
   const [financialPeriodID, setFinancialPeriodID] = useState(1);
 
   // Details Rows
   const [rows, setRows] = useState([
-    { accountID: "", debitAmount: "", creditAmount: "", descriptionAr: "" },
-    { accountID: "", debitAmount: "", creditAmount: "", descriptionAr: "" },
+    { accountID: '', debitAmount: '', creditAmount: '', descriptionAr: '' },
+    { accountID: '', debitAmount: '', creditAmount: '', descriptionAr: '' },
   ]);
 
   const handleRowChange = (index, field, value) => {
@@ -28,7 +28,7 @@ const NewJournalEntryPage = () => {
   const addRow = () => {
     setRows([
       ...rows,
-      { accountID: "", debitAmount: "", creditAmount: "", descriptionAr: "" },
+      { accountID: '', debitAmount: '', creditAmount: '', descriptionAr: '' },
     ]);
   };
 
@@ -52,7 +52,7 @@ const NewJournalEntryPage = () => {
     e.preventDefault();
 
     if (!isBalanced) {
-      alert("يجب أن يكون مجموع المدين مساويًا للدائن");
+      alert('يجب أن يكون مجموع المدين مساويًا للدائن');
       return;
     }
 
@@ -71,22 +71,21 @@ const NewJournalEntryPage = () => {
       })),
     };
 
-    console.log("Sending Payload:", payload);
+    console.log('Sending Payload:', payload);
 
-    await fetch("https://localhost:7081/api/journal-entries", {
-      method: "POST",
+    await fetch('https://localhost:7081/api/journal-entries', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
     });
 
-    navigate("/entries");
+    navigate('/entries');
   };
 
   return (
     <div className="space-y-6 p-6">
-
       {/* Header */}
       <div className="flex items-center gap-3 bg-white rounded-xl p-6 shadow-sm border border-gray-200">
         <ArrowLeft
@@ -105,10 +104,8 @@ const NewJournalEntryPage = () => {
         onSubmit={handleSubmit}
         className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 space-y-6"
       >
-
         {/* Entry Info */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
           <input
             type="text"
             value={journalEntryNumber}
@@ -157,7 +154,6 @@ const NewJournalEntryPage = () => {
             placeholder="رقم الفترة المالية"
             className="border border-gray-200 rounded-lg px-4 py-2"
           />
-
         </div>
 
         {/* Details Table */}
@@ -176,13 +172,12 @@ const NewJournalEntryPage = () => {
             <tbody>
               {rows.map((row, index) => (
                 <tr key={index} className="border border-gray-200">
-
                   <td className="p-2">
                     <input
                       type="number"
                       value={row.accountID}
                       onChange={(e) =>
-                        handleRowChange(index, "accountID", e.target.value)
+                        handleRowChange(index, 'accountID', e.target.value)
                       }
                       className="w-full border border-gray-200 rounded-lg px-3 py-2"
                       placeholder="Account ID"
@@ -194,7 +189,7 @@ const NewJournalEntryPage = () => {
                       type="text"
                       value={row.descriptionAr}
                       onChange={(e) =>
-                        handleRowChange(index, "descriptionAr", e.target.value)
+                        handleRowChange(index, 'descriptionAr', e.target.value)
                       }
                       className="w-full border border-gray-200 rounded-lg px-3 py-2"
                     />
@@ -205,7 +200,7 @@ const NewJournalEntryPage = () => {
                       type="number"
                       value={row.debitAmount}
                       onChange={(e) =>
-                        handleRowChange(index, "debitAmount", e.target.value)
+                        handleRowChange(index, 'debitAmount', e.target.value)
                       }
                       className="w-full border border-gray-200 rounded-lg px-3 py-2"
                     />
@@ -216,7 +211,7 @@ const NewJournalEntryPage = () => {
                       type="number"
                       value={row.creditAmount}
                       onChange={(e) =>
-                        handleRowChange(index, "creditAmount", e.target.value)
+                        handleRowChange(index, 'creditAmount', e.target.value)
                       }
                       className="w-full border border-gray-200 rounded-lg px-3 py-2"
                     />
@@ -231,24 +226,20 @@ const NewJournalEntryPage = () => {
                       <Trash2 size={16} />
                     </button>
                   </td>
-
                 </tr>
               ))}
             </tbody>
 
             <tfoot className="bg-gray-50 font-semibold">
               <tr>
-                <td colSpan="2" className="p-3 text-right">الإجمالي</td>
-                <td className="p-3 text-green-600">
-                  {totalDebit.toFixed(2)}
+                <td colSpan="2" className="p-3 text-right">
+                  الإجمالي
                 </td>
-                <td className="p-3 text-red-600">
-                  {totalCredit.toFixed(2)}
-                </td>
+                <td className="p-3 text-green-600">{totalDebit.toFixed(2)}</td>
+                <td className="p-3 text-red-600">{totalCredit.toFixed(2)}</td>
                 <td></td>
               </tr>
             </tfoot>
-
           </table>
         </div>
 
@@ -266,11 +257,11 @@ const NewJournalEntryPage = () => {
         <div
           className={`p-3 rounded-lg text-sm ${
             isBalanced
-              ? "bg-green-100 text-green-700"
-              : "bg-red-100 text-red-600"
+              ? 'bg-green-100 text-green-700'
+              : 'bg-red-100 text-red-600'
           }`}
         >
-          {isBalanced ? "القيد متوازن ✅" : "القيد غير متوازن ❌"}
+          {isBalanced ? 'القيد متوازن ✅' : 'القيد غير متوازن ❌'}
         </div>
 
         {/* Submit */}
@@ -283,7 +274,6 @@ const NewJournalEntryPage = () => {
             حفظ القيد
           </button>
         </div>
-
       </form>
     </div>
   );

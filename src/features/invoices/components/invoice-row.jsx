@@ -14,7 +14,9 @@ const InvoiceRow = ({ invoice }) => {
       <td className="px-4 py-3 text-sm">
         <span
           className={`px-2 py-1 rounded-full text-xs font-semibold ${
-            invoice.status === 'مدفوعة' ? 'bg-emerald-100 text-emerald-800' : 'bg-yellow-100 text-yellow-800'
+            invoice.status === 'مدفوعة'
+              ? 'bg-emerald-100 text-emerald-800'
+              : 'bg-yellow-100 text-yellow-800'
           }`}
         >
           {invoice.status}
@@ -27,7 +29,10 @@ const InvoiceRow = ({ invoice }) => {
         <button onClick={handleEdit} className="p-1 rounded hover:bg-gray-100">
           <Edit size={16} />
         </button>
-        <button onClick={handleDelete} className="p-1 rounded hover:bg-red-50 text-red-600">
+        <button
+          onClick={handleDelete}
+          className="p-1 rounded hover:bg-red-50 text-red-600"
+        >
           <Trash size={16} />
         </button>
       </td>

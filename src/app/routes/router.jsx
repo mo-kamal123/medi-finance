@@ -19,7 +19,7 @@ export const router = createBrowserRouter([
       ...accountsTreeRoutes,
       ...costCenterRoutes,
       ...linkAccountCostRoutes,
-      ... InvoicesRoutes,
+      ...InvoicesRoutes,
       ...entriesRoutes,
     ],
   },

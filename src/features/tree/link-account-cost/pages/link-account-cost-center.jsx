@@ -1,15 +1,15 @@
-import { useState, useMemo } from "react";
-import { PlusIcon, Download } from "lucide-react";
-import { accountsTree, costTree } from "../../utils/constants";
-import { buildTree } from "../../utils/buildTree";
-import TreeNode from "../../components/tree-node";
-import SearchFilter from "../../../../shared/components/search-filter";
+import { useState, useMemo } from 'react';
+import { PlusIcon, Download } from 'lucide-react';
+import { accountsTree, costTree } from '../../utils/constants';
+import { buildTree } from '../../utils/buildTree';
+import TreeNode from '../../components/tree-node';
+import SearchFilter from '../../../../shared/components/search-filter';
 
 const LinkAccountCostCenter = () => {
-  const [searchAccount, setSearchAccount] = useState("");
-  const [searchCost, setSearchCost] = useState("");
-  const [filterAccountType, setFilterAccountType] = useState("all");
-  const [filterCostType, setFilterCostType] = useState("all");
+  const [searchAccount, setSearchAccount] = useState('');
+  const [searchCost, setSearchCost] = useState('');
+  const [filterAccountType, setFilterAccountType] = useState('all');
+  const [filterCostType, setFilterCostType] = useState('all');
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [selectedCost, setSelectedCost] = useState(null);
 
@@ -17,9 +17,9 @@ const LinkAccountCostCenter = () => {
   const accountTreeData = useMemo(
     () =>
       buildTree(accountsTree, {
-        idKey: "accountID",
-        parentKey: "parentID",
-        sortKey: "accountCode",
+        idKey: 'accountID',
+        parentKey: 'parentID',
+        sortKey: 'accountCode',
       }),
     []
   );
@@ -27,9 +27,9 @@ const LinkAccountCostCenter = () => {
   const costTreeData = useMemo(
     () =>
       buildTree(costTree, {
-        idKey: "costCenterID",
-        parentKey: "parentID",
-        sortKey: "ccCode",
+        idKey: 'costCenterID',
+        parentKey: 'parentID',
+        sortKey: 'ccCode',
       }),
     []
   );
@@ -41,7 +41,7 @@ const LinkAccountCostCenter = () => {
   }, []);
 
   const costTypes = useMemo(() => {
-    const types = new Set(costTree.map((c) => c.costCenterType || "عام"));
+    const types = new Set(costTree.map((c) => c.costCenterType || 'عام'));
     return Array.from(types).sort();
   }, []);
 
@@ -61,13 +61,13 @@ const LinkAccountCostCenter = () => {
   // ربط الحساب بالمركز
   const handleLink = () => {
     if (!selectedAccount || !selectedCost) {
-      alert("يرجى اختيار الحساب والمركز قبل الربط!");
+      alert('يرجى اختيار الحساب والمركز قبل الربط!');
       return;
     }
     console.log(
-      "تم ربط الحساب:",
+      'تم ربط الحساب:',
       selectedAccount.nameAr,
-      "بالمركز:",
+      'بالمركز:',
       selectedCost.nameAr
     );
     // هنا استدعاء API لعمل الربط
@@ -116,17 +116,15 @@ const LinkAccountCostCenter = () => {
                     onClick={() => setSelectedAccount(acc)}
                     className={`p-2 rounded-md cursor-pointer hover:bg-primary/10 ${
                       selectedAccount?.accountID === acc.accountID
-                        ? "bg-primary/20"
-                        : ""
+                        ? 'bg-primary/20'
+                        : ''
                     }`}
                   >
                     {acc.nameAr} - {acc.accountCode}
                   </div>
                 ))
               ) : (
-                <p className="text-gray-500 text-center py-4">
-                  لا توجد حسابات
-                </p>
+                <p className="text-gray-500 text-center py-4">لا توجد حسابات</p>
               )}
             </div>
           </div>
@@ -153,17 +151,15 @@ const LinkAccountCostCenter = () => {
                     onClick={() => setSelectedCost(c)}
                     className={`p-2 rounded-md cursor-pointer hover:bg-primary/10 ${
                       selectedCost?.costCenterID === c.costCenterID
-                        ? "bg-primary/20"
-                        : ""
+                        ? 'bg-primary/20'
+                        : ''
                     }`}
                   >
                     {c.nameAr} - {c.ccCode}
                   </div>
                 ))
               ) : (
-                <p className="text-gray-500 text-center py-4">
-                  لا توجد مراكز
-                </p>
+                <p className="text-gray-500 text-center py-4">لا توجد مراكز</p>
               )}
             </div>
           </div>
