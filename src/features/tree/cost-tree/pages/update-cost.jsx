@@ -1,10 +1,24 @@
+import { useParams } from 'react-router-dom';
 import CostCenterForm from '../components/cost-form';
+import useCostTree from '../hooks/use-cost-tree';
+import useCostById from '../hooks/use-cost-by-id';
+import useUpdateCost from '../hooks/use-update-cost';
 
-const UpdateCost = ({ centerData, parentCenters }) => {
-  const handleUpdate = async (data) => {
-    console.log('Update:', data);
-    // هنا تستدعي API PUT
+const UpdateCost = () => {
+  const { id } = useParams();
+  console.log(id);
+  const { data: centerData, isPending } = useCostById(id);
+  const { data: parentCenters = [] } = useCostTree();
+  const { mutate, isPending: isUpdating } = useUpdateCost();
+
+  const handleUpdate = (data) => {
+    mutate({
+      id,
+      body: data,
+    });
   };
+
+  if (isPending) return <p>جاري التحميل...</p>;
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
@@ -21,6 +35,7 @@ const UpdateCost = ({ centerData, parentCenters }) => {
           defaultValues={centerData}
           parentCenters={parentCenters}
           onSubmit={handleUpdate}
+          isSubmitting={isUpdating}
         />
       </div>
     </div>

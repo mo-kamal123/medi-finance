@@ -1,9 +1,13 @@
 import CostCenterForm from '../components/cost-form';
+import useCostTree from '../hooks/use-cost-tree';
+import useCreateCost from '../hooks/use-create-cost';
 
-const NewCost = ({ parentCenters }) => {
-  const handleCreate = async (data) => {
-    console.log('Create:', data);
-    // هنا تستدعي API POST
+const NewCost = () => {
+  const { data: parentCenters = [] } = useCostTree();
+  const { mutate, isPending } = useCreateCost();
+
+  const handleCreate = (data) => {
+    mutate(data);
   };
 
   return (
@@ -20,6 +24,7 @@ const NewCost = ({ parentCenters }) => {
           mode="create"
           parentCenters={parentCenters}
           onSubmit={handleCreate}
+          isSubmitting={isPending}
         />
       </div>
     </div>
