@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Search, Download, RefreshCw, PlusIcon } from 'lucide-react';
+import { Search, Download, RefreshCw, PlusIcon, Link } from 'lucide-react';
+import useCostTree from '../hooks/use-cost-tree';
 import TreeNode from '../../components/tree-node';
 import { buildTree } from '../../utils/buildTree';
-import { costTree } from '../../utils/constants';
 import { filterTree } from '../../utils/filterTree';
 import SearchFilter from '../../../../shared/components/search-filter';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +14,7 @@ const CostCenterTree = () => {
   const [expandedAll, setExpandedAll] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedCenter, setSelectedCenter] = useState(null);
+  const { data: costTree = [], isPending, isError } = useCostTree();
 
   const navigate = useNavigate();
 
@@ -24,13 +25,13 @@ const CostCenterTree = () => {
       parentKey: 'parentID',
       sortKey: 'ccCode',
     });
-  }, []);
+  }, [costTree]);
 
   // Unique cost center types
   const accountTypes = useMemo(() => {
     const types = new Set(costTree.map((c) => c.costCenterType || 'عام'));
     return Array.from(types).sort();
-  }, []);
+  }, [costTree]);
 
   // Filtered tree
   const filteredTree = useMemo(() => {
@@ -68,9 +69,12 @@ const CostCenterTree = () => {
             <p className="text-gray-600 text-sm">إدارة وتنظيم مراكز التكلفة</p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium flex items-center gap-2">
-              <Download size={16} />
-              تصدير
+            <button
+              onClick={() => navigate('/link')}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors flex items-center gap-2"
+            >
+              <Link size={16} />
+              ربط
             </button>
             <button
               onClick={() => navigate('new')}

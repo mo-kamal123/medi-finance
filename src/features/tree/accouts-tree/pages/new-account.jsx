@@ -1,9 +1,14 @@
 import AccountForm from '../components/AccountForm';
+import useAccountsTree from '../hooks/use-accounts-tree';
+import useCreateAccount from '../hooks/use-create-account';
 
-const NewAccount = ({ parentAccounts }) => {
-  const handleCreate = async (data) => {
-    console.log('Create:', data);
-    // API POST
+const NewAccount = () => {
+  const { data: accountsTree = [] } = useAccountsTree();
+  const { mutate, isLoading } = useCreateAccount();
+
+  const handleCreate = (formData) => {
+    console.log('Submitting form:', formData); // debug
+    mutate(formData); // pass form data directly
   };
 
   return (
@@ -22,9 +27,10 @@ const NewAccount = ({ parentAccounts }) => {
           </div>
 
           {/* Form */}
+
           <AccountForm
             mode="create"
-            parentAccounts={parentAccounts}
+            parentAccounts={accountsTree}
             onSubmit={handleCreate}
           />
         </div>

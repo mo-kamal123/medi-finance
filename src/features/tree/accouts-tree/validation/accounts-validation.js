@@ -1,7 +1,7 @@
-import z from 'zod';
+import z from "zod";
 
 export const accountSchema = z.object({
-  accountID: z.number(),
+  accountID: z.coerce.number().optional(),
 
   accountCode: z.string().min(1, 'رقم الحساب مطلوب'),
 
@@ -9,8 +9,13 @@ export const accountSchema = z.object({
 
   nameEn: z.string().min(2, 'الاسم الإنجليزي مطلوب'),
 
-  parentID: z.coerce.number(),
-
+  parentID: z
+  .union([z.coerce.number(), z.literal('')])
+  .optional()
+  .transform((val) => {
+    if (val === '' || val === 0) return null;
+    return val;
+  }),
   accountType: z.string().min(1, 'نوع الحساب مطلوب'),
 
   isActive: z.boolean(),

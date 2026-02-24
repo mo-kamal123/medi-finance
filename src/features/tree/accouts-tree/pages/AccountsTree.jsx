@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
-import { Download, PlusIcon, RefreshCw } from 'lucide-react';
-import { accountsTree } from '../../utils/constants';
+import { Download, Link, PlusIcon, RefreshCw } from 'lucide-react';
+// import { accountsTree } from '../../utils/constants';
 import TreeNode from '../../components/tree-node';
 import { buildTree } from '../../utils/buildTree';
 import { filterTree } from '../../utils/filterTree';
 import SearchFilter from '../../../../shared/components/search-filter';
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from '../../../../shared/ui/modal';
+import useAccountsTree from '../hooks/use-accounts-tree';
 
 const AccountsTree = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -14,7 +15,8 @@ const AccountsTree = () => {
   const [expandedAll, setExpandedAll] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
-
+  const {data: accountsTree = [] , isPending, isError} = useAccountsTree()
+  console.log(accountsTree.data);
   const navigate = useNavigate();
   // Build tree structure
   const treeData = useMemo(() => {
@@ -23,7 +25,7 @@ const AccountsTree = () => {
       parentKey: 'parentID',
       sortKey: 'accountCode',
     });
-  }, []);
+  }, [accountsTree]);
 
   const filteredTree = useMemo(() => {
     return filterTree(treeData, searchQuery, filterType);
@@ -33,7 +35,7 @@ const AccountsTree = () => {
   const accountTypes = useMemo(() => {
     const types = new Set(accountsTree.map((acc) => acc.accountType));
     return Array.from(types).sort();
-  }, []);
+  }, [accountsTree]);
 
   // Count statistics
   const stats = useMemo(() => {
@@ -45,7 +47,7 @@ const AccountsTree = () => {
     }, {});
 
     return { total, active, byType };
-  }, [accountTypes]);
+  }, [accountsTree, accountTypes]);
 
   const editAccount = (account) => {
     navigate(`${account.accountID}`);
@@ -81,9 +83,9 @@ const AccountsTree = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors flex items-center gap-2">
-              <Download size={16} />
-              تصدير
+            <button onClick={() => navigate('/link')}  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors flex items-center gap-2">
+              <Link  size={16} />
+              ربط
             </button>
             <button
               onClick={() => navigate('new')}
