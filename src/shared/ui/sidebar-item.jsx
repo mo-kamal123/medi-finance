@@ -45,7 +45,7 @@ const SidebarItem = ({ item, active, toggle, openSidebar, setSubActive }) => {
                     `flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors
                     ${
                       isActive
-                        ? 'bg-primary/20 text-primary font-semibold'
+                        ? 'bg-white/10  font-semibold'
                         : 'text-white/70 hover:bg-white/10'
                     }`
                   }
