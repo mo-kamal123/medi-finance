@@ -2,55 +2,32 @@ import { useState, useMemo } from 'react';
 import { Eye, Plus, Trash2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import Table from '../../../shared/ui/table';
-
-const dailyEntriesData = [
-  {
-    journalEntryID: 12,
-    journalEntryNumber: 'erwe',
-    entryDate: '2022-01-01T00:00:00',
-    journalType: '1',
-    descriptionAr: 'sdf',
-    descriptionEn: 'sdfs',
-    referenceNumber: '23423',
-    financialPeriodID: 1,
-    totalDebit: 32,
-    totalCredit: 232,
-    isPosted: true,
-    postedDate: '2002-01-01T00:00:00',
-    isReversed: true,
-    reversalEntryID: 1,
-    status: '1',
-    createdBy: 'msaad',
-    createdAt: '2026-02-17T11:31:37.96',
-    modifiedBy: null,
-    modifiedAt: null,
-    financialPeriodNameAr: null,
-    financialPeriodNameEn: null,
-    reversalEntryNumber: null,
-    details: [],
-  },
-];
+import { useInvoices } from '../hooks/invoices.queries';
 
 const DailyEntriesPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const navigate = useNavigate();
 
+  // Fetch journal entries via your hook
+  const { data: entries = [], isLoading } = useInvoices({
+    journalType: typeFilter !== 'all' ? typeFilter : undefined,
+  });
+
+  // Filter entries based on search input
   const filteredEntries = useMemo(() => {
-    return dailyEntriesData.filter((entry) => {
+    return entries.filter((entry) => {
       const matchesSearch =
         entry.descriptionAr?.includes(searchQuery) ||
         entry.journalEntryNumber?.includes(searchQuery);
-
       return matchesSearch;
     });
-  }, [searchQuery]);
+  }, [entries, searchQuery]);
 
   const onAddEntry = () => {
     navigate('/entries/new');
   };
 
-  // ✅ تعريف الأعمدة
   const columns = [
     {
       header: 'رقم القيد',
@@ -60,7 +37,8 @@ const DailyEntriesPage = () => {
       header: 'التاريخ',
       key: 'entryDate',
       type: 'custom',
-      render: (row) => new Date(row.entryDate).toLocaleDateString('ar-EG'),
+      render: (row) =>
+        new Date(row.entryDate).toLocaleDateString('ar-EG'),
     },
     {
       header: 'النوع',
@@ -68,7 +46,11 @@ const DailyEntriesPage = () => {
       type: 'custom',
       render: (row) => (
         <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
-          {row.journalType === '1' ? 'قيد يومية' : 'نوع آخر'}
+          {row.journalType === 'Sales'
+            ? 'مبيعات'
+            : row.journalType === 'Purchase'
+            ? 'مشتريات'
+            : row.journalType}
         </span>
       ),
     },
@@ -87,7 +69,7 @@ const DailyEntriesPage = () => {
       key: 'totalDebit',
       type: 'custom',
       render: (row) => (
-        <span className="text-green-600 font-medium">{row.totalDebit} ر.س</span>
+        <span className="text-green-600 font-medium">{row.totalDebit} ج.م</span>
       ),
     },
     {
@@ -95,12 +77,12 @@ const DailyEntriesPage = () => {
       key: 'totalCredit',
       type: 'custom',
       render: (row) => (
-        <span className="text-red-600 font-medium">{row.totalCredit} ر.س</span>
+        <span className="text-red-600 font-medium">{row.totalCredit} ج.م</span>
       ),
     },
     {
       header: 'الحالة',
-      key: 'isPosted',
+      key: 'status',
       type: 'custom',
       render: (row) => (
         <span
@@ -120,7 +102,6 @@ const DailyEntriesPage = () => {
       type: 'custom',
       render: (row) => (
         <div className="flex items-center gap-3">
-          {/* View */}
           <Link
             to={`/entries/${row.journalEntryID}`}
             className="text-blue-600 hover:text-blue-800 transition-colors"
@@ -128,8 +109,6 @@ const DailyEntriesPage = () => {
           >
             <Eye size={18} />
           </Link>
-
-          {/* Delete */}
           <button
             onClick={() => console.log('Delete', row.journalEntryID)}
             className="text-red-600 hover:text-red-800 transition-colors"
@@ -141,6 +120,10 @@ const DailyEntriesPage = () => {
       ),
     },
   ];
+
+  if (isLoading) {
+    return <div>جاري تحميل البيانات...</div>;
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -178,12 +161,13 @@ const DailyEntriesPage = () => {
           className="border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
         >
           <option value="all">الكل</option>
-          <option value="income">إيرادات</option>
-          <option value="expense">مصروفات</option>
+          <option value="Sales">مبيعات</option>
+          <option value="Purchase">مشتريات</option>
+          <option value="Invoice">فاتورة</option>
         </select>
       </div>
 
-      {/* ✅ Reusable Table */}
+      {/* Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <Table columns={columns} data={filteredEntries} />
       </div>
