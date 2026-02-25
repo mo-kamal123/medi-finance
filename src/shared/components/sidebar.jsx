@@ -29,7 +29,7 @@ const Sidebar = () => {
         { name: 'شجرة الحسابات', link: '/accounts-tree', icon: FolderTree },
         { name: 'شجرة التكاليف', link: '/cost-tree', icon: FolderTree },
         { name: 'القيود اليومية', link: '/entries', icon: FileText },
-        { name: 'التقارير', link: '/', icon: BarChart3 },
+        // { name: 'التقارير', link: '/', icon: BarChart3 },
       ],
     },
     {
@@ -37,7 +37,7 @@ const Sidebar = () => {
       icon: Users,
       sub: [
         { name: 'فواتير المورديين', link: '/invoices', icon: Users },
-        { name: 'الصلاحيات', link: '/', icon: Settings },
+        // { name: 'الصلاحيات', link: '/', icon: Settings },
       ],
     },
   ];
@@ -72,7 +72,7 @@ const Sidebar = () => {
           ))}
 
           {/* Settings */}
-          <li>
+          {/* <li>
             <NavLink
               to="/settings"
               className={({ isActive }) =>
@@ -83,7 +83,7 @@ const Sidebar = () => {
               <Settings size={18} />
               <span>الإعدادات</span>
             </NavLink>
-          </li>
+          </li> */}
         </ul>
       </div>
     </aside>
