@@ -1,8 +1,8 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import { getFromLocalStorage } from '../../shared/utils/local-storage-actions';
+import { useSelector } from 'react-redux';
 
 const AuthLayout = () => {
-  const loggedIn = getFromLocalStorage('token');
+  const loggedIn = useSelector((state) => state.auth.token);
   if (loggedIn) {
     return <Navigate to={'/'} replace />;
   }
