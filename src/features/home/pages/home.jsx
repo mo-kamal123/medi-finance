@@ -12,6 +12,7 @@ import StatisticsCard from '../components/statistics-card';
 import QuickActionsSection from '../components/quick-actions-section';
 import RecentActivitySection from '../components/recent-activity-section';
 import SystemOverviewSection from '../components/system-overview-section';
+import Pagination from '../../../shared/components/pagination';
 
 const Home = () => {
   // Sample data - replace with real data from your API

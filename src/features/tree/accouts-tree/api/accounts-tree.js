@@ -12,17 +12,17 @@ export const getAccountById = async (id) => {
 
 // Create account
 export const createAccount = async (formData) => {
-    const { data } = await axiosInstance.post('/accounts', formData, {
-      headers: { 'Content-Type': 'application/json' },
-    });
-    return data;
-  };
+  const { data } = await axiosInstance.post('/accounts', formData, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return data;
+};
 // Update
 export const updateAccount = async ({ body }) => {
-    const { data } = await axiosInstance.post(`/accounts`, body, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    return data;
-  };
+  const { data } = await axiosInstance.post(`/accounts`, body, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  return data;
+};

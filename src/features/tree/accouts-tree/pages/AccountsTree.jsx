@@ -15,7 +15,7 @@ const AccountsTree = () => {
   const [expandedAll, setExpandedAll] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
-  const {data: accountsTree = [] , isPending, isError} = useAccountsTree()
+  const { data: accountsTree = [], isPending, isError } = useAccountsTree();
   console.log(accountsTree.data);
   const navigate = useNavigate();
   // Build tree structure
@@ -83,8 +83,11 @@ const AccountsTree = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => navigate('/link')}  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors flex items-center gap-2">
-              <Link  size={16} />
+            <button
+              onClick={() => navigate('/link')}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors flex items-center gap-2"
+            >
+              <Link size={16} />
               ربط
             </button>
             <button
