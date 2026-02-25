@@ -10,9 +10,7 @@ const FormInput = ({
   return (
     <div className={`w-full ${containerClass}`}>
       {label && (
-        <label className="block mb-1 text-sm font-medium text-gray-700">
-          {label}
-        </label>
+        <label className="block mb-1 font-medium text-gray-700">{label}</label>
       )}
 
       <div className="relative">
@@ -26,23 +24,23 @@ const FormInput = ({
         <input
           {...props}
           className={`
-              w-full
-              ${Icon ? 'pr-10' : 'pr-4'}
-              pl-4
-              py-2
-              border
-              rounded-lg
-              focus:outline-none
-              focus:ring-2
-              transition
-              ${
-                error
-                  ? 'border-red-400 focus:ring-red-200'
-                  : 'border-gray-200 focus:ring-primary/20 focus:border-primary'
-              }
-              ${inputClass}
-              ${className}
-            `}
+            w-full
+            ${Icon ? 'pr-10' : 'pr-4'}
+            pl-4
+            py-2
+            border
+            rounded-lg
+            focus:outline-none
+            focus:ring-2
+            transition
+            ${
+              error
+                ? 'border-red-400 focus:ring-red-200'
+                : 'border-gray-200 focus:ring-primary/20 focus:border-primary'
+            }
+            ${inputClass}
+            ${className}
+          `}
         />
       </div>
 

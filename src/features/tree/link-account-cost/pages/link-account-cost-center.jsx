@@ -14,16 +14,26 @@ const LinkAccountCostCenter = () => {
   const { data: costTree = [] } = useCostTree();
   const { data: accountsTree = [] } = useAccountsTree();
 
-  const {mutate, isLoading} = useLinkAccountCostCenter();
+  const { mutate, isLoading } = useLinkAccountCostCenter();
 
   // Build trees
   const accountTreeData = useMemo(
-    () => buildTree(accountsTree, { idKey: 'accountID', parentKey: 'parentID', sortKey: 'accountCode' }),
+    () =>
+      buildTree(accountsTree, {
+        idKey: 'accountID',
+        parentKey: 'parentID',
+        sortKey: 'accountCode',
+      }),
     [accountsTree]
   );
 
   const costTreeData = useMemo(
-    () => buildTree(costTree, { idKey: 'costCenterID', parentKey: 'parentID', sortKey: 'ccCode' }),
+    () =>
+      buildTree(costTree, {
+        idKey: 'costCenterID',
+        parentKey: 'parentID',
+        sortKey: 'ccCode',
+      }),
     [costTree]
   );
 
@@ -31,7 +41,8 @@ const LinkAccountCostCenter = () => {
     let finalNodes = [];
     nodes.forEach((node) => {
       if (node.isFinal) finalNodes.push(node);
-      if (node.children?.length) finalNodes = finalNodes.concat(getFinalNodes(node.children));
+      if (node.children?.length)
+        finalNodes = finalNodes.concat(getFinalNodes(node.children));
     });
     return finalNodes;
   };
@@ -77,34 +88,54 @@ const LinkAccountCostCenter = () => {
           {/* Accounts */}
           <div className="bg-gray-50 rounded-xl p-4 shadow-inner">
             <h2 className="text-lg font-semibold mb-2">اختيار الحساب</h2>
-            <SearchFilter searchQuery={searchAccount} onSearchChange={setSearchAccount} searchPlaceholder="ابحث عن حساب..." />
+            <SearchFilter
+              searchQuery={searchAccount}
+              onSearchChange={setSearchAccount}
+              searchPlaceholder="ابحث عن حساب..."
+            />
             <div className="h-72 overflow-y-auto mt-2 border border-gray-300 rounded-lg p-2 bg-white">
-              {filteredAccounts.length > 0 ? filteredAccounts.map((acc) => (
-                <div
-                  key={acc.accountID}
-                  onClick={() => setSelectedAccount(acc)}
-                  className={`p-2 rounded-md cursor-pointer hover:bg-primary/10 ${selectedAccount?.accountID === acc.accountID ? 'bg-primary/20' : ''}`}
-                >
-                  {acc.nameAr} - {acc.accountCode}
-                </div>
-              )) : <p className="text-gray-500 text-center py-4">لا توجد حسابات نهائية</p>}
+              {filteredAccounts.length > 0 ? (
+                filteredAccounts.map((acc) => (
+                  <div
+                    key={acc.accountID}
+                    onClick={() => setSelectedAccount(acc)}
+                    className={`p-2 rounded-md cursor-pointer hover:bg-primary/10 ${selectedAccount?.accountID === acc.accountID ? 'bg-primary/20' : ''}`}
+                  >
+                    {acc.nameAr} - {acc.accountCode}
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-4">
+                  لا توجد حسابات نهائية
+                </p>
+              )}
             </div>
           </div>
 
           {/* Costs */}
           <div className="bg-gray-50 rounded-xl p-4 shadow-inner">
             <h2 className="text-lg font-semibold mb-2">اختيار مركز التكلفة</h2>
-            <SearchFilter searchQuery={searchCost} onSearchChange={setSearchCost} searchPlaceholder="ابحث عن مركز..." />
+            <SearchFilter
+              searchQuery={searchCost}
+              onSearchChange={setSearchCost}
+              searchPlaceholder="ابحث عن مركز..."
+            />
             <div className="h-72 overflow-y-auto mt-2 border border-gray-300 rounded-lg p-2 bg-white">
-              {filteredCosts.length > 0 ? filteredCosts.map((c) => (
-                <div
-                  key={c.costCenterID}
-                  onClick={() => setSelectedCost(c)}
-                  className={`p-2 rounded-md cursor-pointer hover:bg-primary/10 ${selectedCost?.costCenterID === c.costCenterID ? 'bg-primary/20' : ''}`}
-                >
-                  {c.nameAr} - {c.ccCode}
-                </div>
-              )) : <p className="text-gray-500 text-center py-4">لا توجد مراكز نهائية</p>}
+              {filteredCosts.length > 0 ? (
+                filteredCosts.map((c) => (
+                  <div
+                    key={c.costCenterID}
+                    onClick={() => setSelectedCost(c)}
+                    className={`p-2 rounded-md cursor-pointer hover:bg-primary/10 ${selectedCost?.costCenterID === c.costCenterID ? 'bg-primary/20' : ''}`}
+                  >
+                    {c.nameAr} - {c.ccCode}
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-4">
+                  لا توجد مراكز نهائية
+                </p>
+              )}
             </div>
           </div>
         </div>
