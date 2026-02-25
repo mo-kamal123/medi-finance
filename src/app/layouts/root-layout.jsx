@@ -1,13 +1,13 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import Navbar from '../../shared/components/navbar';
 import Sidebar from '../../shared/components/sidebar';
-import { getFromLocalStorage } from '../../shared/utils/local-storage-actions';
+import { useSelector } from 'react-redux';
 
 const RootLayout = () => {
-  const loggedIn = getFromLocalStorage('token');
+  const loggedIn = useSelector((state) => state.auth.token);
 
   if (!loggedIn) {
-    return <Navigate to="/auth" />;
+    return <Navigate to="/auth" replace/>;
   }
 
   return (
