@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { NavLink } from 'react-router-dom';
 import {
   Calculator,
-  Settings,
+  Users,
   FolderTree,
   FileText,
-  BarChart3,
-  Users,
+  FileBarChart,
+  BookOpen,
+  Scale,
 } from 'lucide-react';
 import SidebarItem from '../ui/sidebar-item';
 import { useSelector } from 'react-redux';
@@ -34,16 +34,14 @@ const Sidebar = () => {
     {
       name: 'الفواتير',
       icon: Users,
-      sub: [
-        { name: 'فواتير المورديين', link: '/invoices', icon: Users },
-        // { name: 'الصلاحيات', link: '/', icon: Settings },
-      ],
+      sub: [{ name: 'فواتير المورديين', link: '/invoices', icon: Users }],
     },
     {
       name: 'التقارير',
-      icon: BarChart3,
+      icon: FileBarChart,
       sub: [
-        { name: 'حساب الاستاذ', link: '/general-ledger', icon: Settings },
+        { name: 'حساب الأستاذ', link: '/general-ledger', icon: BookOpen },
+        { name: 'ميزان المراجعة', link: '/trial-balance', icon: Scale },
       ],
     },
   ];
