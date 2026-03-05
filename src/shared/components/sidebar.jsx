@@ -29,7 +29,6 @@ const Sidebar = () => {
         { name: 'شجرة الحسابات', link: '/accounts-tree', icon: FolderTree },
         { name: 'شجرة التكاليف', link: '/cost-tree', icon: FolderTree },
         { name: 'القيود اليومية', link: '/entries', icon: FileText },
-        // { name: 'التقارير', link: '/', icon: BarChart3 },
       ],
     },
     {
@@ -38,6 +37,13 @@ const Sidebar = () => {
       sub: [
         { name: 'فواتير المورديين', link: '/invoices', icon: Users },
         // { name: 'الصلاحيات', link: '/', icon: Settings },
+      ],
+    },
+    {
+      name: 'التقارير',
+      icon: BarChart3,
+      sub: [
+        { name: 'حساب الاستاذ', link: '/general-ledger', icon: Settings },
       ],
     },
   ];

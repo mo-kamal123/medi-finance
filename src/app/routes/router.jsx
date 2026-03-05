@@ -8,6 +8,7 @@ import costCenterRoutes from '../../features/tree/cost-tree/routes/routes';
 import InvoicesRoutes from '../../features/invoices/routes/routes';
 import { entriesRoutes } from '../../features/entries/routes/routes';
 import { linkAccountCostRoutes } from '../../features/tree/link-account-cost/routes/routes';
+import { generalLedgerRoutes } from '../../features/general-ledger/routes/routes';
 
 export const router = createBrowserRouter([
   { path: '/auth', element: <AuthLayout />, children: [...authRoutes] },
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
       ...linkAccountCostRoutes,
       ...InvoicesRoutes,
       ...entriesRoutes,
+      ...generalLedgerRoutes
     ],
   },
 ]);
