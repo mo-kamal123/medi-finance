@@ -21,7 +21,7 @@ const SidebarItem = ({ item, active, toggle, openSidebar, setSubActive }) => {
           {openSidebar && <span>{item.name}</span>}
         </div>
 
-        {openSidebar && (
+        {openSidebar && item.sub?.length > 0 &&   (
           <ChevronLeft
             size={16}
             className={`transition-transform ${
