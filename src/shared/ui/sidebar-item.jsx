@@ -8,7 +8,8 @@ const SidebarItem = ({ item, active, toggle, openSidebar, setSubActive }) => {
   return (
     <li>
       {/* Parent */}
-      <button
+      <NavLink
+      to={item.link || '#'}
         onClick={() => toggle(item.name)}
         className={`flex items-center w-full rounded-xl transition-colors
         ${openSidebar ? 'justify-between px-3 py-2.5' : 'justify-center p-3'}
@@ -21,7 +22,7 @@ const SidebarItem = ({ item, active, toggle, openSidebar, setSubActive }) => {
           {openSidebar && <span>{item.name}</span>}
         </div>
 
-        {openSidebar && (
+        {openSidebar && item.sub?.length > 0 &&   (
           <ChevronLeft
             size={16}
             className={`transition-transform ${
@@ -29,12 +30,12 @@ const SidebarItem = ({ item, active, toggle, openSidebar, setSubActive }) => {
             }`}
           />
         )}
-      </button>
+      </NavLink>
 
       {/* Sub items */}
       {openSidebar && isOpen && (
         <ul className="mt-1 space-y-1 pr-6 border-r border-white/10">
-          {item.sub.map((sub) => {
+          {item?.sub?.map((sub) => {
             const SubIcon = sub.icon;
             return (
               <li key={sub.name}>

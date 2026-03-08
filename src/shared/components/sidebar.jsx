@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { NavLink } from 'react-router-dom';
 import {
   Calculator,
-  Settings,
+  Users,
   FolderTree,
   FileText,
-  BarChart3,
-  Users,
+  FileBarChart,
+  BookOpen,
+  Scale,
 } from 'lucide-react';
 import SidebarItem from '../ui/sidebar-item';
 import { useSelector } from 'react-redux';
@@ -29,16 +29,25 @@ const Sidebar = () => {
         { name: 'شجرة الحسابات', link: '/accounts-tree', icon: FolderTree },
         { name: 'شجرة التكاليف', link: '/cost-tree', icon: FolderTree },
         { name: 'القيود اليومية', link: '/entries', icon: FileText },
-        // { name: 'التقارير', link: '/', icon: BarChart3 },
       ],
     },
     {
       name: 'الفواتير',
       icon: Users,
+      sub: [{ name: 'فواتير المورديين', link: '/invoices', icon: Users }],
+    },
+    {
+      name: 'التقارير',
+      icon: FileBarChart,
       sub: [
-        { name: 'فواتير المورديين', link: '/invoices', icon: Users },
-        // { name: 'الصلاحيات', link: '/', icon: Settings },
+        { name: 'حساب الأستاذ', link: '/general-ledger', icon: BookOpen },
+        { name: 'ميزان المراجعة', link: '/trial-balance', icon: Scale },
       ],
+    },
+    {
+      name: 'العملاء',
+      icon: FileBarChart,
+      link: '/customers',
     },
   ];
 

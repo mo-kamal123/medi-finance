@@ -1,3 +1,5 @@
+import { Trash2 } from "lucide-react";
+
 const Table = ({ columns = [], data = [], onChange, onDelete, footer }) => {
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm bg-white">
@@ -38,7 +40,7 @@ const Table = ({ columns = [], data = [], onChange, onDelete, footer }) => {
                       onClick={() => onDelete(rowIndex)}
                       className="text-red-500 hover:text-red-700 transition-colors"
                     >
-                      حذف
+                      <Trash2 size={18} />
                     </button>
                   </td>
                 )}
