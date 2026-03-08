@@ -10,6 +10,7 @@ import { entriesRoutes } from '../../features/entries/routes/routes';
 import { linkAccountCostRoutes } from '../../features/tree/link-account-cost/routes/routes';
 import { generalLedgerRoutes } from '../../features/general-ledger/routes/routes';
 import { trialBalanceRoutes } from '../../features/trial-balance/routes/routes';
+import { customersRoutes } from '../../features/customers/routes/routes';
 
 export const router = createBrowserRouter([
   { path: '/auth', element: <AuthLayout />, children: [...authRoutes] },
@@ -25,6 +26,7 @@ export const router = createBrowserRouter([
       ...entriesRoutes,
       ...generalLedgerRoutes,
       ...trialBalanceRoutes,
+      ...customersRoutes
     ],
   },
 ]);

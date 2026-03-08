@@ -44,6 +44,11 @@ const Sidebar = () => {
         { name: 'ميزان المراجعة', link: '/trial-balance', icon: Scale },
       ],
     },
+    {
+      name: 'العملاء',
+      icon: FileBarChart,
+      link: '/customers',
+    },
   ];
 
   return (
