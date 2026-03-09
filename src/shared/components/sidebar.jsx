@@ -49,6 +49,11 @@ const Sidebar = () => {
       icon: FileBarChart,
       link: '/customers',
     },
+    {
+      name: 'المورديين',
+      icon: FileBarChart,
+      link: '/suppliers',
+    },
   ];
 
   return (
