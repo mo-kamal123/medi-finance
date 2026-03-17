@@ -54,6 +54,11 @@ const Sidebar = () => {
       icon: FileBarChart,
       link: '/suppliers',
     },
+    {
+      name: 'الأوراق التجارية',
+      icon: FileBarChart,
+      link: '/commercial-papers',
+    }
   ];
 
   return (

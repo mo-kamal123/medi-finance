@@ -12,6 +12,7 @@ import { generalLedgerRoutes } from '../../features/general-ledger/routes/routes
 import { trialBalanceRoutes } from '../../features/trial-balance/routes/routes';
 import { customersRoutes } from '../../features/customers/routes/routes';
 import { suppliersRoutes } from '../../features/suppliers/routes/routes';
+import CommercialPapersRoutes from '../../features/commercial-papers/routes/routes';
 
 export const router = createBrowserRouter([
   { path: '/auth', element: <AuthLayout />, children: [...authRoutes] },
@@ -28,7 +29,8 @@ export const router = createBrowserRouter([
       ...generalLedgerRoutes,
       ...trialBalanceRoutes,
       ...customersRoutes,
-      ...suppliersRoutes
+      ...suppliersRoutes,
+      ...CommercialPapersRoutes
     ],
   },
 ]);
