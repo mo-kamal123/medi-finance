@@ -53,3 +53,10 @@ export const getFinancialPeriods = async () => {
   const response = await axiosInstance.get('/financial-periods');
   return response.data;
 };
+
+// Get financial
+export const getaccountsbytype = async () => {
+  const response = await axiosInstance.get('/accounts/by-type?accountTypes=Expense%2CRevenue&isActive=true&pageNumber=1&pageSize=100');
+  return response.data;
+};
+
