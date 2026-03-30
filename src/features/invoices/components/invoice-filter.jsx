@@ -53,7 +53,7 @@ const InvoiceFilters = ({
         <option value="">كل الأنواع</option>
         {invoiceTypes?.map((type) => (
           <option key={type.id} value={type.id}>
-            {type.name}
+            {type.nameAr}
           </option>
         ))}
       </select>
@@ -67,7 +67,7 @@ const InvoiceFilters = ({
         <option value="">كل العملاء</option>
         {customers?.map((c) => (
           <option key={c.id} value={c.id}>
-            {c.name}
+            {c.customerNameAr}
           </option>
         ))}
       </select>
@@ -81,7 +81,7 @@ const InvoiceFilters = ({
         <option value="">كل الموردين</option>
         {suppliers?.map((s) => (
           <option key={s.id} value={s.id}>
-            {s.name}
+            {s.supplierNameAr}
           </option>
         ))}
       </select>

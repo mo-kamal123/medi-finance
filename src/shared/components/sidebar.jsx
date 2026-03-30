@@ -34,7 +34,10 @@ const Sidebar = () => {
     {
       name: 'الفواتير',
       icon: Users,
-      sub: [{ name: 'فواتير المورديين', link: '/invoices', icon: Users }],
+      sub: [
+        { name: 'فواتير العملاء', link: '/customers-invoices', icon: Users },
+        { name: 'فواتير المورديين', link: '/suppliers-invoices', icon: Users },
+      ],
     },
     {
       name: 'التقارير',
