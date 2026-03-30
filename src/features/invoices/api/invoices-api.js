@@ -60,4 +60,3 @@ export const getaccountsbytype = async () => {
   return response.data;
 };
 
-// ttps://localhost:7081/api/accounts/by-type?accountTypes=Expense%2CRevenue&isActive=true&pageNumber=1&pageSize=100
