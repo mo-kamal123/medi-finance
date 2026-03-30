@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 
 import InvoiceFilters from '../components/invoice-filter';
@@ -15,10 +15,6 @@ import {
 import Pagination from '../../../shared/components/pagination';
 const InvoicesPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const newInvoiceType =
-    location.pathname === '/customers-invoices' ? 'customer' : 'supplier';
 
   /* ===========================
      Filters + Pagination State
@@ -170,7 +166,7 @@ const InvoicesPage = () => {
      Add Invoice
   =========================== */
   const onAddInvoice = () => {
-    navigate(`/invoices/new?type=${newInvoiceType}`);
+    navigate('/invoices/new?type=customer');
   };
 
   return (
