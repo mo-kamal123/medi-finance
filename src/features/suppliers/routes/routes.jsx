@@ -1,18 +1,25 @@
-import SuppliersPage from "../pages/suppliers-page";
-import SupplierDetails from "../pages/supplier-details";
-import SupplierCreate from "../pages/supplier-create";
+﻿import { lazyPage } from '../../../shared/lib/lazy-page';
 
 export const suppliersRoutes = [
   {
-    path: "/suppliers",
-    element: <SuppliersPage />,
+    path: '/suppliers',
+    element: lazyPage(
+      () => import('../pages/suppliers-page'),
+      'جاري تحميل الموردين...'
+    ),
   },
   {
-    path: "/suppliers/new",
-    element: <SupplierCreate />,
+    path: '/suppliers/new',
+    element: lazyPage(
+      () => import('../pages/supplier-create'),
+      'جاري تحميل نموذج المورد...'
+    ),
   },
   {
-    path: "/suppliers/:id",
-    element: <SupplierDetails />,
+    path: '/suppliers/:id',
+    element: lazyPage(
+      () => import('../pages/supplier-details'),
+      'جاري تحميل بيانات المورد...'
+    ),
   },
 ];

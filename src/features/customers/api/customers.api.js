@@ -1,7 +1,7 @@
-import { axiosInstance } from "../../../app/api/axiosInstance";
+import { axiosInstance } from '../../../app/api/axiosInstance';
 
 export const getCustomers = async () => {
-  const { data } = await axiosInstance.get("/customers");
+  const { data } = await axiosInstance.get('/customers');
   return data;
 };
 
@@ -11,7 +11,7 @@ export const getCustomerById = async (id) => {
 };
 
 export const createCustomer = async (customer) => {
-  const { data } = await axiosInstance.post("/customers", customer);
+  const { data } = await axiosInstance.post('/customers', customer);
   return data;
 };
 

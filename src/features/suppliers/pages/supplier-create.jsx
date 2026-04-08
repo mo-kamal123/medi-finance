@@ -1,5 +1,5 @@
-import SupplierForm from "../components/supplier-form";
-import { useCreateSupplier } from "../hooks/suppliers.queries";
+import SupplierForm from '../components/supplier-form';
+import { useCreateSupplier } from '../hooks/suppliers.queries';
 
 const SupplierCreate = () => {
   const createSupplier = useCreateSupplier();
@@ -8,12 +8,7 @@ const SupplierCreate = () => {
     createSupplier.mutate(data);
   };
 
-  return (
-    <SupplierForm
-      mode="create"
-      onSubmit={handleSubmit}
-    />
-  );
+  return <SupplierForm mode="create" onSubmit={handleSubmit} />;
 };
 
 export default SupplierCreate;

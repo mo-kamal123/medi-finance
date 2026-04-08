@@ -1,8 +1,11 @@
-import GeneralLedgerPage from "../pages/general-ledger-page";
+﻿import { lazyPage } from '../../../shared/lib/lazy-page';
 
 export const generalLedgerRoutes = [
   {
-    path: "/general-ledger",
-    element: <GeneralLedgerPage />,
+    path: '/general-ledger',
+    element: lazyPage(
+      () => import('../pages/general-ledger-page'),
+      'جاري تحميل الأستاذ العام...'
+    ),
   },
 ];

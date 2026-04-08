@@ -1,77 +1,58 @@
-import { useState, useMemo } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 
 import InvoiceFilters from '../components/invoice-filter';
+import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
+import { paginateItems } from '../../../shared/utils/list-utils';
 import { getStatusStyle } from '../utils/status-style';
-
 import {
+  useCustomers,
   useInvoices,
   useInvoiceTypes,
-  useCustomers,
   useSuppliers,
 } from '../hooks/invoices.queries';
-import Pagination from '../../../shared/components/pagination';
+
 const InvoicesPage = () => {
   const navigate = useNavigate();
 
-  /* ===========================
-     Filters + Pagination State
-  =========================== */
   const [filters, setFilters] = useState({
     pageNumber: 1,
     pageSize: 10,
   });
 
-  /* ===========================
-     API Calls
-  =========================== */
-  const { data, isLoading } = useInvoices(filters);
+  const { data = [], isLoading } = useInvoices(filters);
   const { data: invoiceTypes } = useInvoiceTypes();
   const { data: customers } = useCustomers();
   const { data: suppliers } = useSuppliers();
 
-  const invoices = data;
-  // const totalCount = data?.totalCount || 0;
+  const pagination = useMemo(
+    () =>
+      paginateItems(
+        data || [],
+        filters.pageNumber || 1,
+        filters.pageSize || 10
+      ),
+    [data, filters.pageNumber, filters.pageSize]
+  );
 
-  /* ===========================
-     Pagination Handlers
-  =========================== */
-  const handlePageChange = (page) => {
-    setFilters((prev) => ({
-      ...prev,
-      pageNumber: page,
-    }));
-  };
-
-  const handlePageSizeChange = (size) => {
-    setFilters((prev) => ({
-      ...prev,
-      pageSize: size,
-      pageNumber: 1,
-    }));
-  };
-
-  /* ===========================
-     Columns
-  =========================== */
   const columns = useMemo(
     () => [
       {
-        header: 'رقم الفاتورة',
+        header: 'Invoice Number',
         key: 'invoiceNumber',
       },
       {
-        header: 'الشركة / العميل',
+        header: 'Customer / Company',
         key: 'customerNameAr',
       },
       {
-        header: 'نوع الفاتورة',
+        header: 'Invoice Type',
         key: 'invoiceTypeNameAr',
       },
       {
-        header: 'تاريخ الإصدار',
+        header: 'Invoice Date',
         key: 'invoiceDate',
         type: 'custom',
         render: (row) =>
@@ -79,21 +60,14 @@ const InvoicesPage = () => {
             ? new Date(row.invoiceDate).toLocaleDateString()
             : '-',
       },
-      // {
-      //   header: 'تاريخ الاستحقاق',
-      //   key: 'dueDate',
-      //   type: 'custom',
-      //   render: (row) =>
-      //     row.dueDate ? new Date(row.dueDate).toLocaleDateString() : '-',
-      // },
       {
-        header: 'الإجمالي',
+        header: 'Total',
         key: 'totalAmount',
         type: 'custom',
         render: (row) => formatCurrency(row.totalAmount),
       },
       {
-        header: 'الخصم',
+        header: 'Discount',
         key: 'discount',
         type: 'custom',
         render: (row) => (
@@ -103,7 +77,7 @@ const InvoicesPage = () => {
         ),
       },
       {
-        header: 'الصافي',
+        header: 'Net',
         key: 'netAmount',
         type: 'custom',
         render: (row) => (
@@ -113,7 +87,7 @@ const InvoicesPage = () => {
         ),
       },
       {
-        header: 'الحالة',
+        header: 'Status',
         key: 'status',
         type: 'custom',
         render: (row) => (
@@ -127,7 +101,7 @@ const InvoicesPage = () => {
         ),
       },
       {
-        header: 'الإجراءات',
+        header: 'Actions',
         key: 'actions',
         type: 'custom',
         render: (row) => (
@@ -135,7 +109,7 @@ const InvoicesPage = () => {
             <button
               onClick={() => navigate(`/invoices/${row.invoiceID}`)}
               className="text-blue-600 hover:text-blue-800"
-              title="عرض"
+              title="View"
             >
               <Eye size={18} />
             </button>
@@ -143,7 +117,7 @@ const InvoicesPage = () => {
             <button
               onClick={() => navigate(`/invoices/edit/${row.invoiceID}`)}
               className="text-green-600 hover:text-green-800"
-              title="تعديل"
+              title="Edit"
             >
               <Pencil size={18} />
             </button>
@@ -151,7 +125,7 @@ const InvoicesPage = () => {
             <button
               onClick={() => console.log('delete invoice', row.invoiceID)}
               className="text-red-600 hover:text-red-800"
-              title="حذف"
+              title="Delete"
             >
               <Trash2 size={18} />
             </button>
@@ -162,20 +136,18 @@ const InvoicesPage = () => {
     [navigate]
   );
 
-  /* ===========================
-     Add Invoice
-  =========================== */
   const onAddInvoice = () => {
     navigate('/invoices/new?type=customer');
   };
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
       <div className="flex justify-between items-center bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-2xl font-bold">لوحة الفواتير</h1>
-          <p className="text-sm text-gray-600">إدارة جميع الفواتير بسهولة</p>
+          <h1 className="text-2xl font-bold">Customer Invoices</h1>
+          <p className="text-sm text-gray-600">
+            Manage customer invoices from one place.
+          </p>
         </div>
 
         <button
@@ -183,11 +155,10 @@ const InvoicesPage = () => {
           className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg"
         >
           <Plus size={16} />
-          إضافة فاتورة
+          Add Invoice
         </button>
       </div>
 
-      {/* Filters */}
       <InvoiceFilters
         filters={filters}
         setFilters={setFilters}
@@ -196,24 +167,23 @@ const InvoicesPage = () => {
         suppliers={suppliers}
       />
 
-      {/* Table */}
-      <Table columns={columns} data={invoices} loading={isLoading} />
+      <Table columns={columns} data={pagination.items} loading={isLoading} />
 
-      {/* Pagination */}
-      {/* <Pagination
-        currentPage={filters.pageNumber}
-        pageSize={filters.pageSize}
-        totalCount={data.totalCount} // <- fix here
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
-      /> */}
+      <Pagination
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        pageSize={pagination.pageSize}
+        onPageChange={(page) =>
+          setFilters((prev) => ({ ...prev, pageNumber: page }))
+        }
+        onPageSizeChange={(value) =>
+          setFilters((prev) => ({ ...prev, pageSize: value, pageNumber: 1 }))
+        }
+      />
     </div>
   );
 };
 
-/* ===========================
-   Helpers
-=========================== */
 const formatCurrency = (value = 0) =>
   new Intl.NumberFormat('ar-EG', {
     style: 'currency',

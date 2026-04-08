@@ -1,32 +1,40 @@
-import { useState, useMemo } from 'react';
-import { Eye, Plus, Trash2 } from 'lucide-react';
+﻿import { useMemo, useState } from 'react';
+import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import FormInput from '../../../shared/ui/input';
+import PageLoader from '../../../shared/ui/page-loader';
+import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
-import { useInvoices } from '../hooks/invoices.queries';
+import { matchesSearch, paginateItems } from '../../../shared/utils/list-utils';
+import { useJournalEntries } from '../hooks/entries.queries';
 
 const DailyEntriesPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const navigate = useNavigate();
 
-  // Fetch journal entries via your hook
-  const { data: entries = [], isLoading } = useInvoices({
+  const { data: entries = [], isLoading } = useJournalEntries({
     journalType: typeFilter !== 'all' ? typeFilter : undefined,
+    pageNumber: 1,
+    pageSize: 100,
   });
 
-  // Filter entries based on search input
   const filteredEntries = useMemo(() => {
-    return entries.filter((entry) => {
-      const matchesSearch =
-        entry.descriptionAr?.includes(searchQuery) ||
-        entry.journalEntryNumber?.includes(searchQuery);
-      return matchesSearch;
-    });
+    return entries.filter((entry) =>
+      matchesSearch(
+        entry,
+        ['descriptionAr', 'journalEntryNumber', 'referenceNumber'],
+        searchQuery
+      )
+    );
   }, [entries, searchQuery]);
 
-  const onAddEntry = () => {
-    navigate('/entries/new');
-  };
+  const pagination = useMemo(
+    () => paginateItems(filteredEntries, pageNumber, pageSize),
+    [filteredEntries, pageNumber, pageSize]
+  );
 
   const columns = [
     {
@@ -38,21 +46,13 @@ const DailyEntriesPage = () => {
       key: 'entryDate',
       type: 'custom',
       render: (row) =>
-        new Date(row.entryDate).toLocaleDateString('ar-EG'),
+        row.entryDate
+          ? new Date(row.entryDate).toLocaleDateString('ar-EG')
+          : '-',
     },
     {
       header: 'النوع',
       key: 'journalType',
-      type: 'custom',
-      render: (row) => (
-        <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
-          {row.journalType === 'Sales'
-            ? 'مبيعات'
-            : row.journalType === 'Purchase'
-            ? 'مشتريات'
-            : row.journalType}
-        </span>
-      ),
     },
     {
       header: 'الوصف',
@@ -62,14 +62,15 @@ const DailyEntriesPage = () => {
       header: 'الفترة المالية',
       key: 'financialPeriodNameAr',
       type: 'custom',
-      render: (row) => row.financialPeriodNameAr || '-',
+      render: (row) =>
+        row.financialPeriodNameAr || row.financialPeriodNameEn || '-',
     },
     {
       header: 'مدين',
       key: 'totalDebit',
       type: 'custom',
       render: (row) => (
-        <span className="text-green-600 font-medium">{row.totalDebit} ج.م</span>
+        <span className="font-medium text-green-600">{row.totalDebit} ج.م</span>
       ),
     },
     {
@@ -77,7 +78,7 @@ const DailyEntriesPage = () => {
       key: 'totalCredit',
       type: 'custom',
       render: (row) => (
-        <span className="text-red-600 font-medium">{row.totalCredit} ج.م</span>
+        <span className="font-medium text-red-600">{row.totalCredit} ج.م</span>
       ),
     },
     {
@@ -86,13 +87,13 @@ const DailyEntriesPage = () => {
       type: 'custom',
       render: (row) => (
         <span
-          className={`px-2 py-1 rounded-full text-xs ${
-            row.isPosted
+          className={`rounded-full px-2 py-1 text-xs ${
+            row.status === 'Posted'
               ? 'bg-green-100 text-green-700'
               : 'bg-yellow-100 text-yellow-700'
           }`}
         >
-          {row.isPosted ? 'مرحّل' : 'غير مرحّل'}
+          {row.status || '-'}
         </span>
       ),
     },
@@ -104,14 +105,21 @@ const DailyEntriesPage = () => {
         <div className="flex items-center gap-3">
           <Link
             to={`/entries/${row.journalEntryID}`}
-            className="text-blue-600 hover:text-blue-800 transition-colors"
+            className="text-blue-600 transition-colors hover:text-blue-800"
             title="عرض"
           >
             <Eye size={18} />
           </Link>
           <button
+            onClick={() => navigate(`/entries/${row.journalEntryID}`)}
+            className="text-green-600 transition-colors hover:text-green-800"
+            title="تعديل"
+          >
+            <Pencil size={18} />
+          </button>
+          <button
             onClick={() => console.log('Delete', row.journalEntryID)}
-            className="text-red-600 hover:text-red-800 transition-colors"
+            className="text-red-600 transition-colors hover:text-red-800"
             title="حذف"
           >
             <Trash2 size={18} />
@@ -122,55 +130,69 @@ const DailyEntriesPage = () => {
   ];
 
   if (isLoading) {
-    return <div>جاري تحميل البيانات...</div>;
+    return <PageLoader label="جاري تحميل القيود اليومية..." />;
   }
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">القيود اليومية</h1>
-          <p className="text-gray-600 text-sm">
-            إدارة جميع المصروفات والإيرادات اليومية بسهولة.
+          <p className="text-sm text-gray-600">
+            إدارة جميع القيود اليومية بسهولة.
           </p>
         </div>
 
         <button
-          onClick={onAddEntry}
-          className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          onClick={() => navigate('/entries/new')}
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-medium text-white transition-colors hover:bg-primary/90"
         >
           <Plus size={16} />
-          إضافة إدخال جديد
+          إضافة قيد جديد
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4">
-        <input
-          type="text"
-          placeholder="بحث..."
+      <div className="grid grid-cols-1 gap-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:grid-cols-2">
+        <FormInput
+          label="بحث"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
+          onChange={(event) => {
+            setSearchQuery(event.target.value);
+            setPageNumber(1);
+          }}
+          placeholder="ابحث برقم القيد أو الوصف أو المرجع"
         />
 
-        <select
+        <FormInput
+          as="select"
+          label="النوع"
           value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
+          onChange={(event) => {
+            setTypeFilter(event.target.value);
+            setPageNumber(1);
+          }}
         >
           <option value="all">الكل</option>
-          <option value="Sales">مبيعات</option>
-          <option value="Purchase">مشتريات</option>
-          <option value="Invoice">فاتورة</option>
-        </select>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+        </FormInput>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <Table columns={columns} data={filteredEntries} />
+      <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+        <Table columns={columns} data={pagination.items} loading={isLoading} />
       </div>
+
+      <Pagination
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        pageSize={pagination.pageSize}
+        onPageChange={setPageNumber}
+        onPageSizeChange={(value) => {
+          setPageSize(value);
+          setPageNumber(1);
+        }}
+      />
     </div>
   );
 };

@@ -1,13 +1,19 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import {
   Calculator,
-  Users,
   FolderTree,
   FileText,
-  FileBarChart,
+  Receipt,
+  Users,
+  Landmark,
+  BarChart3,
   BookOpen,
   Scale,
+  FileCheck,
+  FileClock,
+  CreditCard,
 } from 'lucide-react';
+
 import SidebarItem from '../ui/sidebar-item';
 import { useSelector } from 'react-redux';
 import logo from '../../app/assets/logo.png';
@@ -33,15 +39,40 @@ const Sidebar = () => {
     },
     {
       name: 'الفواتير',
-      icon: Users,
+      icon: Receipt, // ✅ better than Users
       sub: [
-        { name: 'فواتير العملاء', link: '/customers-invoices', icon: Users },
-        { name: 'فواتير المورديين', link: '/suppliers-invoices', icon: Users },
+        {
+          name: 'فواتير العملاء',
+          link: '/customers-invoices',
+          icon: FileCheck,
+        },
+        {
+          name: 'فواتير المورديين',
+          link: '/suppliers-invoices',
+          icon: FileClock,
+        },
+      ],
+    },
+    {
+      name: 'الأوراق التجارية',
+      icon: CreditCard, // ✅ represents payments/financial docs
+      sub: [
+        {
+          name: 'أوراق القبض',
+          link: '/commercial-papers/receivable',
+          icon: FileCheck,
+        },
+        {
+          name: 'أوراق الدفع',
+          link: '/commercial-papers/payable',
+          icon: FileText,
+        },
+        { name: 'الشيكات', link: '/cheques', icon: CreditCard },
       ],
     },
     {
       name: 'التقارير',
-      icon: FileBarChart,
+      icon: BarChart3, // ✅ better than FileBarChart
       sub: [
         { name: 'حساب الأستاذ', link: '/general-ledger', icon: BookOpen },
         { name: 'ميزان المراجعة', link: '/trial-balance', icon: Scale },
@@ -49,34 +80,32 @@ const Sidebar = () => {
     },
     {
       name: 'العملاء',
-      icon: FileBarChart,
+      icon: Users, // ✅ correct
       link: '/customers',
     },
     {
       name: 'المورديين',
-      icon: FileBarChart,
+      icon: Users, // could also use Truck if you want differentiation
       link: '/suppliers',
     },
     {
-      name: 'الأوراق التجارية',
-      icon: FileBarChart,
-      link: '/commercial-papers',
-    }
+      name: 'البنوك',
+      icon: Landmark, // ✅ perfect for banks
+      link: '/banks',
+    },
   ];
 
   return (
     <aside
       className={`
-    bg-primary h-screen text-white
+    bg-primary h-screen shrink-0 text-white
     transition-all duration-300 ease-in-out overflow-hidden
     ${openSidebar ? 'w-72 p-4 shadow-2xl' : 'w-0 p-0'}
   `}
     >
-      {/* Only show content if sidebar is open */}
       <div
         className={`${openSidebar ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
       >
-        {/* Header */}
         <div className="mb-6 flex items-center gap-2 px-2 justify-start">
           <img src={logo} alt="logo" className="w-100" />
         </div>
@@ -92,20 +121,6 @@ const Sidebar = () => {
               setSubActive={setSubActive}
             />
           ))}
-
-          {/* Settings */}
-          {/* <li>
-            <NavLink
-              to="/settings"
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors
-                ${isActive ? 'bg-primary/20 text-primary font-semibold' : 'text-white/80 hover:bg-white/10 hover:text-white'}`
-              }
-            >
-              <Settings size={18} />
-              <span>الإعدادات</span>
-            </NavLink>
-          </li> */}
         </ul>
       </div>
     </aside>
