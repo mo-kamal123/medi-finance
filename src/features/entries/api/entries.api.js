@@ -25,3 +25,17 @@ export const updateJournalEntry = async ({ id, ...payload }) => {
   const { data } = await axiosInstance.put(`/journal-entries/${id}`, payload);
   return data;
 };
+
+export const postJournalEntry = async ({ id, postedBy }) => {
+  const { data } = await axiosInstance.post(`/journal-entries/${id}/post`, {
+    postedBy,
+  });
+  return data;
+};
+
+export const reverseJournalEntry = async ({ id, reversedBy }) => {
+  const { data } = await axiosInstance.post(`/journal-entries/${id}/reverse`, {
+    reversedBy,
+  });
+  return data;
+};
