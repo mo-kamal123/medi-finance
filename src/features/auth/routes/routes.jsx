@@ -1,3 +1,11 @@
-import Login from '../pages/login';
+﻿import { lazyPage } from '../../../shared/lib/lazy-page';
 
-export const authRoutes = [{ index: true, element: <Login /> }];
+export const authRoutes = [
+  {
+    index: true,
+    element: lazyPage(
+      () => import('../pages/login'),
+      'جاري تحميل صفحة تسجيل الدخول...'
+    ),
+  },
+];

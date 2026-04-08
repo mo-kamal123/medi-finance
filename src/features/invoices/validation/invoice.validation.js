@@ -1,50 +1,36 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
 
 export const invoiceDetailSchema = z.object({
-  productServiceID: z.coerce
-    .number({ invalid_type_error: 'معرف المنتج مطلوب' })
-    .min(1, 'معرف المنتج مطلوب'),
-  quantity: z.coerce
-    .number({ invalid_type_error: 'الكمية يجب أن تكون رقم' })
-    .min(1, 'الكمية يجب أن تكون على الأقل 1'),
-  unitPrice: z.coerce
-    .number({ invalid_type_error: 'سعر الوحدة يجب أن يكون رقم' })
-    .min(0, 'سعر الوحدة لا يمكن أن يكون سالب'),
-  discountPercentage: z.coerce
-    .number({ invalid_type_error: 'الخصم يجب أن يكون رقم' })
-    .min(0, 'الخصم لا يمكن أن يكون سالب'),
-  taxPercentage: z.coerce
-    .number({ invalid_type_error: 'الضريبة يجب أن تكون رقم' })
-    .min(0, 'الضريبة لا يمكن أن تكون سالب'),
+  productServiceID: z.coerce.number().min(1, 'معرف المنتج أو الخدمة مطلوب'),
+
+  quantity: z.coerce.number().min(1, 'الكمية يجب أن تكون على الأقل 1'),
+
+  unitPrice: z.coerce.number().min(0, 'سعر الوحدة لا يمكن أن يكون سالب'),
+
+  discountPercentage: z.coerce.number().min(0, 'الخصم لا يمكن أن يكون سالب'),
+
+  taxPercentage: z.coerce.number().min(0, 'الضريبة لا يمكن أن تكون سالبة'),
 });
 
 export const invoiceSchema = z.object({
   invoiceNumber: z.string().nonempty('رقم الفاتورة مطلوب'),
-  invoiceDate: z.string().nonempty('تاريخ الإصدار مطلوب'),
+
+  invoiceDate: z.string().nonempty('تاريخ الفاتورة مطلوب'),
+
   dueDate: z.string().nonempty('تاريخ الاستحقاق مطلوب'),
+
   invoiceTypeID: z.string().nonempty('نوع الفاتورة مطلوب'),
 
-  customerID: z.coerce
-    .number({ invalid_type_error: 'العميل يجب أن يكون رقم' })
-    .nullable()
-    .optional(),
-  supplierID: z.coerce
-    .number({ invalid_type_error: 'المورد يجب أن يكون رقم' })
-    .nullable()
-    .optional(),
-    
-  taxAmount: z.coerce.number().min(0, 'المبلغ الضريبي لا يمكن أن يكون سالب'),
-  discountAmount: z.coerce.number().min(0, 'المبلغ الخصم لا يمكن أن يكون سالب'),
+  customerID: z.string().optional(),
+  supplierID: z.string().optional(),
 
-  financialPeriodID: z.coerce.number().min(0, 'يجب اختيار الفترة المالية'),
-  debtorAccountID: z.coerce.number().min(0, 'يجب اختيار حساب المدين'),
-  creditorAccountID: z.coerce.number().min(0, 'يجب اختيار حساب الدائن'),
-  taxAccountID: z.coerce.number().min(0, 'يجب اختيار حساب الضريبة'),
-  discountAccountID: z.coerce.number().min(0, 'يجب اختيار حساب الخصم'),
-  cashAccountID: z.coerce.number().min(0, 'يجب اختيار حساب النقديه'),
+  taxAmount: z.coerce.number().min(0, 'قيمة الضريبة لا يمكن أن تكون سالبة'),
 
-  status: z.enum(['Posted', 'paid', 'overdue']),
-  details: z
-    .array(invoiceDetailSchema)
-    .min(1, 'يجب إضافة خدمة واحدة على الأقل'),
+  discountAmount: z.coerce.number().min(0, 'قيمة الخصم لا can be negative'),
+
+  financialPeriodID: z.string().nonempty('الفترة المالية مطلوبة'),
+
+  status: z.string().nonempty('الحالة مطلوبة'),
+
+  details: z.array(invoiceDetailSchema).min(1, 'يجب إضافة سطر واحد على الأقل'),
 });

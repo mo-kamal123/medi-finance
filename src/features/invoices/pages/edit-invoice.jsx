@@ -1,42 +1,47 @@
-// EditInvoice.jsx
-import { useNavigate, useParams } from 'react-router-dom';
-import { useUpdateInvoice } from '../hooks/invoices.mutations';
+﻿import { useNavigate, useParams } from 'react-router-dom';
+import PageLoader from '../../../shared/ui/page-loader';
 import InvoiceForm from '../components/invoice-form';
+import { useUpdateInvoice } from '../hooks/invoices.mutations';
 import { useInvoice } from '../hooks/invoices.queries';
+
+const getRedirectPath = (invoice) => {
+  if (invoice?.customerID) {
+    return '/customers-invoices';
+  }
+
+  return '/suppliers-invoices';
+};
 
 const EditInvoice = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-
-  // Fetch existing invoice
   const { data: invoice, isLoading: isFetching } = useInvoice(id);
-
-  // Mutation for updating
   const updateInvoiceMutation = useUpdateInvoice();
 
   const handleUpdate = async (data) => {
     try {
-      // Send payload exactly as API expects
       await updateInvoiceMutation.mutateAsync({ id, ...data });
-      navigate('/invoices'); // redirect after update
+      navigate(getRedirectPath(invoice));
     } catch (error) {
       console.error('Error updating invoice:', error);
     }
   };
 
-  if (isFetching) return <div>جارٍ تحميل البيانات...</div>;
+  if (isFetching) {
+    return <PageLoader label="جاري تحميل الفاتورة..." />;
+  }
 
   return (
-    <div className="space-y-8 p-6 md:p-10 bg-gray-50 min-h-screen">
+    <div className="min-h-screen space-y-8 bg-gray-50 p-6 md:p-10">
       <h1 className="text-3xl font-bold text-gray-900">تعديل الفاتورة</h1>
-      <p className="text-gray-500 mt-1">
-        قم بتحديث بيانات الفاتورة وحفظ التغييرات
+      <p className="mt-1 text-gray-500">
+        قم بتحديث بيانات الفاتورة ثم احفظ التغييرات.
       </p>
 
       <InvoiceForm
         initialData={invoice}
         onSubmit={handleUpdate}
-        isLoading={updateInvoiceMutation.isLoading}
+        isLoading={updateInvoiceMutation.isPending}
       />
     </div>
   );

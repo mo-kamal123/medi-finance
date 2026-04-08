@@ -1,18 +1,25 @@
-import AccountsTree from '../pages/AccountsTree';
-import NewAccount from '../pages/new-account';
-import UpdateAccount from '../pages/update-account';
+﻿import { lazyPage } from '../../../../shared/lib/lazy-page';
 
 export const accountsTreeRoutes = [
   {
     path: 'accounts-tree',
-    element: <AccountsTree />,
+    element: lazyPage(
+      () => import('../pages/AccountsTree'),
+      'جاري تحميل شجرة الحسابات...'
+    ),
   },
   {
     path: 'accounts-tree/:id',
-    element: <UpdateAccount />,
+    element: lazyPage(
+      () => import('../pages/update-account'),
+      'جاري تحميل الحساب...'
+    ),
   },
   {
     path: 'accounts-tree/new',
-    element: <NewAccount />,
+    element: lazyPage(
+      () => import('../pages/new-account'),
+      'جاري تحميل نموذج الحساب...'
+    ),
   },
 ];

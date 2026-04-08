@@ -1,40 +1,31 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import {
   getAllInvoices,
-  getInvoiceById,
-  getInvoiceTypes,
-  getSuppliers,
   getCustomers,
   getFinancialPeriods,
+  getInvoiceById,
+  getInvoiceTypes,
+  getNextInvoiceNumber,
+  getSuppliers,
 } from '../api/invoices-api';
 import { invoicesKeys } from './invoices.keys';
 
-/* ===========================
-   GET ALL INVOICES
-=========================== */
-
-export const useInvoices = (filters) => {
+export const useInvoices = (filters, type) => {
   return useQuery({
-    queryKey: invoicesKeys.lists(filters),
-    queryFn: () => getAllInvoices(filters),
+    queryKey: invoicesKeys.lists({ ...filters, type }),
+    queryFn: () => getAllInvoices(filters, type),
     keepPreviousData: true,
   });
 };
 
-/* ===========================
-   GET INVOICE BY ID
-=========================== */
 export const useInvoice = (id) => {
   return useQuery({
     queryKey: invoicesKeys.detail(id),
     queryFn: () => getInvoiceById(id),
-    // enabled: !!id,
+    enabled: !!id,
   });
 };
 
-/* ===========================
-   GET TYPES
-=========================== */
 export const useInvoiceTypes = () => {
   return useQuery({
     queryKey: invoicesKeys.types(),
@@ -42,9 +33,6 @@ export const useInvoiceTypes = () => {
   });
 };
 
-/* ===========================
-   GET SUPPLIERS
-=========================== */
 export const useSuppliers = () => {
   return useQuery({
     queryKey: invoicesKeys.suppliers(),
@@ -52,9 +40,6 @@ export const useSuppliers = () => {
   });
 };
 
-/* ===========================
-   GET CUSTOMERS
-=========================== */
 export const useCustomers = () => {
   return useQuery({
     queryKey: invoicesKeys.customers(),
@@ -62,12 +47,17 @@ export const useCustomers = () => {
   });
 };
 
-/* ===========================
-   GET financial-periods
-=========================== */
 export const useFinancialPeriods = () => {
   return useQuery({
     queryKey: invoicesKeys.financial(),
     queryFn: getFinancialPeriods,
+  });
+};
+
+export const useNextInvoiceNumber = (enabled = true) => {
+  return useQuery({
+    queryKey: invoicesKeys.nextNumber(),
+    queryFn: getNextInvoiceNumber,
+    enabled,
   });
 };

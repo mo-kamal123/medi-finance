@@ -1,22 +1,22 @@
-import Table from "../../../shared/ui/table";
-import { groupByAccount } from "../utils/group-by-account";
+import Table from '../../../shared/ui/table';
+import { groupByAccount } from '../utils/group-by-account';
 
 const GeneralLedgerTable = ({ data }) => {
   const grouped = groupByAccount(data);
 
   const columns = [
     {
-      header: "التاريخ",
-      key: "EntryDate",
+      header: 'التاريخ',
+      key: 'EntryDate',
     },
     {
-      header: "رقم القيد",
-      key: "JournalEntryNumber",
+      header: 'رقم القيد',
+      key: 'JournalEntryNumber',
     },
     {
-      header: "مدين",
-      key: "DebitAmount",
-      type: "custom",
+      header: 'مدين',
+      key: 'DebitAmount',
+      type: 'custom',
       render: (row) => (
         <span className="text-green-600 font-medium">
           {row.DebitAmount?.toLocaleString()}
@@ -24,9 +24,9 @@ const GeneralLedgerTable = ({ data }) => {
       ),
     },
     {
-      header: "دائن",
-      key: "CreditAmount",
-      type: "custom",
+      header: 'دائن',
+      key: 'CreditAmount',
+      type: 'custom',
       render: (row) => (
         <span className="text-red-600 font-medium">
           {row.CreditAmount?.toLocaleString()}
@@ -34,15 +34,15 @@ const GeneralLedgerTable = ({ data }) => {
       ),
     },
     {
-      header: "الرصيد الجاري",
-      key: "RunningBalance",
-      type: "custom",
+      header: 'الرصيد الجاري',
+      key: 'RunningBalance',
+      type: 'custom',
       render: (row) => (
         <span
           className={
             row.RunningBalance >= 0
-              ? "text-blue-600 font-semibold"
-              : "text-red-600 font-semibold"
+              ? 'text-blue-600 font-semibold'
+              : 'text-red-600 font-semibold'
           }
         >
           {row.RunningBalance?.toLocaleString()}
@@ -66,16 +66,17 @@ const GeneralLedgerTable = ({ data }) => {
 
         return (
           <div key={accountId}>
-            <h2 className="text-lg font-bold mb-3">
-              حساب رقم: {accountId}
-            </h2>
+            <h2 className="text-lg font-bold mb-3">حساب رقم: {accountId}</h2>
 
             <Table
               columns={columns}
               data={entries}
               footer={
                 <tr>
-                  <td colSpan={2} className="p-3 border border-gray-300 text-left">
+                  <td
+                    colSpan={2}
+                    className="p-3 border border-gray-300 text-left"
+                  >
                     الإجمالي
                   </td>
                   <td className="p-3 border border-gray-300 text-green-600">

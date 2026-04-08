@@ -1,18 +1,25 @@
-import CustomersPage from "../pages/customers-page";
-import NewCustomer from "../pages/new-customer";
-import CustomerDetails from "../pages/customer-details";
+﻿import { lazyPage } from '../../../shared/lib/lazy-page';
 
 export const customersRoutes = [
   {
-    path: "/customers",
-    element: <CustomersPage />,
+    path: '/customers',
+    element: lazyPage(
+      () => import('../pages/customers-page'),
+      'جاري تحميل العملاء...'
+    ),
   },
   {
-    path: "/customers/new",
-    element: <NewCustomer />,
+    path: '/customers/new',
+    element: lazyPage(
+      () => import('../pages/new-customer'),
+      'جاري تحميل نموذج العميل...'
+    ),
   },
   {
-    path: "/customers/:id",
-    element: <CustomerDetails />,
+    path: '/customers/:id',
+    element: lazyPage(
+      () => import('../pages/customer-details'),
+      'جاري تحميل بيانات العميل...'
+    ),
   },
 ];

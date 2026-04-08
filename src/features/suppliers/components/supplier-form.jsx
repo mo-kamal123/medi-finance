@@ -1,18 +1,17 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Save } from "lucide-react";
-import { supplierSchema } from "../validation/supplier.validation";
-import FormInput from "../../../shared/ui/input";
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Save } from 'lucide-react';
+import { supplierSchema } from '../validation/supplier.validation';
+import FormInput from '../../../shared/ui/input';
 
 const SupplierForm = ({
-  mode = "create",
+  mode = 'create',
   defaultValues = {},
   currencies = [],
   accounts = [],
   costCenters = [],
   onSubmit,
 }) => {
-
   const {
     register,
     handleSubmit,
@@ -33,18 +32,17 @@ const SupplierForm = ({
       onSubmit={handleSubmit(onSubmit)}
       className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 space-y-6"
     >
-
       <div className="grid grid-cols-2 gap-5">
         <FormInput
           label="كود المورد"
-          {...register("supplierCode")}
+          {...register('supplierCode')}
           error={errors.supplierCode?.message}
-          disabled={mode === "update"}
+          disabled={mode === 'update'}
         />
 
         <FormInput
           label="الاسم بالعربية"
-          {...register("supplierNameAr")}
+          {...register('supplierNameAr')}
           error={errors.supplierNameAr?.message}
         />
       </div>
@@ -52,13 +50,13 @@ const SupplierForm = ({
       <div className="grid grid-cols-2 gap-5">
         <FormInput
           label="الاسم بالإنجليزية"
-          {...register("supplierNameEn")}
+          {...register('supplierNameEn')}
           error={errors.supplierNameEn?.message}
         />
 
         <FormInput
           label="الشخص المسؤول"
-          {...register("contactPerson")}
+          {...register('contactPerson')}
           error={errors.contactPerson?.message}
         />
       </div>
@@ -66,13 +64,13 @@ const SupplierForm = ({
       <div className="grid grid-cols-2 gap-5">
         <FormInput
           label="الهاتف"
-          {...register("phone")}
+          {...register('phone')}
           error={errors.phone?.message}
         />
 
         <FormInput
           label="البريد الإلكتروني"
-          {...register("email")}
+          {...register('email')}
           error={errors.email?.message}
         />
       </div>
@@ -80,13 +78,13 @@ const SupplierForm = ({
       <div className="grid grid-cols-2 gap-5">
         <FormInput
           label="العنوان بالعربية"
-          {...register("addressAr")}
+          {...register('addressAr')}
           error={errors.addressAr?.message}
         />
 
         <FormInput
           label="العنوان بالإنجليزية"
-          {...register("addressEn")}
+          {...register('addressEn')}
           error={errors.addressEn?.message}
         />
       </div>
@@ -94,14 +92,14 @@ const SupplierForm = ({
       <div className="grid grid-cols-2 gap-5">
         <FormInput
           label="الرقم الضريبي"
-          {...register("taxNumber")}
+          {...register('taxNumber')}
           error={errors.taxNumber?.message}
         />
 
         <FormInput
           label="الحد الائتماني"
           type="number"
-          {...register("creditLimit")}
+          {...register('creditLimit')}
           error={errors.creditLimit?.message}
         />
       </div>
@@ -110,7 +108,7 @@ const SupplierForm = ({
         <FormInput
           label="مدة السداد (أيام)"
           type="number"
-          {...register("paymentTermDays")}
+          {...register('paymentTermDays')}
           error={errors.paymentTermDays?.message}
         />
 
@@ -120,7 +118,7 @@ const SupplierForm = ({
           </label>
 
           <select
-            {...register("currencyID")}
+            {...register('currencyID')}
             className="w-full px-4 py-2 border border-gray-200 rounded-lg"
           >
             <option value="">اختر العملة</option>
@@ -135,14 +133,13 @@ const SupplierForm = ({
       </div>
 
       <div className="grid grid-cols-2 gap-5">
-
         <div>
           <label className="block mb-1 text-sm font-medium text-gray-700">
             الحساب
           </label>
 
           <select
-            {...register("accountID")}
+            {...register('accountID')}
             className="w-full px-4 py-2 border border-gray-200 rounded-lg"
           >
             <option value="">اختر الحساب</option>
@@ -161,7 +158,7 @@ const SupplierForm = ({
           </label>
 
           <select
-            {...register("defaultCostCenterID")}
+            {...register('defaultCostCenterID')}
             className="w-full px-4 py-2 border border-gray-200 rounded-lg"
           >
             <option value="">بدون</option>
@@ -173,26 +170,23 @@ const SupplierForm = ({
             ))}
           </select>
         </div>
-
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-
         <label className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border border-gray-300">
-          <input type="checkbox" {...register("isTaxable")} />
+          <input type="checkbox" {...register('isTaxable')} />
           <span>خاضع للضريبة</span>
         </label>
 
         <label className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border border-gray-300">
-          <input type="checkbox" {...register("isActive")} />
+          <input type="checkbox" {...register('isActive')} />
           <span>المورد نشط</span>
         </label>
-
       </div>
 
       <FormInput
         label="المستخدم"
-        {...register("user")}
+        {...register('user')}
         error={errors.user?.message}
       />
 
@@ -204,12 +198,11 @@ const SupplierForm = ({
         <Save size={18} />
 
         {isSubmitting
-          ? "جاري الحفظ..."
-          : mode === "create"
-          ? "إنشاء المورد"
-          : "حفظ التعديلات"}
+          ? 'جاري الحفظ...'
+          : mode === 'create'
+            ? 'إنشاء المورد'
+            : 'حفظ التعديلات'}
       </button>
-
     </form>
   );
 };

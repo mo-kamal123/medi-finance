@@ -1,6 +1,6 @@
-import { useParams } from "react-router-dom";
-import { useSupplier } from "../hooks/suppliers.queries";
-import SupplierForm from "../components/supplier-form";
+import { useParams } from 'react-router-dom';
+import { useSupplier } from '../hooks/suppliers.queries';
+import SupplierForm from '../components/supplier-form';
 
 const SupplierDetails = () => {
   const { id } = useParams();

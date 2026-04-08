@@ -94,17 +94,18 @@ const TrialBalancePage = () => {
     </tr>
   );
 
-//   if (isLoading) return <div>Loading...</div>;
+  //   if (isLoading) return <div>Loading...</div>;
 
   return (
     <div className="p-6 space-y-4">
-{/* Header */}
-<div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-  <h1 className="text-2xl font-bold">ميزان المراجعة</h1>
-  <p className="text-sm text-gray-600 mt-1">
-    عرض أرصدة الحسابات خلال الفترة مع إجمالي المدين والدائن والرصيد الختامي
-  </p>
-</div>
+      {/* Header */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h1 className="text-2xl font-bold">ميزان المراجعة</h1>
+        <p className="text-sm text-gray-600 mt-1">
+          عرض أرصدة الحسابات خلال الفترة مع إجمالي المدين والدائن والرصيد
+          الختامي
+        </p>
+      </div>
       <Table columns={columns} data={data} footer={footer} />
     </div>
   );

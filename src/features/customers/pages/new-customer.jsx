@@ -1,6 +1,6 @@
-import CustomerForm from "../components/customer-form";
-import { useCreateCustomer } from "../hooks/customers.mutations";
-import { useNavigate } from "react-router-dom";
+import CustomerForm from '../components/customer-form';
+import { useCreateCustomer } from '../hooks/customers.mutations';
+import { useNavigate } from 'react-router-dom';
 
 const NewCustomer = () => {
   const { mutate } = useCreateCustomer();
@@ -8,7 +8,7 @@ const NewCustomer = () => {
 
   const submit = (data) => {
     mutate(data, {
-      onSuccess: () => navigate("/customers"),
+      onSuccess: () => navigate('/customers'),
     });
   };
 

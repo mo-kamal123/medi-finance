@@ -1,4 +1,4 @@
 export const generalLedgerKeys = {
-    all: ["general-ledger"],
-    list: (filters) => ["general-ledger", filters],
-  };
+  all: ['general-ledger'],
+  list: (filters) => ['general-ledger', filters],
+};

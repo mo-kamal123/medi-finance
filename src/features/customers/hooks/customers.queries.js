@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import { getCustomers, getCustomerById } from "../api/customers.api";
-import { customersKeys } from "./customers.keys";
+import { useQuery } from '@tanstack/react-query';
+import { getCustomers, getCustomerById } from '../api/customers.api';
+import { customersKeys } from './customers.keys';
 
 export const useCustomers = () =>
   useQuery({
