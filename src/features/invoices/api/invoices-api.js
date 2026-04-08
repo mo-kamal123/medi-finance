@@ -1,20 +1,37 @@
-import { axiosInstance } from '../../../app/api/axiosInstance';
+﻿import { axiosInstance } from '../../../app/api/axiosInstance';
 
-// Get all invoices with filters
-export const getAllInvoices = async (params) => {
+export const getAllInvoices = async (params = {}, type) => {
+  const requestParams = {
+    ...params,
+  };
+
+  if (type === 'customer') {
+    requestParams.showOnlyCustomersInvoices = true;
+    delete requestParams.showOnlySuppliersInvoices;
+  }
+
+  if (type === 'supplier') {
+    requestParams.showOnlySuppliersInvoices = true;
+    delete requestParams.showOnlyCustomersInvoices;
+  }
+
   const { data } = await axiosInstance.get('/invoices', {
-    params,
+    params: requestParams,
   });
+
   return data;
 };
 
-// Get invoice by ID
 export const getInvoiceById = async (id) => {
-  const response = await axiosInstance.get(`/invoices/${id}`);
+  const response = await axiosInstance.get(`/invoices/${id}/with-journal`);
   return response.data;
 };
 
-// Create invoice
+export const getNextInvoiceNumber = async () => {
+  const response = await axiosInstance.get('/invoices/next-number');
+  return response.data;
+};
+
 export const createInvoice = async (formData) => {
   const { data } = await axiosInstance.post('/invoices', formData, {
     headers: { 'Content-Type': 'application/json' },
@@ -22,41 +39,29 @@ export const createInvoice = async (formData) => {
   return data;
 };
 
-// Update invoice
-export const updateInvoice = async ({ id, body }) => {
+export const updateInvoice = async ({ id, ...body }) => {
   const { data } = await axiosInstance.put(`/invoices/${id}`, body, {
     headers: { 'Content-Type': 'application/json' },
   });
   return data;
 };
 
-// Get invoice types
 export const getInvoiceTypes = async () => {
   const response = await axiosInstance.get('/invoice-types');
   return response.data;
 };
 
-// Get suppliers
 export const getSuppliers = async () => {
   const response = await axiosInstance.get('/suppliers');
   return response.data;
 };
 
-// Get customers
 export const getCustomers = async () => {
   const response = await axiosInstance.get('/customers');
   return response.data;
 };
 
-// Get financial
 export const getFinancialPeriods = async () => {
   const response = await axiosInstance.get('/financial-periods');
   return response.data;
 };
-
-// Get financial
-export const getaccountsbytype = async () => {
-  const response = await axiosInstance.get('/accounts/by-type?accountTypes=Expense%2CRevenue&isActive=true&pageNumber=1&pageSize=100');
-  return response.data;
-};
-

@@ -1,9 +1,9 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const customerSchema = z.object({
-  customerCode: z.string().min(1, "كود العميل مطلوب"),
+  customerCode: z.string().min(1, 'كود العميل مطلوب'),
 
-  customerNameAr: z.string().min(1, "الاسم العربي مطلوب"),
+  customerNameAr: z.string().min(1, 'الاسم العربي مطلوب'),
 
   customerNameEn: z.string().optional(),
 
@@ -11,7 +11,7 @@ export const customerSchema = z.object({
 
   contactPerson: z.string().optional(),
 
-  email: z.string().email("البريد غير صحيح").optional().or(z.literal("")),
+  email: z.string().email('البريد غير صحيح').optional().or(z.literal('')),
 
   phone: z.string().optional(),
 
@@ -35,5 +35,5 @@ export const customerSchema = z.object({
 
   isActive: z.boolean(),
 
-  user: z.string().min(1, "المستخدم مطلوب"),
+  user: z.string().min(1, 'المستخدم مطلوب'),
 });

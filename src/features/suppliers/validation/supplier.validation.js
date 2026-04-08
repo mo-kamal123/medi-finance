@@ -1,13 +1,13 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const supplierSchema = z.object({
-  supplierCode: z.string().min(1, "كود المورد مطلوب"),
-  supplierNameAr: z.string().min(1, "الاسم بالعربية مطلوب"),
+  supplierCode: z.string().min(1, 'كود المورد مطلوب'),
+  supplierNameAr: z.string().min(1, 'الاسم بالعربية مطلوب'),
   supplierNameEn: z.string().optional(),
 
   contactPerson: z.string().optional(),
   phone: z.string().optional(),
-  email: z.string().email("بريد غير صالح").optional(),
+  email: z.string().email('بريد غير صالح').optional(),
 
   addressAr: z.string().optional(),
   addressEn: z.string().optional(),

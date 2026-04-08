@@ -9,7 +9,7 @@ const SidebarItem = ({ item, active, toggle, openSidebar, setSubActive }) => {
     <li>
       {/* Parent */}
       <NavLink
-      to={item.link || '#'}
+        to={item.link || '#'}
         onClick={() => toggle(item.name)}
         className={`flex items-center w-full rounded-xl transition-colors
         ${openSidebar ? 'justify-between px-3 py-2.5' : 'justify-center p-3'}
@@ -22,7 +22,7 @@ const SidebarItem = ({ item, active, toggle, openSidebar, setSubActive }) => {
           {openSidebar && <span>{item.name}</span>}
         </div>
 
-        {openSidebar && item.sub?.length > 0 &&   (
+        {openSidebar && item.sub?.length > 0 && (
           <ChevronLeft
             size={16}
             className={`transition-transform ${

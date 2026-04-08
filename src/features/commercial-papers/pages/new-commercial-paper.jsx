@@ -1,7 +1,7 @@
-import CommercialPaperForm from '../components/commercial-paper-form';
+﻿import CommercialPaperForm from '../components/commercial-paper-form';
 
-const NewCommercialPaper = () => {
-  return <CommercialPaperForm />;
+const NewCommercialPaper = ({ paperType = 'RECEIVABLE' }) => {
+  return <CommercialPaperForm paperType={paperType} />;
 };
 
 export default NewCommercialPaper;

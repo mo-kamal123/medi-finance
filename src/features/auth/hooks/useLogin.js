@@ -10,7 +10,9 @@ export const useLogin = () => {
     mutationFn: login,
     onSuccess: (data) => {
       addToLocalStorage('token', data.data.token);
-      dispatch(setCredentials({user:{name: 'mostafa'}, token:data.data.token}))
+      dispatch(
+        setCredentials({ user: { name: 'mostafa' }, token: data.data.token })
+      );
       console.log(data.data.token);
     },
   });

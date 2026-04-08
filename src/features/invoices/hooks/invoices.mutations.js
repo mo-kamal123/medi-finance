@@ -1,10 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+﻿import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createInvoice, updateInvoice } from '../api/invoices-api';
 import { invoicesKeys } from './invoices.keys';
+import { getErrorMessage, toast } from '../../../shared/lib/toast';
 
-/* ===========================
-   CREATE
-=========================== */
 export const useCreateInvoice = () => {
   const queryClient = useQueryClient();
 
@@ -14,13 +12,14 @@ export const useCreateInvoice = () => {
       queryClient.invalidateQueries({
         queryKey: invoicesKeys.lists(),
       });
+      toast.success('تم إنشاء الفاتورة بنجاح');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'تعذر إنشاء الفاتورة'));
     },
   });
 };
 
-/* ===========================
-   UPDATE
-=========================== */
 export const useUpdateInvoice = () => {
   const queryClient = useQueryClient();
 
@@ -36,6 +35,11 @@ export const useUpdateInvoice = () => {
           queryKey: invoicesKeys.detail(variables.id),
         });
       }
+
+      toast.success('تم تحديث الفاتورة بنجاح');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'تعذر تحديث الفاتورة'));
     },
   });
 };

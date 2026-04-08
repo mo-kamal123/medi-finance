@@ -1,4 +1,4 @@
-import { useNavigate, useSearchParams } from 'react-router-dom';
+﻿import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCreateInvoice } from '../hooks/invoices.mutations';
 import InvoiceForm from '../components/invoice-form';
 
@@ -6,9 +6,9 @@ const NewSupplierInvoice = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const type = searchParams.get('type'); // 'customer' | 'supplier'
-  const redirectPath = type === 'customer' ? '/customers-invoices' : '/suppliers-invoices';
-
+  const type = searchParams.get('type');
+  const redirectPath =
+    type === 'customer' ? '/customers-invoices' : '/suppliers-invoices';
   const createInvoiceMutation = useCreateInvoice();
 
   const handleCreate = async (data) => {
@@ -29,7 +29,7 @@ const NewSupplierInvoice = () => {
       <InvoiceForm
         invoiceType={type}
         onSubmit={handleCreate}
-        isLoading={createInvoiceMutation.isLoading}
+        isLoading={createInvoiceMutation.isPending}
       />
     </div>
   );

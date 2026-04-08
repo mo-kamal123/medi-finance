@@ -32,9 +32,7 @@ const FormInput = ({
   return (
     <div className={`w-full ${containerClass}`}>
       {label && (
-        <label className="block mb-1 font-medium text-gray-700">
-          {label}
-        </label>
+        <label className="block mb-1 font-medium text-gray-700">{label}</label>
       )}
 
       <div className="relative">

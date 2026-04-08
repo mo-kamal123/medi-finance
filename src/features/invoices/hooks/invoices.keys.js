@@ -14,4 +14,6 @@ export const invoicesKeys = {
   customers: () => [...invoicesKeys.all, 'customers'],
 
   financial: () => [...invoicesKeys.all, 'financial-periods'],
+
+  nextNumber: () => [...invoicesKeys.all, 'next-number'],
 };

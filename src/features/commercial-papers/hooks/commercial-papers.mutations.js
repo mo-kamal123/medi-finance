@@ -1,14 +1,12 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+﻿import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   createCommercialPaper,
-  updateCommercialPaper,
   deleteCommercialPaper,
+  updateCommercialPaper,
 } from '../api/commercial-papers.api';
 import { commercialPapersKeys } from './commercial-papers.keys';
+import { getErrorMessage, toast } from '../../../shared/lib/toast';
 
-/* ===========================
-   CREATE
-=========================== */
 export const useCreateCommercialPaper = () => {
   const queryClient = useQueryClient();
 
@@ -18,13 +16,14 @@ export const useCreateCommercialPaper = () => {
       queryClient.invalidateQueries({
         queryKey: commercialPapersKeys.lists(),
       });
+      toast.success('تم إنشاء الورقة التجارية بنجاح');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'تعذر إنشاء الورقة التجارية'));
     },
   });
 };
 
-/* ===========================
-   UPDATE
-=========================== */
 export const useUpdateCommercialPaper = () => {
   const queryClient = useQueryClient();
 
@@ -40,13 +39,15 @@ export const useUpdateCommercialPaper = () => {
           queryKey: commercialPapersKeys.detail(variables.id),
         });
       }
+
+      toast.success('تم تحديث الورقة التجارية بنجاح');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'تعذر تحديث الورقة التجارية'));
     },
   });
 };
 
-/* ===========================
-   DELETE
-=========================== */
 export const useDeleteCommercialPaper = () => {
   const queryClient = useQueryClient();
 
@@ -56,6 +57,10 @@ export const useDeleteCommercialPaper = () => {
       queryClient.invalidateQueries({
         queryKey: commercialPapersKeys.lists(),
       });
+      toast.success('تم حذف الورقة التجارية بنجاح');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'تعذر حذف الورقة التجارية'));
     },
   });
 };
