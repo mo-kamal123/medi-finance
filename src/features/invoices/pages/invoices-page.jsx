@@ -120,7 +120,7 @@ const InvoicesPage = () => {
               <Eye size={18} />
             </button>
 
-            <button
+            {/* <button
               onClick={() => navigate(`/invoices/edit/${row.invoiceID}`)}
               className="text-green-600 hover:text-green-800"
               title="تعديل"
@@ -134,7 +134,7 @@ const InvoicesPage = () => {
               title="حذف"
             >
               <Trash2 size={18} />
-            </button>
+            </button> */}
           </div>
         ),
       },

@@ -12,6 +12,7 @@ import {
   FileCheck,
   FileClock,
   CreditCard,
+  Wallet,
 } from 'lucide-react';
 
 import SidebarItem from '../ui/sidebar-item';
@@ -39,7 +40,7 @@ const Sidebar = () => {
     },
     {
       name: 'الفواتير',
-      icon: Receipt, // ✅ better than Users
+      icon: Receipt,
       sub: [
         {
           name: 'فواتير العملاء',
@@ -55,7 +56,7 @@ const Sidebar = () => {
     },
     {
       name: 'الأوراق التجارية',
-      icon: CreditCard, // ✅ represents payments/financial docs
+      icon: CreditCard,
       sub: [
         {
           name: 'أوراق القبض',
@@ -72,25 +73,26 @@ const Sidebar = () => {
     },
     {
       name: 'التقارير',
-      icon: BarChart3, // ✅ better than FileBarChart
+      icon: BarChart3,
       sub: [
         { name: 'حساب الأستاذ', link: '/general-ledger', icon: BookOpen },
         { name: 'ميزان المراجعة', link: '/trial-balance', icon: Scale },
+        { name: 'الميزانية العمومية', link: '/balance-sheet', icon: Wallet },
       ],
     },
     {
       name: 'العملاء',
-      icon: Users, // ✅ correct
+      icon: Users,
       link: '/customers',
     },
     {
       name: 'المورديين',
-      icon: Users, // could also use Truck if you want differentiation
+      icon: Users,
       link: '/suppliers',
     },
     {
       name: 'البنوك',
-      icon: Landmark, // ✅ perfect for banks
+      icon: Landmark,
       link: '/banks',
     },
   ];
@@ -106,7 +108,7 @@ const Sidebar = () => {
       <div
         className={`${openSidebar ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
       >
-        <div className="mb-6 flex items-center gap-2 px-2 justify-start">
+        <div className="mb-6 flex items-center justify-start gap-2 px-2">
           <img src={logo} alt="logo" className="w-100" />
         </div>
 

@@ -1,12 +1,29 @@
 ﻿import { useMemo, useState } from 'react';
-import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
+import { CheckCircle2, Eye, Plus, RotateCcw } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import FormInput from '../../../shared/ui/input';
 import PageLoader from '../../../shared/ui/page-loader';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
+import { toast } from '../../../shared/lib/toast';
 import { matchesSearch, paginateItems } from '../../../shared/utils/list-utils';
+import {
+  usePostJournalEntry,
+  useReverseJournalEntry,
+} from '../hooks/entries.mutations';
 import { useJournalEntries } from '../hooks/entries.queries';
+
+const getStatusMeta = (status) => {
+  if (status === 'Posted') {
+    return { badgeClass: 'bg-green-100 text-green-700', label: status };
+  }
+
+  if (String(status).toLowerCase().includes('reverse')) {
+    return { badgeClass: 'bg-red-100 text-red-700', label: status };
+  }
+
+  return { badgeClass: 'bg-yellow-100 text-yellow-700', label: status || '-' };
+};
 
 const DailyEntriesPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -14,6 +31,8 @@ const DailyEntriesPage = () => {
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const navigate = useNavigate();
+  const postMutation = usePostJournalEntry();
+  const reverseMutation = useReverseJournalEntry();
 
   const { data: entries = [], isLoading } = useJournalEntries({
     journalType: typeFilter !== 'all' ? typeFilter : undefined,
@@ -35,6 +54,34 @@ const DailyEntriesPage = () => {
     () => paginateItems(filteredEntries, pageNumber, pageSize),
     [filteredEntries, pageNumber, pageSize]
   );
+
+  const handlePostEntry = (entryId, status) => {
+    if (status === 'Posted') {
+      toast.info('تم ترحيل هذا القيد بالفعل');
+      return;
+    }
+
+    if (String(status).toLowerCase().includes('reverse')) {
+      toast.info('لا يمكن ترحيل قيد تم عكسه');
+      return;
+    }
+
+    postMutation.mutate({ id: entryId, postedBy: 'ms' });
+  };
+
+  const handleReverseEntry = (entryId, status) => {
+    if (String(status).toLowerCase().includes('reverse')) {
+      toast.info('تم عكس هذا القيد بالفعل');
+      return;
+    }
+
+    if (status !== 'Posted') {
+      toast.info('يجب ترحيل القيد أولاً قبل إجراء العكس');
+      return;
+    }
+
+    reverseMutation.mutate({ id: entryId, reversedBy: 'ms' });
+  };
 
   const columns = [
     {
@@ -85,47 +132,73 @@ const DailyEntriesPage = () => {
       header: 'الحالة',
       key: 'status',
       type: 'custom',
-      render: (row) => (
-        <span
-          className={`rounded-full px-2 py-1 text-xs ${
-            row.status === 'Posted'
-              ? 'bg-green-100 text-green-700'
-              : 'bg-yellow-100 text-yellow-700'
-          }`}
-        >
-          {row.status || '-'}
-        </span>
-      ),
+      render: (row) => {
+        const statusMeta = getStatusMeta(row.status);
+
+        return (
+          <span
+            className={`rounded-full px-2 py-1 text-xs ${statusMeta.badgeClass}`}
+          >
+            {statusMeta.label}
+          </span>
+        );
+      },
     },
     {
       header: 'الإجراءات',
       key: 'actions',
       type: 'custom',
-      render: (row) => (
-        <div className="flex items-center gap-3">
-          <Link
-            to={`/entries/${row.journalEntryID}`}
-            className="text-blue-600 transition-colors hover:text-blue-800"
-            title="عرض"
-          >
-            <Eye size={18} />
-          </Link>
-          <button
-            onClick={() => navigate(`/entries/${row.journalEntryID}`)}
-            className="text-green-600 transition-colors hover:text-green-800"
-            title="تعديل"
-          >
-            <Pencil size={18} />
-          </button>
-          <button
-            onClick={() => console.log('Delete', row.journalEntryID)}
-            className="text-red-600 transition-colors hover:text-red-800"
-            title="حذف"
-          >
-            <Trash2 size={18} />
-          </button>
-        </div>
-      ),
+      render: (row) => {
+        const isPosting =
+          postMutation.isPending &&
+          postMutation.variables?.id === row.journalEntryID;
+        const isReversing =
+          reverseMutation.isPending &&
+          reverseMutation.variables?.id === row.journalEntryID;
+        const isReversed = String(row.status).toLowerCase().includes('reverse');
+
+        return (
+          <div className="flex items-center justify-center gap-3">
+            <Link
+              to={`/entries/${row.journalEntryID}`}
+              className="text-blue-600 transition-colors hover:text-blue-800"
+              title="عرض"
+            >
+              <Eye size={18} />
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => handlePostEntry(row.journalEntryID, row.status)}
+              disabled={
+                isPosting ||
+                isReversing ||
+                row.status === 'Posted' ||
+                isReversed
+              }
+              className="text-emerald-600 transition-colors hover:text-emerald-800 disabled:cursor-not-allowed disabled:opacity-40"
+              title="ترحيل"
+            >
+              <CheckCircle2 size={18} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleReverseEntry(row.journalEntryID, row.status)}
+              disabled={
+                isPosting ||
+                isReversing ||
+                row.status !== 'Posted' ||
+                isReversed
+              }
+              className="text-amber-600 transition-colors hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-40"
+              title="عكس القيد"
+            >
+              <RotateCcw size={18} />
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
