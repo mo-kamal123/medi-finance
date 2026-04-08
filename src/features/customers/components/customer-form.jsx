@@ -1,8 +1,8 @@
-import { useForm } from 'react-hook-form';
+﻿import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Save } from 'lucide-react';
-import { customerSchema } from '../validation/customer.validation';
 import FormInput from '../../../shared/ui/input';
+import { customerSchema } from '../validation/customer.validation';
 
 const CustomerForm = ({
   mode = 'create',
@@ -19,21 +19,47 @@ const CustomerForm = ({
   } = useForm({
     resolver: zodResolver(customerSchema),
     defaultValues: {
+      customerID: 0,
       customerType: 1,
       isTaxable: false,
       isActive: true,
       creditLimit: 0,
       paymentTermDays: 0,
+      user: 'ms',
       ...defaultValues,
     },
   });
 
+  const submitHandler = (data) => {
+    onSubmit({
+      customerID: data.customerID ?? 0,
+      customerCode: data.customerCode,
+      customerNameAr: data.customerNameAr,
+      customerNameEn: data.customerNameEn || '',
+      customerType: Number(data.customerType),
+      contactPerson: data.contactPerson || '',
+      email: data.email || '',
+      phone: data.phone || '',
+      addressAr: data.addressAr || '',
+      addressEn: data.addressEn || '',
+      taxNumber: data.taxNumber || '',
+      isTaxable: Boolean(data.isTaxable),
+      creditLimit: Number(data.creditLimit) || 0,
+      paymentTermDays: Number(data.paymentTermDays) || 0,
+      currencyID: Number(data.currencyID) || 0,
+      accountID: Number(data.accountID) || 0,
+      defaultCostCenterID: Number(data.defaultCostCenterID) || 0,
+      isActive: Boolean(data.isActive),
+      user: 'ms',
+    });
+  };
+
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 space-y-6"
+      onSubmit={handleSubmit(submitHandler)}
+      className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
     >
-      <div className="flex gap-5">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <FormInput
           label="كود العميل"
           {...register('customerCode')}
@@ -48,7 +74,7 @@ const CustomerForm = ({
         />
       </div>
 
-      <div className="flex gap-5">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <FormInput
           label="الاسم بالإنجليزية"
           {...register('customerNameEn')}
@@ -56,13 +82,12 @@ const CustomerForm = ({
         />
 
         <div className="w-full">
-          <label className="block mb-1 text-sm font-medium text-gray-700">
+          <label className="mb-1 block text-sm font-medium text-gray-700">
             نوع العميل
           </label>
-
           <select
             {...register('customerType')}
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20"
+            className="w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-primary/20"
           >
             <option value={1}>عميل</option>
             <option value={2}>عميل نقدي</option>
@@ -70,7 +95,7 @@ const CustomerForm = ({
         </div>
       </div>
 
-      <div className="flex gap-5">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <FormInput
           label="الشخص المسؤول"
           {...register('contactPerson')}
@@ -84,7 +109,7 @@ const CustomerForm = ({
         />
       </div>
 
-      <div className="flex gap-5">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <FormInput
           label="البريد الإلكتروني"
           {...register('email')}
@@ -98,7 +123,7 @@ const CustomerForm = ({
         />
       </div>
 
-      <div className="flex gap-5">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <FormInput
           label="العنوان بالعربية"
           {...register('addressAr')}
@@ -112,7 +137,7 @@ const CustomerForm = ({
         />
       </div>
 
-      <div className="flex gap-5">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <FormInput
           label="الحد الائتماني"
           type="number"
@@ -128,18 +153,16 @@ const CustomerForm = ({
         />
       </div>
 
-      <div className="flex gap-5">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <div className="w-full">
-          <label className="block mb-1 text-sm font-medium text-gray-700">
+          <label className="mb-1 block text-sm font-medium text-gray-700">
             العملة
           </label>
-
           <select
             {...register('currencyID')}
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg"
+            className="w-full rounded-lg border border-gray-200 px-4 py-2"
           >
             <option value="">اختر العملة</option>
-
             {currencies.map((currency) => (
               <option key={currency.currencyID} value={currency.currencyID}>
                 {currency.currencyName}
@@ -149,16 +172,14 @@ const CustomerForm = ({
         </div>
 
         <div className="w-full">
-          <label className="block mb-1 text-sm font-medium text-gray-700">
+          <label className="mb-1 block text-sm font-medium text-gray-700">
             الحساب
           </label>
-
           <select
             {...register('accountID')}
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg"
+            className="w-full rounded-lg border border-gray-200 px-4 py-2"
           >
             <option value="">اختر الحساب</option>
-
             {accounts.map((acc) => (
               <option key={acc.accountID} value={acc.accountID}>
                 {acc.accountCode} - {acc.nameAr}
@@ -168,18 +189,16 @@ const CustomerForm = ({
         </div>
       </div>
 
-      <div className="flex gap-5">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <div className="w-full">
-          <label className="block mb-1 text-sm font-medium text-gray-700">
+          <label className="mb-1 block text-sm font-medium text-gray-700">
             مركز التكلفة الافتراضي
           </label>
-
           <select
             {...register('defaultCostCenterID')}
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg"
+            className="w-full rounded-lg border border-gray-200 px-4 py-2"
           >
             <option value="">بدون</option>
-
             {costCenters.map((center) => (
               <option key={center.costCenterID} value={center.costCenterID}>
                 {center.ccCode} - {center.nameAr}
@@ -188,32 +207,25 @@ const CustomerForm = ({
           </select>
         </div>
 
-        <FormInput
-          label="المستخدم"
-          {...register('user')}
-          error={errors.user?.message}
-        />
-      </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-3">
+            <input type="checkbox" {...register('isTaxable')} />
+            <span>خاضع للضريبة</span>
+          </label>
 
-      <div className="grid grid-cols-2 gap-4">
-        <label className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border border-gray-300">
-          <input type="checkbox" {...register('isTaxable')} />
-          <span>خاضع للضريبة</span>
-        </label>
-
-        <label className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border border-gray-300">
-          <input type="checkbox" {...register('isActive')} />
-          <span>العميل نشط</span>
-        </label>
+          <label className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-3">
+            <input type="checkbox" {...register('isActive')} />
+            <span>العميل نشط</span>
+          </label>
+        </div>
       </div>
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-lg hover:opacity-90 transition disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 text-white transition hover:opacity-90 disabled:opacity-60"
       >
         <Save size={18} />
-
         {isSubmitting
           ? 'جاري الحفظ...'
           : mode === 'create'

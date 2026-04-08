@@ -151,7 +151,7 @@ const CommercialPapersPage = ({ paperType }) => {
               <Eye size={18} />
             </button>
 
-            <button
+            {/* <button
               onClick={() => navigate(`/commercial-papers/edit/${row.paperID}`)}
               className="text-green-600"
             >
@@ -163,7 +163,7 @@ const CommercialPapersPage = ({ paperType }) => {
               className="text-red-600"
             >
               <Trash2 size={18} />
-            </button>
+            </button> */}
           </div>
         ),
       },
