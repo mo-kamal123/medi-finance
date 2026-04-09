@@ -3,6 +3,8 @@
 export const invoiceDetailSchema = z.object({
   productServiceID: z.coerce.number().min(1, 'معرف المنتج أو الخدمة مطلوب'),
 
+  serviceTypeID: z.coerce.number().min(1, 'معرف المنتج أو الخدمة مطلوب'),
+
   quantity: z.coerce.number().min(1, 'الكمية يجب أن تكون على الأقل 1'),
 
   unitPrice: z.coerce.number().min(0, 'سعر الوحدة لا يمكن أن يكون سالب'),

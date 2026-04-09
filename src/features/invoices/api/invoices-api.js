@@ -65,3 +65,8 @@ export const getFinancialPeriods = async () => {
   const response = await axiosInstance.get('/financial-periods');
   return response.data;
 };
+
+export const getProductsServices = async () => {
+  const response = await axiosInstance.get('/products-services/dropdown');
+  return response.data;
+};

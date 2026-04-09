@@ -13,6 +13,7 @@ import {
   useInvoiceTypes,
   useSuppliers,
 } from '../hooks/invoices.queries';
+import { formatCurrency } from '../utils/format-currency';
 
 const InvoicesPage = () => {
   const navigate = useNavigate();
@@ -188,10 +189,5 @@ const InvoicesPage = () => {
   );
 };
 
-const formatCurrency = (value = 0) =>
-  new Intl.NumberFormat('ar-EG', {
-    style: 'currency',
-    currency: 'EGP',
-  }).format(value);
 
 export default InvoicesPage;

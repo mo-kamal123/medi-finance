@@ -6,6 +6,7 @@ import {
   getInvoiceById,
   getInvoiceTypes,
   getNextInvoiceNumber,
+  getProductsServices,
   getSuppliers,
 } from '../api/invoices-api';
 import { invoicesKeys } from './invoices.keys';
@@ -51,6 +52,13 @@ export const useFinancialPeriods = () => {
   return useQuery({
     queryKey: invoicesKeys.financial(),
     queryFn: getFinancialPeriods,
+  });
+};
+
+export const useProductsServices = () => {
+  return useQuery({
+    queryKey: invoicesKeys.services(),
+    queryFn: getProductsServices,
   });
 };
 
