@@ -2,6 +2,8 @@ export const getStatusStyle = (status) => {
   switch (status) {
     case 'paid':
       return 'bg-green-100 text-green-700';
+    case 'Posted':
+      return 'bg-green-100 text-green-700';
     case 'pending':
       return 'bg-yellow-100 text-yellow-700';
     case 'overdue':

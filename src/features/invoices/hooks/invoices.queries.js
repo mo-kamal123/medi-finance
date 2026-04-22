@@ -1,11 +1,13 @@
 ﻿import { useQuery } from '@tanstack/react-query';
 import {
   getAllInvoices,
+  getBatchByNumber,
   getCustomers,
   getFinancialPeriods,
   getInvoiceById,
   getInvoiceTypes,
   getNextInvoiceNumber,
+  getProductsServices,
   getSuppliers,
 } from '../api/invoices-api';
 import { invoicesKeys } from './invoices.keys';
@@ -23,6 +25,14 @@ export const useInvoice = (id) => {
     queryKey: invoicesKeys.detail(id),
     queryFn: () => getInvoiceById(id),
     enabled: !!id,
+  });
+};
+
+export const useBatch = (batchNumber, enabled = true) => {
+  return useQuery({
+    queryKey: invoicesKeys.batch(batchNumber),
+    queryFn: () => getBatchByNumber(batchNumber),
+    enabled: enabled && Boolean(batchNumber),
   });
 };
 
@@ -51,6 +61,13 @@ export const useFinancialPeriods = () => {
   return useQuery({
     queryKey: invoicesKeys.financial(),
     queryFn: getFinancialPeriods,
+  });
+};
+
+export const useProductsServices = () => {
+  return useQuery({
+    queryKey: invoicesKeys.services(),
+    queryFn: getProductsServices,
   });
 };
 

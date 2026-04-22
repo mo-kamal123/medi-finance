@@ -1,5 +1,5 @@
 ﻿import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createInvoice, updateInvoice } from '../api/invoices-api';
+import { createBatchInvoice, createInvoice, updateInvoice } from '../api/invoices-api';
 import { invoicesKeys } from './invoices.keys';
 import { getErrorMessage, toast } from '../../../shared/lib/toast';
 
@@ -40,6 +40,23 @@ export const useUpdateInvoice = () => {
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'تعذر تحديث الفاتورة'));
+    },
+  });
+};
+
+export const useCreateBatchInvoice = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createBatchInvoice,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: invoicesKeys.lists(),
+      });
+      toast.success('تم إنشاء فاتورة المطالبة بنجاح');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'تعذر إنشاء فاتورة المطالبة'));
     },
   });
 };

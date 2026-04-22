@@ -1,11 +1,12 @@
 import { useForm } from 'react-hook-form';
-import FormInput from '../../../../shared/ui/input';
-import { Save } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Save } from 'lucide-react';
+import FormInput from '../../../../shared/ui/input';
+import SearchableSelect from '../../../../shared/ui/searchable-select';
 import { costSchema } from '../validation/cost-validation';
 
 const CostCenterForm = ({
-  mode = 'create', // create | update
+  mode = 'create',
   defaultValues = {},
   parentCenters = [],
   onSubmit,
@@ -45,32 +46,27 @@ const CostCenterForm = ({
         error={errors.nameEn?.message}
       />
 
-      {/* Parent */}
       <div>
-        <label className="block mb-1 text-sm font-medium text-gray-700">
+        <label className="mb-1 block text-sm font-medium text-gray-700">
           المركز الأب
         </label>
-        <select
+        <SearchableSelect
           {...register('parentID')}
-          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
-        >
-          <option value="">بدون</option>
-          {parentCenters.map((center) => (
-            <option key={center.costCenterID} value={center.costCenterID}>
-              {center.ccCode} - {center.nameAr}
-            </option>
-          ))}
-        </select>
+          placeholder="بدون"
+          options={parentCenters.map((center) => ({
+            value: center.costCenterID,
+            label: `${center.ccCode} - ${center.nameAr}`,
+          }))}
+        />
       </div>
 
-      {/* Status */}
       <div className="grid grid-cols-2 gap-4">
-        <label className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border">
+        <label className="flex items-center gap-2 rounded-lg border bg-gray-50 p-3">
           <input type="checkbox" {...register('isActive')} />
           <span>المركز نشط</span>
         </label>
 
-        <label className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border">
+        <label className="flex items-center gap-2 rounded-lg border bg-gray-50 p-3">
           <input type="checkbox" {...register('isFinal')} />
           <span>مركز نهائي</span>
         </label>
@@ -85,7 +81,7 @@ const CostCenterForm = ({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-lg hover:opacity-90 transition disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 text-white transition hover:opacity-90 disabled:opacity-60"
       >
         <Save size={18} />
         {isSubmitting

@@ -1,9 +1,10 @@
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Save } from 'lucide-react';
 import { accountSchema } from '../validation/accounts-validation';
 import FormInput from '../../../../shared/ui/input';
-import { useEffect } from 'react';
+import SearchableSelect from '../../../../shared/ui/searchable-select';
 
 const AccountForm = ({
   mode = 'create',
@@ -21,7 +22,6 @@ const AccountForm = ({
     defaultValues,
   });
 
-  // Reset form when defaultValues change
   useEffect(() => {
     if (defaultValues && Object.keys(defaultValues).length > 0) {
       reset(defaultValues);
@@ -30,88 +30,86 @@ const AccountForm = ({
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit, (errors) => {
-        console.log('Validation Errors:', errors);
+      onSubmit={handleSubmit(onSubmit, (formErrors) => {
+        console.log('Validation Errors:', formErrors);
       })}
       className="space-y-6"
     >
-      {' '}
       <FormInput
         label="رقم الحساب"
         {...register('accountCode')}
         error={errors.accountCode?.message}
         disabled={mode === 'update'}
       />
+
       <FormInput
         label="الاسم بالعربية"
         {...register('nameAr')}
         error={errors.nameAr?.message}
       />
+
       <FormInput
         label="الاسم بالإنجليزية"
         {...register('nameEn')}
         error={errors.nameEn?.message}
       />
-      {/* Parent */}
+
       <div>
-        <label className="block mb-1 text-sm font-medium text-gray-700">
+        <label className="mb-1 block text-sm font-medium text-gray-700">
           الحساب الأب
         </label>
-        <select
+        <SearchableSelect
           {...register('parentID')}
-          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
-        >
-          <option value="">بدون</option>
-          {parentAccounts.map((acc) => (
-            <option key={acc.accountID} value={acc.accountID}>
-              {acc.accountCode} - {acc.nameAr}
-            </option>
-          ))}
-        </select>
+          placeholder="بدون"
+          options={parentAccounts.map((account) => ({
+            value: account.accountID,
+            label: `${account.accountCode} - ${account.nameAr}`,
+          }))}
+        />
       </div>
-      {/* Type */}
+
       <div>
-        <label className="block mb-1 text-sm font-medium text-gray-700">
+        <label className="mb-1 block text-sm font-medium text-gray-700">
           نوع الحساب
         </label>
-        <select
+        <SearchableSelect
           {...register('accountType')}
-          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
-        >
-          <option value="">اختر النوع</option>
-          <option value="asset">أصول</option>
-          <option value="liability">خصوم</option>
-          <option value="equity">حقوق ملكية</option>
-          <option value="revenue">إيرادات</option>
-          <option value="expense">مصروفات</option>
-        </select>
+          placeholder="اختر النوع"
+          options={[
+            { value: 'asset', label: 'أصول' },
+            { value: 'liability', label: 'خصوم' },
+            { value: 'equity', label: 'حقوق ملكية' },
+            { value: 'revenue', label: 'إيرادات' },
+            { value: 'expense', label: 'مصروفات' },
+          ]}
+        />
 
-        {errors.accountType && (
-          <p className="mt-1 text-sm text-red-500">
-            {errors.accountType.message}
-          </p>
-        )}
+        {errors.accountType ? (
+          <p className="mt-1 text-sm text-red-500">{errors.accountType.message}</p>
+        ) : null}
       </div>
-      {/* Status */}
+
       <div className="grid grid-cols-2 gap-4">
-        <label className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border">
+        <label className="flex items-center gap-2 rounded-lg border bg-gray-50 p-3">
           <input type="checkbox" {...register('isActive')} />
           <span>الحساب نشط</span>
         </label>
 
-        <label className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border">
+        <label className="flex items-center gap-2 rounded-lg border bg-gray-50 p-3">
           <input type="checkbox" {...register('isFinal')} />
           <span>حساب نهائي</span>
         </label>
       </div>
+
       <FormInput
         label="المستخدم"
         {...register('user')}
         error={errors.user?.message}
       />
+
       <button
         type="submit"
-        className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-lg hover:opacity-90 transition disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 text-white transition hover:opacity-90 disabled:opacity-60"
       >
         <Save size={18} />
         {isSubmitting

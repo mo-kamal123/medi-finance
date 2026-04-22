@@ -2,6 +2,7 @@
 import { ArrowLeft, CheckCircle2, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import FormInput from '../../../shared/ui/input';
+import SearchableSelect from '../../../shared/ui/searchable-select';
 import { toast } from '../../../shared/lib/toast';
 import { useCurrencies } from '../../commercial-papers/hooks/commercial-papers.queries';
 import {
@@ -97,19 +98,15 @@ const SelectField = ({
   onChange,
   options,
   placeholder = '\u0627\u062e\u062a\u0631',
+  dropdownPosition = 'bottom',
 }) => (
-  <select
+  <SearchableSelect
     value={value}
     onChange={onChange}
-    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2"
-  >
-    <option value="">{placeholder}</option>
-    {options.map((option) => (
-      <option key={option.value} value={option.value}>
-        {option.label}
-      </option>
-    ))}
-  </select>
+    options={options}
+    placeholder={placeholder}
+    dropdownPosition={dropdownPosition}
+  />
 );
 
 const DetailField = ({ label, children }) => (
@@ -119,7 +116,7 @@ const DetailField = ({ label, children }) => (
   </div>
 );
 
-const JournalEntryForm = ({ defaultValues, mode = 'create' }) => {
+const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
   const navigate = useNavigate();
   const createMutation = useCreateJournalEntry();
   const updateMutation = useUpdateJournalEntry();
@@ -132,7 +129,7 @@ const JournalEntryForm = ({ defaultValues, mode = 'create' }) => {
   const { data: currencies = [] } = useCurrencies();
   const { data: financialPeriods = [] } = useFinancialPeriods();
   const isEditMode = mode === 'edit';
-  const entryId = defaultValues.journalEntryID || defaultValues.id;
+  const entryId = defaultValues?.journalEntryID || defaultValues?.id;
 
   const accountOptions = useMemo(
     () =>

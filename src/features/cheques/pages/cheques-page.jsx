@@ -2,6 +2,7 @@
 import { Eye, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import FormInput from '../../../shared/ui/input';
+import SearchableSelect from '../../../shared/ui/searchable-select';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
 import { matchesSearch, paginateItems } from '../../../shared/utils/list-utils';
@@ -111,20 +112,15 @@ const ChequesPage = () => {
 
         <div>
           <FormLabel label="الحالة" />
-          <select
+          <SearchableSelect
             value={status}
             onChange={(event) => {
               setStatus(event.target.value);
               setPageNumber(1);
             }}
-            className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-gray-900 w-full"
-          >
-            {statusOptions.map((option) => (
-              <option key={option.value || 'all'} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            options={statusOptions}
+            placeholder="كل الحالات"
+          />
         </div>
       </div>
 
