@@ -15,6 +15,12 @@ export const getAllInvoices = async (params = {}, type) => {
     delete requestParams.showOnlyCustomersInvoices;
   }
 
+  if (type === 'batch') {
+    requestParams.hasBatchOnly = true;
+    delete requestParams.showOnlyCustomersInvoices;
+    delete requestParams.showOnlySuppliersInvoices;
+  }
+
   const { data } = await axiosInstance.get('/invoices', {
     params: requestParams,
   });
@@ -34,6 +40,18 @@ export const getNextInvoiceNumber = async () => {
 
 export const createInvoice = async (formData) => {
   const { data } = await axiosInstance.post('/invoices', formData, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return data;
+};
+
+export const getBatchByNumber = async (batchNumber) => {
+  const { data } = await axiosInstance.get(`/batches/${batchNumber}`);
+  return data;
+};
+
+export const createBatchInvoice = async (formData) => {
+  const { data } = await axiosInstance.post('/batches/create-invoice', formData, {
     headers: { 'Content-Type': 'application/json' },
   });
   return data;
@@ -63,5 +81,10 @@ export const getCustomers = async () => {
 
 export const getFinancialPeriods = async () => {
   const response = await axiosInstance.get('/financial-periods');
+  return response.data;
+};
+
+export const getProductsServices = async () => {
+  const response = await axiosInstance.get('/products-services/dropdown');
   return response.data;
 };

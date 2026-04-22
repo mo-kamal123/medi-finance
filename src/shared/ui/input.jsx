@@ -1,3 +1,6 @@
+import { Children, isValidElement } from 'react';
+import SearchableSelect from './searchable-select';
+
 const FormInput = ({
   label,
   error,
@@ -46,9 +49,19 @@ const FormInput = ({
         {as === 'textarea' ? (
           <textarea {...props} className={baseClasses + ' min-h-[100px]'} />
         ) : as === 'select' ? (
-          <select {...props} className={baseClasses}>
-            {children}
-          </select>
+          <SearchableSelect
+            {...props}
+            label={null}
+            error={error}
+            placeholder={props.placeholder || 'اختر'}
+            className={baseClasses}
+            options={Children.toArray(children)
+              .filter(isValidElement)
+              .map((child) => ({
+                value: child.props.value ?? '',
+                label: child.props.children,
+              }))}
+          />
         ) : (
           <input {...props} type={type} className={baseClasses} />
         )}

@@ -1,4 +1,5 @@
 import { Search } from 'lucide-react';
+import SearchableSelect from '../../../shared/ui/searchable-select';
 
 const InvoiceFilters = ({
   filters,
@@ -11,95 +12,85 @@ const InvoiceFilters = ({
     setFilters((prev) => ({
       ...prev,
       [key]: value || undefined,
-      pageNumber: 1, // reset pagination
+      pageNumber: 1,
     }));
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 bg-white rounded-xl p-6 shadow-sm borderborder-gray-100">
-      {/* 🔍 Search */}
+    <div className="mb-4 grid grid-cols-1 gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm md:grid-cols-3">
       <div className="relative">
         <Search
           size={18}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
         />
         <input
           type="text"
           placeholder="ابحث برقم الفاتورة..."
           value={filters.invoiceNumber || ''}
-          onChange={(e) => handleChange('invoiceNumber', e.target.value)}
-          className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg"
+          onChange={(event) => handleChange('invoiceNumber', event.target.value)}
+          className="w-full rounded-lg border border-gray-300 py-2 pr-10 pl-4"
         />
       </div>
 
-      {/* Status */}
-      <select
+      <SearchableSelect
         value={filters.status || ''}
-        onChange={(e) => handleChange('status', e.target.value)}
-        className="border border-gray-300 rounded-lg px-3 py-2"
-      >
-        <option value="">كل الحالات</option>
-        <option value="paid">مدفوعة</option>
-        <option value="pending">قيد الانتظار</option>
-        <option value="overdue">متأخرة</option>
-      </select>
+        onChange={(event) => handleChange('status', event.target.value)}
+        placeholder="كل الحالات"
+        options={[
+          { value: 'paid', label: 'مدفوعة' },
+          { value: 'pending', label: 'قيد الانتظار' },
+          { value: 'overdue', label: 'متأخرة' },
+        ]}
+      />
 
-      {/* Invoice Type */}
-      <select
+      <SearchableSelect
         value={filters.invoiceTypeId || ''}
-        onChange={(e) => handleChange('invoiceTypeId', e.target.value)}
-        className="border border-gray-300 rounded-lg px-3 py-2"
-      >
-        <option value="">كل الأنواع</option>
-        {invoiceTypes?.map((type) => (
-          <option key={type.id} value={type.id}>
-            {type.nameAr}
-          </option>
-        ))}
-      </select>
+        onChange={(event) => handleChange('invoiceTypeId', event.target.value)}
+        placeholder="كل الأنواع"
+        options={
+          invoiceTypes?.map((type) => ({
+            value: type.id ?? type.invoiceTypeID,
+            label: type.nameAr,
+          })) || []
+        }
+      />
 
-      {/* Customer */}
-      <select
+      <SearchableSelect
         value={filters.customerId || ''}
-        onChange={(e) => handleChange('customerId', e.target.value)}
-        className="border border-gray-300 rounded-lg px-3 py-2"
-      >
-        <option value="">كل العملاء</option>
-        {customers?.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.customerNameAr}
-          </option>
-        ))}
-      </select>
+        onChange={(event) => handleChange('customerId', event.target.value)}
+        placeholder="كل العملاء"
+        options={
+          customers?.map((customer) => ({
+            value: customer.id ?? customer.customerID,
+            label: customer.customerNameAr,
+          })) || []
+        }
+      />
 
-      {/* Supplier */}
-      <select
+      <SearchableSelect
         value={filters.supplierId || ''}
-        onChange={(e) => handleChange('supplierId', e.target.value)}
-        className="border border-gray-300 rounded-lg px-3 py-2"
-      >
-        <option value="">كل الموردين</option>
-        {suppliers?.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.supplierNameAr}
-          </option>
-        ))}
-      </select>
+        onChange={(event) => handleChange('supplierId', event.target.value)}
+        placeholder="كل الموردين"
+        options={
+          suppliers?.map((supplier) => ({
+            value: supplier.id ?? supplier.supplierID,
+            label: supplier.supplierNameAr,
+          })) || []
+        }
+      />
 
-      {/* Date From */}
       <input
         type="date"
         value={filters.fromDate || ''}
-        onChange={(e) => handleChange('fromDate', e.target.value)}
-        className="border border-gray-300 rounded-lg px-3 py-2"
+        onChange={(event) => handleChange('fromDate', event.target.value)}
+        className="rounded-lg border border-gray-300 px-3 py-2"
       />
 
-      {/* Date To */}
       <input
         type="date"
         value={filters.toDate || ''}
-        onChange={(e) => handleChange('toDate', e.target.value)}
-        className="border border-gray-300 rounded-lg px-3 py-2"
+        onChange={(event) => handleChange('toDate', event.target.value)}
+        className="rounded-lg border border-gray-300 px-3 py-2"
       />
     </div>
   );

@@ -1,7 +1,6 @@
-﻿import { useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
-
+import { useMemo, useState } from 'react';
+import { Eye, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import InvoiceFilters from '../components/invoice-filter';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
@@ -15,21 +14,22 @@ import {
 } from '../hooks/invoices.queries';
 import { formatCurrency } from '../utils/format-currency';
 
-const InvoicesPage = () => {
+const getBatchNumber = (row) => {
+  if (row.batchNumber) return row.batchNumber;
+  if (row.invoiceNumber?.startsWith('INV-BATCH-')) {
+    return row.invoiceNumber.replace('INV-BATCH-', '');
+  }
+  return '-';
+};
+
+const BatchInvoicesPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const pageType =
-    location.pathname === '/customers-invoices' ? 'customer' : 'supplier';
-
-  const newInvoiceType = pageType;
-
   const [filters, setFilters] = useState({
     pageNumber: 1,
     pageSize: 10,
   });
 
-  const { data = [], isLoading } = useInvoices(filters, pageType);
+  const { data = [], isLoading } = useInvoices(filters, 'batch');
   const { data: invoiceTypes } = useInvoiceTypes();
   const { data: customers } = useCustomers();
   const { data: suppliers } = useSuppliers();
@@ -51,12 +51,16 @@ const InvoicesPage = () => {
         key: 'invoiceNumber',
       },
       {
-        header: 'العميل / الشركة',
-        key: 'customerNameAr',
+        header: 'رقم الدفعة',
+        key: 'batchNumber',
+        type: 'custom',
+        render: (row) => getBatchNumber(row),
       },
       {
-        header: 'نوع الفاتورة',
-        key: 'invoiceTypeNameAr',
+        header: 'المورد',
+        key: 'supplierNameAr',
+        type: 'custom',
+        render: (row) => row.supplierNameAr || row.customerNameAr || '-',
       },
       {
         header: 'تاريخ الفاتورة',
@@ -64,7 +68,7 @@ const InvoicesPage = () => {
         type: 'custom',
         render: (row) =>
           row.invoiceDate
-            ? new Date(row.invoiceDate).toLocaleDateString()
+            ? new Date(row.invoiceDate).toLocaleDateString('ar-EG')
             : '-',
       },
       {
@@ -79,7 +83,7 @@ const InvoicesPage = () => {
         type: 'custom',
         render: (row) => (
           <span className="text-red-500">
-            {formatCurrency(row.totalAmount - row.netAmount)}
+            {formatCurrency((row.totalAmount || 0) - (row.netAmount || 0))}
           </span>
         ),
       },
@@ -99,7 +103,7 @@ const InvoicesPage = () => {
         type: 'custom',
         render: (row) => (
           <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(
+            className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusStyle(
               row.status
             )}`}
           >
@@ -112,7 +116,7 @@ const InvoicesPage = () => {
         key: 'actions',
         type: 'custom',
         render: (row) => (
-          <div className="flex items-center gap-3 justify-center">
+          <div className="flex items-center justify-center gap-3">
             <button
               onClick={() => navigate(`/invoices/${row.invoiceID}`)}
               className="text-blue-600 hover:text-blue-800"
@@ -120,22 +124,6 @@ const InvoicesPage = () => {
             >
               <Eye size={18} />
             </button>
-
-            {/* <button
-              onClick={() => navigate(`/invoices/edit/${row.invoiceID}`)}
-              className="text-green-600 hover:text-green-800"
-              title="تعديل"
-            >
-              <Pencil size={18} />
-            </button>
-
-            <button
-              onClick={() => console.log('delete invoice', row.invoiceID)}
-              className="text-red-600 hover:text-red-800"
-              title="حذف"
-            >
-              <Trash2 size={18} />
-            </button> */}
           </div>
         ),
       },
@@ -143,24 +131,22 @@ const InvoicesPage = () => {
     [navigate]
   );
 
-  const onAddInvoice = () => {
-    navigate(`/invoices/new?type=${newInvoiceType}`);
-  };
-
   return (
     <div className="space-y-6 p-6">
-      <div className="flex justify-between items-center bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
         <div>
-          <h1 className="text-2xl font-bold">الفواتير</h1>
-          <p className="text-sm text-gray-600">إدارة الفواتير من مكان واحد</p>
+          <h1 className="text-2xl font-bold">فواتير المطالبات</h1>
+          <p className="text-sm text-gray-600">
+            متابعة الفواتير التي تم إنشاؤها من دفعات المطالبات
+          </p>
         </div>
 
         <button
-          onClick={onAddInvoice}
-          className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg"
+          onClick={() => navigate('/batches-invoices/new')}
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary/90"
         >
           <Plus size={16} />
-          إضافة فاتورة
+          إنشاء فاتورة دفعة
         </button>
       </div>
 
@@ -189,5 +175,4 @@ const InvoicesPage = () => {
   );
 };
 
-
-export default InvoicesPage;
+export default BatchInvoicesPage;

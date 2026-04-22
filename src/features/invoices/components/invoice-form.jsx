@@ -1,111 +1,26 @@
 ﻿import React, { useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2 } from 'lucide-react';
 import FormInput from '../../../shared/ui/input';
 import { invoiceSchema } from '../validation/invoice.validation';
-import {
-  useInvoiceTypes,
-  useCustomers,
-  useSuppliers,
-  useFinancialPeriods,
-  useNextInvoiceNumber,
-} from '../hooks/invoices.queries';
+import { useNextInvoiceNumber } from '../hooks/invoices.queries';
+import { createEmptyDetail, mapInvoiceToFormValues, defaultValues } from '../utils/mapInvoiceToFormValues';
+import useDropdowns from '../hooks/dropdowns';
+import NormalSelect from '../../../shared/ui/NormalSelect';
+import SearchableSelect from '../../../shared/ui/searchable-select';
+import { formatCurrency } from '../utils/format-currency';
 
-const PRODUCT_SERVICE_OPTIONS = [
-  { id: 12, code: '0022', name: 'werw' },
-  { id: 11, code: '3434', name: 'wewr' },
-  { id: 6, code: '0013', name: 'ادوية و حقن' },
-  { id: 3, code: '0012', name: 'اقامة مستشفيات' },
-  { id: 1, code: '0011', name: 'تحاليل و اشعة' },
-  { id: 7, code: '777', name: 'قفغقفغق' },
-];
-
-const EMPTY_INITIAL_DATA = Object.freeze({});
-
-const createEmptyDetail = () => ({
-  productServiceID: '',
-  quantity: 1,
-  unitPrice: 0,
-  discountPercentage: 0,
-  taxPercentage: 0,
-});
-
-const defaultValues = {
-  invoiceNumber: '',
-  invoiceDate: '',
-  dueDate: '',
-  invoiceTypeID: '',
-  customerID: '',
-  supplierID: '',
-  taxAmount: 0,
-  discountAmount: 0,
-  financialPeriodID: '',
-  status: 'Posted',
-  details: [createEmptyDetail()],
-};
-
-const toDateInputValue = (value) => {
-  if (!value) return '';
-  return String(value).split('T')[0];
-};
-
-const mapInvoiceToFormValues = (invoice) => {
-  if (!invoice || Object.keys(invoice).length === 0) {
-    return defaultValues;
-  }
-
-  return {
-    invoiceNumber: invoice.invoiceNumber || '',
-    invoiceDate: toDateInputValue(invoice.invoiceDate),
-    dueDate: toDateInputValue(invoice.dueDate),
-    invoiceTypeID: invoice.invoiceTypeID ? String(invoice.invoiceTypeID) : '',
-    customerID: invoice.customerID ? String(invoice.customerID) : '',
-    supplierID: invoice.supplierID ? String(invoice.supplierID) : '',
-    taxAmount: invoice.taxAmount ?? 0,
-    discountAmount: invoice.discountAmount ?? 0,
-    financialPeriodID: invoice.financialPeriodID
-      ? String(invoice.financialPeriodID)
-      : '',
-    status: invoice.status || 'Posted',
-    details:
-      invoice.invoiceDetails?.length > 0
-        ? invoice.invoiceDetails.map((item) => ({
-            productServiceID: item.productServiceID
-              ? String(item.productServiceID)
-              : '',
-            quantity: item.quantity ?? 1,
-            unitPrice: item.unitPrice ?? 0,
-            discountPercentage: item.discountPercentage ?? 0,
-            taxPercentage: item.taxPercentage ?? 0,
-          }))
-        : invoice.details?.length > 0
-          ? invoice.details.map((item) => ({
-              productServiceID: item.productServiceID
-                ? String(item.productServiceID)
-                : '',
-              quantity: item.quantity ?? 1,
-              unitPrice: item.unitPrice ?? 0,
-              discountPercentage: item.discountPercentage ?? 0,
-              taxPercentage: item.taxPercentage ?? 0,
-            }))
-          : [createEmptyDetail()],
-  };
-};
-
-const InvoiceForm = ({
-  initialData = EMPTY_INITIAL_DATA,
-  onSubmit,
-  isLoading,
-  invoiceType,
-}) => {
+const InvoiceForm = ({ initialData = {}, onSubmit, isLoading, invoiceType }) => {
   const isEditMode = Boolean(initialData?.invoiceID);
-  const { data: invoiceTypes } = useInvoiceTypes();
-  const { data: customers } = useCustomers();
-  const { data: suppliers } = useSuppliers();
-  const { data: financialPeriods } = useFinancialPeriods();
+  const {
+    customers,
+    financialPeriods,
+    invoiceTypes,
+    productsServices,
+    suppliers,
+  } = useDropdowns();
   const { data: nextInvoiceNumberData } = useNextInvoiceNumber(!isEditMode);
-
   const {
     register,
     control,
@@ -122,19 +37,43 @@ const InvoiceForm = ({
     control,
     name: 'details',
   });
+  const watchedDetails = useWatch({ control, name: 'details' });
+  const watchedDiscountAmount = useWatch({ control, name: 'discountAmount' });
+  const watchedTaxAmount = useWatch({ control, name: 'taxAmount' });
+
+  const totalAmount = (watchedDetails || []).reduce((sum, item) => {
+    const quantity = Number(item?.quantity) || 0;
+    const unitPrice = Number(item?.unitPrice) || 0;
+    return sum + quantity * unitPrice;
+  }, 0);
+
+  const detailsDiscounts = (watchedDetails || []).reduce((sum, item) => {
+    const quantity = Number(item?.quantity) || 0;
+    const unitPrice = Number(item?.unitPrice) || 0;
+    const discountPercentage = Number(item?.discountPercentage) || 0;
+    return sum + (quantity * unitPrice * discountPercentage) / 100;
+  }, 0);
+
+  const formDiscountAmount = Number(watchedDiscountAmount) || 0;
+  const totalDiscounts = detailsDiscounts + formDiscountAmount;
+  const taxAmount = Number(watchedTaxAmount) || 0;
+  const netAmount = Math.max(totalAmount - totalDiscounts + taxAmount, 0);
 
   useEffect(() => {
-    reset(mapInvoiceToFormValues(initialData));
-  }, [initialData, reset]);
-
-  useEffect(() => {
-    if (!isEditMode && nextInvoiceNumberData?.nextInvoiceNumber) {
-      setValue('invoiceNumber', nextInvoiceNumberData.nextInvoiceNumber, {
-        shouldDirty: false,
-        shouldValidate: true,
+    if (isEditMode && initialData?.invoiceID) {
+      reset(mapInvoiceToFormValues(initialData));
+    } else if (!isEditMode && nextInvoiceNumberData?.nextInvoiceNumber) {
+      reset({
+        ...defaultValues,
+        invoiceNumber: nextInvoiceNumberData.nextInvoiceNumber,
       });
     }
-  }, [isEditMode, nextInvoiceNumberData, setValue]);
+  }, [
+    isEditMode,
+    initialData?.invoiceID,
+    nextInvoiceNumberData?.nextInvoiceNumber,
+    reset,
+  ]);
 
   useEffect(() => {
     if (!invoiceType) return;
@@ -271,7 +210,7 @@ const InvoiceForm = ({
         />
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 w-full overflow-x-auto">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-800">
             تفاصيل الخدمات
@@ -287,8 +226,10 @@ const InvoiceForm = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-3 font-semibold text-gray-700 px-4 py-2 bg-gray-200 rounded-xl">
-          <span>معرف المنتج</span>
+        <div className="grid grid-cols-1 md:grid-cols-8 gap-3 font-semibold text-gray-700 px-4 py-2 bg-gray-200 rounded-xl">
+          <span>الخدمه</span>
+          <span>نوع الخدمه</span>
+          <span>التاريخ</span>
           <span>الكمية</span>
           <span>سعر الوحدة</span>
           <span>خصم %</span>
@@ -302,29 +243,62 @@ const InvoiceForm = ({
           return (
             <div
               key={field.id}
-              className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end border border-gray-300 rounded-xl p-4 bg-gray-50"
+              className="grid grid-cols-1 md:grid-cols-9 gap-3 items-end border border-gray-300 rounded-xl p-4 bg-gray-50"
             >
               <div className="flex flex-col">
-                <select
+                <SearchableSelect
                   {...register(`details.${index}.productServiceID`, {
                     valueAsNumber: true,
                   })}
                   className="input-modern"
-                >
-                  <option value="">اختر</option>
-                  {PRODUCT_SERVICE_OPTIONS.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.name}
-                    </option>
-                  ))}
-                </select>
+                  options={
+                    productsServices?.map((product) => ({
+                      value: product.id,
+                      label: product.name,
+                    })) || []
+                  }
+                />
                 {detailErrors?.productServiceID?.message && (
                   <p className="text-red-500 text-sm mt-1">
                     {detailErrors.productServiceID.message}
                   </p>
                 )}
               </div>
+              <div className="flex flex-col">
+                <SearchableSelect
+                  {...register(`details.${index}.ServiceTypeID`, {
+                    valueAsNumber: true,
+                  })}
+                  className="input-modern"
+                  options={
+                    productsServices?.map((product) => ({
+                      value: product.id,
+                      label: product.name,
+                    })) || []
+                  }
+                />
+                {detailErrors?.serviceTypeID?.message && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {detailErrors.serviceTypeID.message}
+                  </p>
+                )}
+              </div>
 
+              <input
+                type="date"
+                {...register(`details.${index}.quantity`, {
+                  valueAsNumber: true,
+                })}
+                className="input-modern"
+              />
+
+              <input
+                type="number"
+                {...register(`details.${index}.quantity`, {
+                  valueAsNumber: true,
+                })}
+                className="input-modern"
+              />
               <input
                 type="number"
                 {...register(`details.${index}.quantity`, {
@@ -367,37 +341,42 @@ const InvoiceForm = ({
         })}
       </div>
 
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="px-8 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition disabled:opacity-50"
-        >
-          حفظ الفاتورة
-        </button>
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 md:grid-cols-3">
+          <div className="rounded-xl bg-white p-4 shadow-sm">
+            <p className="text-sm text-gray-500">إجمالي الفاتورة</p>
+            <p className="mt-2 text-lg font-semibold text-gray-900">
+              {formatCurrency(totalAmount)}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-white p-4 shadow-sm">
+            <p className="text-sm text-gray-500">إجمالي الخصومات</p>
+            <p className="mt-2 text-lg font-semibold text-red-500">
+              {formatCurrency(totalDiscounts)}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-white p-4 shadow-sm">
+            <p className="text-sm text-gray-500">صافي الفاتورة</p>
+            <p className="mt-2 text-lg font-semibold text-primary">
+              {formatCurrency(netAmount)}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="px-8 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition disabled:opacity-50"
+          >
+            حفظ الفاتورة
+          </button>
+        </div>
       </div>
     </form>
   );
 };
 
 export default InvoiceForm;
-
-const NormalSelect = React.forwardRef(
-  ({ label, options, error, ...rest }, ref) => (
-    <div className="w-full flex flex-col mb-4">
-      <label className="mb-1 text-gray-700 font-medium">{label}</label>
-      <select
-        ref={ref}
-        {...rest}
-        className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-gray-900"
-      >
-        {options.map((opt, i) => (
-          <option key={i} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-      {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
-    </div>
-  )
-);

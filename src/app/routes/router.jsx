@@ -2,6 +2,7 @@
 import { authRoutes } from '../../features/auth/routes/routes';
 import { balanceSheetRoutes } from '../../features/balance-sheet/routes/routes';
 import { banksRoutes } from '../../features/banks/routes/routes';
+import { cashTransactionsRoutes } from '../../features/cash-transactions/routes/routes';
 import chequesRoutes from '../../features/cheques/routes/routes';
 import CommercialPapersRoutes from '../../features/commercial-papers/routes/routes';
 import { customersRoutes } from '../../features/customers/routes/routes';
@@ -43,6 +44,7 @@ export const router = createBrowserRouter([
       ...linkAccountCostRoutes,
       ...InvoicesRoutes,
       ...entriesRoutes,
+      ...cashTransactionsRoutes,
       ...generalLedgerRoutes,
       ...trialBalanceRoutes,
       ...balanceSheetRoutes,
@@ -54,3 +56,4 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
+

@@ -2,6 +2,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Save } from 'lucide-react';
 import FormInput from '../../../shared/ui/input';
+import SearchableSelect from '../../../shared/ui/searchable-select';
 import { supplierSchema } from '../validation/supplier.validation';
 
 const SupplierForm = ({
@@ -83,13 +84,13 @@ const SupplierForm = ({
           <label className="mb-1 block text-sm font-medium text-gray-700">
             نوع المورد
           </label>
-          <select
+          <SearchableSelect
             {...register('supplierType')}
-            className="w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-primary/20"
-          >
-            <option value={1}>مورد</option>
-            <option value={2}>مورد نقدي</option>
-          </select>
+            options={[
+              { value: 1, label: 'مورد' },
+              { value: 2, label: 'مورد نقدي' },
+            ]}
+          />
         </div>
       </div>
 
@@ -147,17 +148,14 @@ const SupplierForm = ({
           <label className="mb-1 block text-sm font-medium text-gray-700">
             العملة
           </label>
-          <select
+          <SearchableSelect
             {...register('currencyID')}
-            className="w-full rounded-lg border border-gray-200 px-4 py-2"
-          >
-            <option value="">اختر العملة</option>
-            {currencies.map((currency) => (
-              <option key={currency.currencyID} value={currency.currencyID}>
-                {currency.currencyName}
-              </option>
-            ))}
-          </select>
+            placeholder="اختر العملة"
+            options={currencies.map((currency) => ({
+              value: currency.currencyID,
+              label: currency.currencyName,
+            }))}
+          />
         </div>
       </div>
 
@@ -166,34 +164,28 @@ const SupplierForm = ({
           <label className="mb-1 block text-sm font-medium text-gray-700">
             الحساب
           </label>
-          <select
+          <SearchableSelect
             {...register('accountID')}
-            className="w-full rounded-lg border border-gray-200 px-4 py-2"
-          >
-            <option value="">اختر الحساب</option>
-            {accounts.map((acc) => (
-              <option key={acc.accountID} value={acc.accountID}>
-                {acc.accountCode} - {acc.nameAr}
-              </option>
-            ))}
-          </select>
+            placeholder="اختر الحساب"
+            options={accounts.map((acc) => ({
+              value: acc.accountID,
+              label: `${acc.accountCode} - ${acc.nameAr}`,
+            }))}
+          />
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">
             مركز التكلفة
           </label>
-          <select
+          <SearchableSelect
             {...register('defaultCostCenterID')}
-            className="w-full rounded-lg border border-gray-200 px-4 py-2"
-          >
-            <option value="">بدون</option>
-            {costCenters.map((center) => (
-              <option key={center.costCenterID} value={center.costCenterID}>
-                {center.ccCode} - {center.nameAr}
-              </option>
-            ))}
-          </select>
+            placeholder="بدون"
+            options={costCenters.map((center) => ({
+              value: center.costCenterID,
+              label: `${center.ccCode} - ${center.nameAr}`,
+            }))}
+          />
         </div>
       </div>
 
