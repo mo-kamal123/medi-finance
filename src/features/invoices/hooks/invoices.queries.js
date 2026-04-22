@@ -1,6 +1,7 @@
 ﻿import { useQuery } from '@tanstack/react-query';
 import {
   getAllInvoices,
+  getBatchByNumber,
   getCustomers,
   getFinancialPeriods,
   getInvoiceById,
@@ -24,6 +25,14 @@ export const useInvoice = (id) => {
     queryKey: invoicesKeys.detail(id),
     queryFn: () => getInvoiceById(id),
     enabled: !!id,
+  });
+};
+
+export const useBatch = (batchNumber, enabled = true) => {
+  return useQuery({
+    queryKey: invoicesKeys.batch(batchNumber),
+    queryFn: () => getBatchByNumber(batchNumber),
+    enabled: enabled && Boolean(batchNumber),
   });
 };
 

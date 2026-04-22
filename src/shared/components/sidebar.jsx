@@ -36,6 +36,7 @@ const Sidebar = () => {
         { name: 'شجرة الحسابات', link: '/accounts-tree', icon: FolderTree },
         { name: 'شجرة التكاليف', link: '/cost-tree', icon: FolderTree },
         { name: 'القيود اليومية', link: '/entries', icon: FileText },
+        { name: 'الصندوق', link: '/cash-transactions', icon: Wallet },
       ],
     },
     {
@@ -50,6 +51,11 @@ const Sidebar = () => {
         {
           name: 'فواتير المورديين',
           link: '/suppliers-invoices',
+          icon: FileClock,
+        },
+        {
+          name: 'فواتير المطالبات',
+          link: '/batches-invoices',
           icon: FileClock,
         },
       ],

@@ -1,5 +1,5 @@
 ﻿import React, { useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2 } from 'lucide-react';
 import FormInput from '../../../shared/ui/input';
@@ -8,6 +8,8 @@ import { useNextInvoiceNumber } from '../hooks/invoices.queries';
 import { createEmptyDetail, mapInvoiceToFormValues, defaultValues } from '../utils/mapInvoiceToFormValues';
 import useDropdowns from '../hooks/dropdowns';
 import NormalSelect from '../../../shared/ui/NormalSelect';
+import SearchableSelect from '../../../shared/ui/searchable-select';
+import { formatCurrency } from '../utils/format-currency';
 
 const InvoiceForm = ({ initialData = {}, onSubmit, isLoading, invoiceType }) => {
   const isEditMode = Boolean(initialData?.invoiceID);
@@ -35,6 +37,27 @@ const InvoiceForm = ({ initialData = {}, onSubmit, isLoading, invoiceType }) => 
     control,
     name: 'details',
   });
+  const watchedDetails = useWatch({ control, name: 'details' });
+  const watchedDiscountAmount = useWatch({ control, name: 'discountAmount' });
+  const watchedTaxAmount = useWatch({ control, name: 'taxAmount' });
+
+  const totalAmount = (watchedDetails || []).reduce((sum, item) => {
+    const quantity = Number(item?.quantity) || 0;
+    const unitPrice = Number(item?.unitPrice) || 0;
+    return sum + quantity * unitPrice;
+  }, 0);
+
+  const detailsDiscounts = (watchedDetails || []).reduce((sum, item) => {
+    const quantity = Number(item?.quantity) || 0;
+    const unitPrice = Number(item?.unitPrice) || 0;
+    const discountPercentage = Number(item?.discountPercentage) || 0;
+    return sum + (quantity * unitPrice * discountPercentage) / 100;
+  }, 0);
+
+  const formDiscountAmount = Number(watchedDiscountAmount) || 0;
+  const totalDiscounts = detailsDiscounts + formDiscountAmount;
+  const taxAmount = Number(watchedTaxAmount) || 0;
+  const netAmount = Math.max(totalAmount - totalDiscounts + taxAmount, 0);
 
   useEffect(() => {
     if (isEditMode && initialData?.invoiceID) {
@@ -223,19 +246,18 @@ const InvoiceForm = ({ initialData = {}, onSubmit, isLoading, invoiceType }) => 
               className="grid grid-cols-1 md:grid-cols-9 gap-3 items-end border border-gray-300 rounded-xl p-4 bg-gray-50"
             >
               <div className="flex flex-col">
-                <select
+                <SearchableSelect
                   {...register(`details.${index}.productServiceID`, {
                     valueAsNumber: true,
                   })}
                   className="input-modern"
-                >
-                  <option value="">اختر</option>
-                  {productsServices?.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.name}
-                    </option>
-                  ))}
-                </select>
+                  options={
+                    productsServices?.map((product) => ({
+                      value: product.id,
+                      label: product.name,
+                    })) || []
+                  }
+                />
                 {detailErrors?.productServiceID?.message && (
                   <p className="text-red-500 text-sm mt-1">
                     {detailErrors.productServiceID.message}
@@ -243,19 +265,18 @@ const InvoiceForm = ({ initialData = {}, onSubmit, isLoading, invoiceType }) => 
                 )}
               </div>
               <div className="flex flex-col">
-                <select
+                <SearchableSelect
                   {...register(`details.${index}.ServiceTypeID`, {
                     valueAsNumber: true,
                   })}
                   className="input-modern"
-                >
-                  <option value="">اختر</option>
-                  {productsServices?.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.name}
-                    </option>
-                  ))}
-                </select>
+                  options={
+                    productsServices?.map((product) => ({
+                      value: product.id,
+                      label: product.name,
+                    })) || []
+                  }
+                />
                 {detailErrors?.serviceTypeID?.message && (
                   <p className="text-red-500 text-sm mt-1">
                     {detailErrors.serviceTypeID.message}
@@ -320,17 +341,42 @@ const InvoiceForm = ({ initialData = {}, onSubmit, isLoading, invoiceType }) => 
         })}
       </div>
 
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="px-8 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition disabled:opacity-50"
-        >
-          حفظ الفاتورة
-        </button>
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 md:grid-cols-3">
+          <div className="rounded-xl bg-white p-4 shadow-sm">
+            <p className="text-sm text-gray-500">إجمالي الفاتورة</p>
+            <p className="mt-2 text-lg font-semibold text-gray-900">
+              {formatCurrency(totalAmount)}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-white p-4 shadow-sm">
+            <p className="text-sm text-gray-500">إجمالي الخصومات</p>
+            <p className="mt-2 text-lg font-semibold text-red-500">
+              {formatCurrency(totalDiscounts)}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-white p-4 shadow-sm">
+            <p className="text-sm text-gray-500">صافي الفاتورة</p>
+            <p className="mt-2 text-lg font-semibold text-primary">
+              {formatCurrency(netAmount)}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="px-8 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition disabled:opacity-50"
+          >
+            حفظ الفاتورة
+          </button>
+        </div>
       </div>
     </form>
   );
-};;
+};
 
 export default InvoiceForm;

@@ -1,4 +1,6 @@
-﻿const Pagination = ({
+import SearchableSelect from './searchable-select';
+
+const Pagination = ({
   currentPage = 1,
   totalPages = 1,
   pageSize = 10,
@@ -16,13 +18,13 @@
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
+    <div className="flex flex-col items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white px-4 py-3 md:flex-row">
       <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={() => onPageChange?.(currentPage - 1)}
           disabled={currentPage <= 1}
-          className="px-3 py-2 rounded-lg border border-gray-300 text-sm disabled:opacity-50"
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:opacity-50"
         >
           السابق
         </button>
@@ -33,9 +35,9 @@
               key={page}
               type="button"
               onClick={() => onPageChange?.(page)}
-              className={`px-3 py-2 rounded-lg text-sm border ${
+              className={`rounded-lg border px-3 py-2 text-sm ${
                 page === currentPage
-                  ? 'bg-primary text-white border-primary'
+                  ? 'border-primary bg-primary text-white'
                   : 'border-gray-300 text-gray-700'
               }`}
             >
@@ -48,7 +50,7 @@
           type="button"
           onClick={() => onPageChange?.(currentPage + 1)}
           disabled={currentPage >= totalPages}
-          className="px-3 py-2 rounded-lg border border-gray-300 text-sm disabled:opacity-50"
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:opacity-50"
         >
           التالي
         </button>
@@ -59,18 +61,15 @@
           صفحة {currentPage} من {totalPages}
         </span>
 
-        {onPageSizeChange && (
-          <select
-            value={pageSize}
-            onChange={(event) => onPageSizeChange(Number(event.target.value))}
-            className="border border-gray-300 rounded-lg px-3 py-2"
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
-        )}
+        {onPageSizeChange ? (
+          <div className="w-24">
+            <SearchableSelect
+              value={pageSize}
+              onChange={(event) => onPageSizeChange(Number(event.target.value))}
+              options={[5, 10, 20, 50]}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -16,10 +16,24 @@ const InvoicesRoutes = [
     ),
   },
   {
+    path: '/batches-invoices',
+    element: lazyPage(
+      () => import('../pages/batch-invoices-page'),
+      'جاري تحميل فواتير المطالبات...'
+    ),
+  },
+  {
     path: '/invoices/new',
     element: lazyPage(
       () => import('../pages/new-customer-invoice'),
       'جاري تحميل نموذج الفاتورة...'
+    ),
+  },
+  {
+    path: '/batches-invoices/new',
+    element: lazyPage(
+      () => import('../pages/new-batch-invoice'),
+      'جاري تحميل نموذج فاتورة المطالبة...'
     ),
   },
   {

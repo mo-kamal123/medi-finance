@@ -7,6 +7,8 @@ export const invoicesKeys = {
 
   detail: (id) => [...invoicesKeys.details(), id],
 
+  batch: (batchNumber) => [...invoicesKeys.all, 'batch', batchNumber],
+
   types: () => [...invoicesKeys.all, 'types'],
 
   suppliers: () => [...invoicesKeys.all, 'suppliers'],

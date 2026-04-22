@@ -1,6 +1,6 @@
-import { Search, Filter } from 'lucide-react';
-import Input from '../ui/input';
+import { Search } from 'lucide-react';
 import FormInput from '../ui/input';
+import SearchableSelect from '../ui/searchable-select';
 
 const SearchFilter = ({
   searchQuery,
@@ -13,36 +13,24 @@ const SearchFilter = ({
   className = '',
 }) => {
   return (
-    <div className={`flex flex-col sm:flex-row gap-3 ${className}`}>
-      {/* Search */}
-      <div className="flex-1 relative">
+    <div className={`flex flex-col gap-3 sm:flex-row ${className}`}>
+      <div className="relative flex-1">
         <FormInput
           type="text"
           placeholder={searchPlaceholder}
           value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
+          onChange={(event) => onSearchChange(event.target.value)}
           icon={Search}
         />
       </div>
 
-      {/* Filter */}
-      <div className="relative">
-        <Filter
-          size={18}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-        />
-        <select
+      <div className="sm:w-48">
+        <SearchableSelect
           value={filterValue}
-          onChange={(e) => onFilterChange(e.target.value)}
-          className="w-full sm:w-48 pr-10 pl-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary appearance-none bg-white text-start"
-        >
-          <option value="all">{allLabel}</option>
-          {filterOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
+          onChange={(event) => onFilterChange(event.target.value)}
+          placeholder={allLabel}
+          options={filterOptions}
+        />
       </div>
     </div>
   );

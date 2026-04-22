@@ -1,5 +1,6 @@
 ﻿import { Trash2 } from 'lucide-react';
 import Spinner from './spinner';
+import SearchableSelect from './searchable-select';
 
 const Table = ({
   columns = [],
@@ -88,18 +89,11 @@ const renderCell = (col, row, rowIndex, onChange) => {
   switch (col.type) {
     case 'select':
       return (
-        <select
+        <SearchableSelect
           value={row[col.key] || ''}
           onChange={(e) => onChange(rowIndex, col.key, e.target.value)}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2"
-        >
-          <option value="">اختر</option>
-          {col.options?.map((opt, i) => (
-            <option key={i} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
+          options={col.options || []}
+        />
       );
 
     case 'number':
