@@ -66,7 +66,11 @@ const EditInvoice = () => {
           {isLoadingJournalEntry ? (
             <PageLoader label="جاري تحميل القيد المرتبط..." />
           ) : journalEntry ? (
-            <JournalEntryForm defaultValues={journalEntry} mode="edit" />
+            <JournalEntryForm
+              defaultValues={journalEntry}
+              mode="edit"
+              showEntryDetailsButton
+            />
           ) : (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
               تعذر تحميل القيد المرتبط بهذه الفاتورة.

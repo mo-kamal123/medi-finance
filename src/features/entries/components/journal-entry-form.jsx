@@ -1,5 +1,12 @@
 ﻿import { useMemo, useState } from 'react';
-import { ArrowLeft, CheckCircle2, Plus, RotateCcw, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  ExternalLink,
+  Plus,
+  RotateCcw,
+  Trash2,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import FormInput from '../../../shared/ui/input';
 import SearchableSelect from '../../../shared/ui/searchable-select';
@@ -18,11 +25,12 @@ import {
   useReverseJournalEntry,
   useUpdateJournalEntry,
 } from '../hooks/entries.mutations';
+import { getBatchSummary } from '../api/entries.api';
 
 const JOURNAL_TYPES = [
-  { value: '1', label: '\u0642\u064a\u062f \u064a\u0648\u0645\u064a\u0629' },
-  { value: '2', label: '\u0642\u064a\u062f \u062a\u0633\u0648\u064a\u0629' },
-  { value: '3', label: '\u0642\u064a\u062f \u0625\u0642\u0641\u0627\u0644' },
+  { value: '1', label: 'قيد يومية' },
+  { value: '2', label: 'قيد تسوية' },
+  { value: '3', label: 'قيد إقفال' },
 ];
 
 const getStatusMeta = (status) => {
@@ -38,8 +46,12 @@ const getStatusMeta = (status) => {
 };
 
 const emptyDetail = {
+  batchNumber: '',
   accountID: '',
   costCenterID: '',
+  supplierName: '',
+  recordDate: '',
+  documentNumber: '',
   debitAmount: '',
   creditAmount: '',
   descriptionAr: '',
@@ -70,7 +82,6 @@ const getInitialValues = (defaultValues = {}) => ({
   entryDate: toDateInputValue(defaultValues.entryDate),
   journalType: defaultValues.journalType ?? '1',
   descriptionAr: defaultValues.descriptionAr ?? '',
-  descriptionEn: defaultValues.descriptionEn ?? '',
   referenceNumber: defaultValues.referenceNumber ?? '',
   financialPeriodID: defaultValues.financialPeriodID
     ? String(defaultValues.financialPeriodID)
@@ -79,12 +90,15 @@ const getInitialValues = (defaultValues = {}) => ({
   details:
     defaultValues.details?.length > 0
       ? defaultValues.details.map((detail) => ({
+          batchNumber: detail.batchNumber ?? '',
           accountID: detail.accountID ? String(detail.accountID) : '',
           costCenterID: detail.costCenterID ? String(detail.costCenterID) : '',
+          supplierName: detail.supplierName ?? '',
+          recordDate: toDateInputValue(detail.recordDate),
+          documentNumber: detail.documentNumber ?? '',
           debitAmount: detail.debitAmount ?? '',
           creditAmount: detail.creditAmount ?? '',
           descriptionAr: detail.descriptionAr ?? '',
-          descriptionEn: detail.descriptionEn ?? '',
           customerID: detail.customerID ? String(detail.customerID) : '',
           supplierID: detail.supplierID ? String(detail.supplierID) : '',
           currencyID: detail.currencyID ? String(detail.currencyID) : '',
@@ -97,7 +111,7 @@ const SelectField = ({
   value,
   onChange,
   options,
-  placeholder = '\u0627\u062e\u062a\u0631',
+  placeholder = 'اختر',
   dropdownPosition = 'bottom',
 }) => (
   <SearchableSelect
@@ -110,13 +124,17 @@ const SelectField = ({
 );
 
 const DetailField = ({ label, children }) => (
-  <div className="space-y-1">
+  <div className="space-y-1">0
     <label className="text-sm font-medium text-gray-700">{label}</label>
     {children}
   </div>
 );
 
-const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
+const JournalEntryForm = ({
+  defaultValues = {},
+  mode = 'create',
+  showEntryDetailsButton = false,
+}) => {
   const navigate = useNavigate();
   const createMutation = useCreateJournalEntry();
   const updateMutation = useUpdateJournalEntry();
@@ -199,6 +217,74 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
     });
   };
 
+  const handleAmountChange = (index, field, value) => {
+    setFormData((prev) => {
+      const details = [...prev.details];
+      const oppositeField =
+        field === 'debitAmount' ? 'creditAmount' : 'debitAmount';
+
+      details[index] = {
+        ...details[index],
+        [field]: value,
+        [oppositeField]: value !== '' ? '' : details[index][oppositeField],
+      };
+
+      return { ...prev, details };
+    });
+  };
+
+  const handleLoadBatchSummary = async (index) => {
+    const batchNumber = String(
+      formData.details[index]?.batchNumber || ''
+    ).trim();
+
+    if (!batchNumber) {
+      toast.error('أدخل رقم الدفعة أولاً');
+      return;
+    }
+
+    try {
+      const response = await getBatchSummary(batchNumber);
+      const summary = response?.data ?? response;
+
+      if (!summary) {
+        toast.error('تعذر جلب بيانات الدفعة');
+        return;
+      }
+
+      const matchedSupplier = suppliers.find((supplier) => {
+        const supplierNameAr = String(supplier.supplierNameAr || '').trim();
+        const supplierNameEn = String(supplier.supplierNameEn || '').trim();
+        const summaryName = String(summary.supplierName || '').trim();
+
+        return (
+          summaryName &&
+          (supplierNameAr === summaryName || supplierNameEn === summaryName)
+        );
+      });
+
+      setFormData((prev) => {
+        const details = [...prev.details];
+        details[index] = {
+          ...details[index],
+          supplierName: summary.supplierName || '',
+          supplierID: matchedSupplier ? String(matchedSupplier.supplierID) : '',
+          accountID: summary.accountID ? String(summary.accountID) : '',
+          debitAmount:
+            summary.totalAmount === null || summary.totalAmount === undefined
+              ? ''
+              : String(summary.totalAmount),
+          creditAmount: '',
+        };
+        return { ...prev, details };
+      });
+
+      toast.success('تم تحميل بيانات الدفعة');
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'فشل في جلب بيانات الدفعة');
+    }
+  };
+
   const addRow = () => {
     setFormData((prev) => ({
       ...prev,
@@ -239,16 +325,12 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
     if (!entryId) return;
 
     if (entryStatus === 'Posted') {
-      toast.info(
-        '\u062a\u0645 \u062a\u0631\u062d\u064a\u0644 \u0647\u0630\u0627 \u0627\u0644\u0642\u064a\u062f \u0628\u0627\u0644\u0641\u0639\u0644'
-      );
+      toast.info('تم ترحيل هذا القيد بالفعل');
       return;
     }
 
     if (isReversed) {
-      toast.info(
-        '\u0644\u0627 \u064a\u0645\u0643\u0646 \u062a\u0631\u062d\u064a\u0644 \u0642\u064a\u062f \u062a\u0645 \u0639\u0643\u0633\u0647'
-      );
+      toast.info('لا يمكن ترحيل قيد تم عكسه');
       return;
     }
 
@@ -259,16 +341,12 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
     if (!entryId) return;
 
     if (isReversed) {
-      toast.info(
-        '\u062a\u0645 \u0639\u0643\u0633 \u0647\u0630\u0627 \u0627\u0644\u0642\u064a\u062f \u0628\u0627\u0644\u0641\u0639\u0644'
-      );
+      toast.info('تم عكس هذا القيد بالفعل');
       return;
     }
 
     if (entryStatus !== 'Posted') {
-      toast.info(
-        '\u064a\u062c\u0628 \u062a\u0631\u062d\u064a\u0644 \u0627\u0644\u0642\u064a\u062f \u0623\u0648\u0644\u0627\u064b \u0642\u0628\u0644 \u0625\u062c\u0631\u0627\u0621 \u0627\u0644\u0639\u0643\u0633'
-      );
+      toast.info('يجب ترحيل القيد أولاً قبل إجراء العكس');
       return;
     }
 
@@ -279,9 +357,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
     event.preventDefault();
 
     if (!isBalanced) {
-      toast.error(
-        '\u064a\u062c\u0628 \u0623\u0646 \u064a\u0643\u0648\u0646 \u0645\u062c\u0645\u0648\u0639 \u0627\u0644\u0645\u062f\u064a\u0646 \u0645\u0633\u0627\u0648\u064a\u0627\u064b \u0644\u0644\u062f\u0627\u0626\u0646'
-      );
+      toast.error('يجب أن يكون مجموع المدين مساوياً للدائن');
       return;
     }
 
@@ -289,7 +365,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
       entryDate: new Date(formData.entryDate).toISOString(),
       journalType: formData.journalType,
       descriptionAr: formData.descriptionAr,
-      descriptionEn: formData.descriptionEn || '',
+      descriptionEn: '',
       referenceNumber: formData.referenceNumber || '',
       financialPeriodID: Number(formData.financialPeriodID),
       status: formData.status,
@@ -297,10 +373,14 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
       details: formData.details.map((detail) => ({
         accountID: Number(detail.accountID),
         costCenterID: detail.costCenterID ? Number(detail.costCenterID) : null,
+        recordDate: detail.recordDate
+          ? new Date(detail.recordDate).toISOString()
+          : null,
+        documentNumber: detail.documentNumber || '',
         debitAmount: Number(detail.debitAmount) || 0,
         creditAmount: Number(detail.creditAmount) || 0,
         descriptionAr: detail.descriptionAr || '',
-        descriptionEn: detail.descriptionEn || '',
+        descriptionEn: '',
         customerID: detail.customerID ? Number(detail.customerID) : null,
         supplierID: detail.supplierID ? Number(detail.supplierID) : null,
         currencyID: detail.currencyID ? Number(detail.currencyID) : null,
@@ -332,20 +412,26 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
           />
           <div>
             <h1 className="text-xl font-bold md:text-2xl">
-              {isEditMode
-                ? '\u062a\u0639\u062f\u064a\u0644 \u0642\u064a\u062f \u064a\u0648\u0645\u064a'
-                : '\u0625\u0646\u0634\u0627\u0621 \u0642\u064a\u062f \u064a\u0648\u0645\u064a'}
+              {isEditMode ? 'تعديل قيد يومي' : 'إنشاء قيد يومي'}
             </h1>
             <p className="text-sm text-gray-600">
-              {
-                '\u064a\u062c\u0628 \u0623\u0646 \u064a\u0643\u0648\u0646 \u0645\u062c\u0645\u0648\u0639 \u0627\u0644\u0645\u062f\u064a\u0646 \u0645\u0633\u0627\u0648\u064a\u0627\u064b \u0644\u0644\u062f\u0627\u0626\u0646'
-              }
+              يجب أن يكون مجموع المدين مساوياً للدائن
             </p>
           </div>
         </div>
 
         {isEditMode ? (
           <div className="flex flex-wrap items-center gap-3">
+            {showEntryDetailsButton && entryId ? (
+              <button
+                type="button"
+                onClick={() => navigate(`/entries/${entryId}`)}
+                className="flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-4 py-2 text-sky-700"
+              >
+                <ExternalLink size={16} />
+                فتح صفحة القيد
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={handlePostEntry}
@@ -358,7 +444,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
               className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <CheckCircle2 size={16} />
-              {'\u062a\u0631\u062d\u064a\u0644 \u0627\u0644\u0642\u064a\u062f'}
+              ترحيل القيد
             </button>
             <button
               type="button"
@@ -372,7 +458,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
               className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <RotateCcw size={16} />
-              {'\u0639\u0643\u0633 \u0627\u0644\u0642\u064a\u062f'}
+              عكس القيد
             </button>
           </div>
         ) : null}
@@ -385,7 +471,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           <FormInput
             type="date"
-            label={'\u0627\u0644\u062a\u0627\u0631\u064a\u062e'}
+            label="التاريخ"
             value={formData.entryDate}
             onChange={(event) =>
               handleFieldChange('entryDate', event.target.value)
@@ -395,7 +481,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
 
           <FormInput
             as="select"
-            label={'\u0646\u0648\u0639 \u0627\u0644\u0642\u064a\u062f'}
+            label="نوع القيد"
             value={formData.journalType}
             onChange={(event) =>
               handleFieldChange('journalType', event.target.value)
@@ -409,7 +495,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
           </FormInput>
 
           <FormInput
-            label={'\u0631\u0642\u0645 \u0627\u0644\u0645\u0631\u062c\u0639'}
+            label="رقم المرجع"
             value={formData.referenceNumber}
             onChange={(event) =>
               handleFieldChange('referenceNumber', event.target.value)
@@ -417,7 +503,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
           />
 
           <FormInput
-            label={'\u0627\u0644\u0648\u0635\u0641 \u0639\u0631\u0628\u064a'}
+            label="الوصف عربي"
             value={formData.descriptionAr}
             onChange={(event) =>
               handleFieldChange('descriptionAr', event.target.value)
@@ -425,26 +511,14 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
           />
 
           <FormInput
-            label={
-              '\u0627\u0644\u0648\u0635\u0641 \u0625\u0646\u062c\u0644\u064a\u0632\u064a'
-            }
-            value={formData.descriptionEn}
-            onChange={(event) =>
-              handleFieldChange('descriptionEn', event.target.value)
-            }
-          />
-
-          <FormInput
             as="select"
-            label={
-              '\u0627\u0644\u0641\u062a\u0631\u0629 \u0627\u0644\u0645\u0627\u0644\u064a\u0629'
-            }
+            label="الفترة المالية"
             value={formData.financialPeriodID}
             onChange={(event) =>
               handleFieldChange('financialPeriodID', event.target.value)
             }
           >
-            <option value="">{'\u0627\u062e\u062a\u0631'}</option>
+            <option value="">اختر</option>
             {periodOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -453,9 +527,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
           </FormInput>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              {'\u0627\u0644\u062d\u0627\u0644\u0629'}
-            </label>
+            <label className="text-sm font-medium text-gray-700">الحالة</label>
             <div className="flex h-11 items-center rounded-lg border border-gray-200 bg-gray-50 px-3">
               <span
                 className={`rounded-full px-2 py-1 text-xs ${statusMeta.badgeClass}`}
@@ -469,9 +541,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">
-              {
-                '\u062a\u0641\u0627\u0635\u064a\u0644 \u0627\u0644\u0642\u064a\u062f'
-              }
+              تفاصيل القيد
             </h2>
             <button
               type="button"
@@ -479,7 +549,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
               className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary/90"
             >
               <Plus size={16} />
-              {'\u0625\u0636\u0627\u0641\u0629 \u0633\u0637\u0631'}
+              إضافة سطر
             </button>
           </div>
 
@@ -491,7 +561,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-gray-700">
-                    {`\u0627\u0644\u0633\u0637\u0631 ${index + 1}`}
+                    {`السطر ${index + 1}`}
                   </span>
                   <button
                     type="button"
@@ -503,7 +573,27 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  <DetailField label={'\u0627\u0644\u062d\u0633\u0627\u0628'}>
+                  <DetailField label="رقم الدفعة">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={row.batchNumber}
+                        onChange={(e) =>
+                          handleRowChange(index, 'batchNumber', e.target.value)
+                        }
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleLoadBatchSummary(index)}
+                        className="shrink-0 rounded-lg bg-primary px-3 py-2 text-sm text-white hover:bg-primary/90"
+                      >
+                        جلب
+                      </button>
+                    </div>
+                  </DetailField>
+
+                  <DetailField label="الحساب">
                     <SelectField
                       value={row.accountID}
                       onChange={(e) =>
@@ -513,11 +603,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
                     />
                   </DetailField>
 
-                  <DetailField
-                    label={
-                      '\u0645\u0631\u0643\u0632 \u0627\u0644\u062a\u0643\u0644\u0641\u0629'
-                    }
-                  >
+                  <DetailField label="مركز التكلفة">
                     <SelectField
                       value={row.costCenterID}
                       onChange={(e) =>
@@ -527,11 +613,55 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
                     />
                   </DetailField>
 
-                  <DetailField
-                    label={
-                      '\u0627\u0644\u0648\u0635\u0641 \u0639\u0631\u0628\u064a'
-                    }
-                  >
+                  <DetailField label="مدين">
+                    <input
+                      type="number"
+                      value={row.debitAmount}
+                      onChange={(e) =>
+                        handleAmountChange(index, 'debitAmount', e.target.value)
+                      }
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                    />
+                  </DetailField>
+
+                  <DetailField label="دائن">
+                    <input
+                      type="number"
+                      value={row.creditAmount}
+                      onChange={(e) =>
+                        handleAmountChange(
+                          index,
+                          'creditAmount',
+                          e.target.value
+                        )
+                      }
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                    />
+                  </DetailField>
+
+                  <DetailField label="تاريخ السجل">
+                    <input
+                      type="date"
+                      value={row.recordDate}
+                      onChange={(e) =>
+                        handleRowChange(index, 'recordDate', e.target.value)
+                      }
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                    />
+                  </DetailField>
+
+                  <DetailField label="رقم المستند">
+                    <input
+                      type="text"
+                      value={row.documentNumber}
+                      onChange={(e) =>
+                        handleRowChange(index, 'documentNumber', e.target.value)
+                      }
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                    />
+                  </DetailField>
+
+                  <DetailField label="الوصف عربي">
                     <input
                       type="text"
                       value={row.descriptionAr}
@@ -542,44 +672,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
                     />
                   </DetailField>
 
-                  <DetailField
-                    label={
-                      '\u0627\u0644\u0648\u0635\u0641 \u0625\u0646\u062c\u0644\u064a\u0632\u064a'
-                    }
-                  >
-                    <input
-                      type="text"
-                      value={row.descriptionEn}
-                      onChange={(e) =>
-                        handleRowChange(index, 'descriptionEn', e.target.value)
-                      }
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                    />
-                  </DetailField>
-
-                  <DetailField label={'\u0645\u062f\u064a\u0646'}>
-                    <input
-                      type="number"
-                      value={row.debitAmount}
-                      onChange={(e) =>
-                        handleRowChange(index, 'debitAmount', e.target.value)
-                      }
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                    />
-                  </DetailField>
-
-                  <DetailField label={'\u062f\u0627\u0626\u0646'}>
-                    <input
-                      type="number"
-                      value={row.creditAmount}
-                      onChange={(e) =>
-                        handleRowChange(index, 'creditAmount', e.target.value)
-                      }
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                    />
-                  </DetailField>
-
-                  <DetailField label={'\u0627\u0644\u0639\u0645\u064a\u0644'}>
+                  <DetailField label="العميل">
                     <SelectField
                       value={row.customerID}
                       onChange={(e) =>
@@ -589,7 +682,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
                     />
                   </DetailField>
 
-                  <DetailField label={'\u0627\u0644\u0645\u0648\u0631\u062f'}>
+                  <DetailField label="المورد">
                     <SelectField
                       value={row.supplierID}
                       onChange={(e) =>
@@ -599,7 +692,16 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
                     />
                   </DetailField>
 
-                  <DetailField label={'\u0627\u0644\u0639\u0645\u0644\u0629'}>
+                  <DetailField label="بيانات المورد">
+                    <input
+                      type="text"
+                      value={row.supplierName}
+                      readOnly
+                      className="w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-gray-700"
+                    />
+                  </DetailField>
+
+                  <DetailField label="العملة">
                     <SelectField
                       value={row.currencyID}
                       onChange={(e) =>
@@ -609,9 +711,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
                     />
                   </DetailField>
 
-                  <DetailField
-                    label={'\u0633\u0639\u0631 \u0627\u0644\u0635\u0631\u0641'}
-                  >
+                  <DetailField label="سعر الصرف">
                     <input
                       type="number"
                       value={row.exchangeRate}
@@ -630,48 +730,58 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
             <table className="min-w-max overflow-hidden rounded-lg border border-gray-200 text-sm">
               <thead className="bg-primary/90 text-white">
                 <tr>
-                  <th className="p-3 text-right">
-                    {'\u0627\u0644\u062d\u0633\u0627\u0628'}
-                  </th>
-                  <th className="p-3 text-right">
-                    {
-                      '\u0645\u0631\u0643\u0632 \u0627\u0644\u062a\u0643\u0644\u0641\u0629'
-                    }
-                  </th>
-                  <th className="p-3 text-right">
-                    {
-                      '\u0627\u0644\u0648\u0635\u0641 \u0639\u0631\u0628\u064a'
-                    }{' '}
-                  </th>
-                  <th className="p-3 text-right">
-                    {
-                      '\u0627\u0644\u0648\u0635\u0641 \u0625\u0646\u062c\u0644\u064a\u0632\u064a'
-                    }
-                  </th>
-                  <th className="p-3 text-right">
-                    {'\u0645\u062f\u064a\u0646'}
-                  </th>
-                  <th className="p-3 text-right">
-                    {'\u062f\u0627\u0626\u0646'}
-                  </th>
-                  <th className="p-3 text-right">
-                    {'\u0627\u0644\u0639\u0645\u064a\u0644'}
-                  </th>
-                  <th className="p-3 text-right">
-                    {'\u0627\u0644\u0645\u0648\u0631\u062f'}
-                  </th>
-                  <th className="p-3 text-right">
-                    {'\u0627\u0644\u0639\u0645\u0644\u0629'}
-                  </th>
-                  <th className="p-3 text-right">
-                    {'\u0633\u0639\u0631 \u0627\u0644\u0635\u0631\u0641'}
-                  </th>
+                  <th className="p-3 text-right">مدين</th>
+                  <th className="p-3 text-right">دائن</th>
+                  <th className="p-3 text-right">الحساب</th>
+                  <th className="p-3 text-right">مركز التكلفة</th>
+                  <th className="p-3 text-right">الوصف</th>
+                  <th className="p-3 text-right">تاريخ السجل</th>
+                  <th className="p-3 text-right">رقم المستند</th>
+                  <th className="p-3 text-right">العميل</th>
+                  <th className="p-3 text-right">المورد</th>
+                  <th className="p-3 text-right">بيانات المورد</th>
+                  <th className="p-3 text-right">العملة</th>
+                  <th className="p-3 text-right">سعر الصرف</th>
+                  <th className="p-3 text-right">رقم الدفعة</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
                 {formData.details.map((row, index) => (
                   <tr key={index} className="align-top border border-gray-200">
+                    {/* مدين */}
+                    <td className="min-w-[120px] p-2">
+                      <input
+                        type="number"
+                        value={row.debitAmount}
+                        onChange={(event) =>
+                          handleAmountChange(
+                            index,
+                            'debitAmount',
+                            event.target.value
+                          )
+                        }
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                      />
+                    </td>
+
+                    {/* دائن */}
+                    <td className="min-w-[120px] p-2">
+                      <input
+                        type="number"
+                        value={row.creditAmount}
+                        onChange={(event) =>
+                          handleAmountChange(
+                            index,
+                            'creditAmount',
+                            event.target.value
+                          )
+                        }
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                      />
+                    </td>
+
+                    {/* الحساب */}
                     <td className="min-w-[220px] p-2">
                       <SelectField
                         value={row.accountID}
@@ -685,6 +795,8 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
                         options={accountOptions}
                       />
                     </td>
+
+                    {/* مركز التكلفة */}
                     <td className="min-w-[200px] p-2">
                       <SelectField
                         value={row.costCenterID}
@@ -698,6 +810,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
                         options={costCenterOptions}
                       />
                     </td>
+                    {/* الوصف */}
                     <td className="min-w-[180px] p-2">
                       <input
                         type="text"
@@ -712,48 +825,39 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
                         className="w-full rounded-lg border border-gray-200 px-3 py-2"
                       />
                     </td>
-                    <td className="min-w-[180px] p-2">
+                    {/* تاريخ السجل */}
+                    <td className="min-w-[160px] p-2">
+                      <input
+                        type="date"
+                        value={row.recordDate}
+                        onChange={(event) =>
+                          handleRowChange(
+                            index,
+                            'recordDate',
+                            event.target.value
+                          )
+                        }
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                      />
+                    </td>
+
+                    {/* رقم المستند */}
+                    <td className="min-w-[160px] p-2">
                       <input
                         type="text"
-                        value={row.descriptionEn}
+                        value={row.documentNumber}
                         onChange={(event) =>
                           handleRowChange(
                             index,
-                            'descriptionEn',
+                            'documentNumber',
                             event.target.value
                           )
                         }
                         className="w-full rounded-lg border border-gray-200 px-3 py-2"
                       />
                     </td>
-                    <td className="min-w-[120px] p-2">
-                      <input
-                        type="number"
-                        value={row.debitAmount}
-                        onChange={(event) =>
-                          handleRowChange(
-                            index,
-                            'debitAmount',
-                            event.target.value
-                          )
-                        }
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                      />
-                    </td>
-                    <td className="min-w-[120px] p-2">
-                      <input
-                        type="number"
-                        value={row.creditAmount}
-                        onChange={(event) =>
-                          handleRowChange(
-                            index,
-                            'creditAmount',
-                            event.target.value
-                          )
-                        }
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                      />
-                    </td>
+
+                    {/* العميل */}
                     <td className="min-w-[180px] p-2">
                       <SelectField
                         value={row.customerID}
@@ -767,6 +871,8 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
                         options={customerOptions}
                       />
                     </td>
+
+                    {/* المورد */}
                     <td className="min-w-[180px] p-2">
                       <SelectField
                         value={row.supplierID}
@@ -780,6 +886,18 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
                         options={supplierOptions}
                       />
                     </td>
+
+                    {/* بيانات المورد */}
+                    <td className="min-w-[220px] p-2">
+                      <input
+                        type="text"
+                        value={row.supplierName}
+                        readOnly
+                        className="w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2"
+                      />
+                    </td>
+
+                    {/* العملة */}
                     <td className="min-w-[180px] p-2">
                       <SelectField
                         value={row.currencyID}
@@ -793,6 +911,8 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
                         options={currencyOptions}
                       />
                     </td>
+
+                    {/* سعر الصرف */}
                     <td className="min-w-[120px] p-2">
                       <input
                         type="number"
@@ -807,6 +927,33 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
                         className="w-full rounded-lg border border-gray-200 px-3 py-2"
                       />
                     </td>
+
+                    {/* رقم الدفعة (آخر حاجة) */}
+                    <td className="min-w-[190px] p-2">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={row.batchNumber}
+                          onChange={(event) =>
+                            handleRowChange(
+                              index,
+                              'batchNumber',
+                              event.target.value
+                            )
+                          }
+                          className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleLoadBatchSummary(index)}
+                          className="shrink-0 rounded-lg bg-primary px-3 py-2 text-white"
+                        >
+                          جلب
+                        </button>
+                      </div>
+                    </td>
+
+                    {/* حذف */}
                     <td className="p-2 text-center">
                       <button
                         type="button"
@@ -821,14 +968,14 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
               </tbody>
               <tfoot className="bg-gray-50 font-semibold">
                 <tr>
-                  <td colSpan="4" className="p-3 text-right">
-                    {'\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a'}
+                  <td colSpan="3" className="p-3 text-right">
+                    الإجمالي
                   </td>
                   <td className="p-3 text-green-600">
                     {totalDebit.toFixed(2)}
                   </td>
                   <td className="p-3 text-red-600">{totalCredit.toFixed(2)}</td>
-                  <td colSpan="5"></td>
+                  <td colSpan="9"></td>
                 </tr>
               </tfoot>
             </table>
@@ -842,9 +989,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
               : 'bg-red-100 text-red-600'
           }`}
         >
-          {isBalanced
-            ? '\u0627\u0644\u0642\u064a\u062f \u0645\u062a\u0648\u0627\u0632\u0646'
-            : '\u0627\u0644\u0642\u064a\u062f \u063a\u064a\u0631 \u0645\u062a\u0648\u0627\u0632\u0646'}
+          {isBalanced ? 'القيد متوازن' : 'القيد غير متوازن'}
         </div>
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -853,7 +998,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
             onClick={() => navigate('/entries')}
             className="rounded-lg border border-gray-300 px-6 py-2 text-gray-700"
           >
-            {'\u0631\u062c\u0648\u0639'}
+            رجوع
           </button>
           <button
             type="submit"
@@ -864,9 +1009,7 @@ const JournalEntryForm = ({ defaultValues = {}, mode = 'create' }) => {
             }
             className="rounded-lg bg-primary px-6 py-2 text-white disabled:opacity-50"
           >
-            {isEditMode
-              ? '\u062d\u0641\u0638 \u0627\u0644\u062a\u0639\u062f\u064a\u0644\u0627\u062a'
-              : '\u062d\u0641\u0638 \u0627\u0644\u0642\u064a\u062f'}
+            {isEditMode ? 'حفظ التعديلات' : 'حفظ القيد'}
           </button>
         </div>
       </form>
