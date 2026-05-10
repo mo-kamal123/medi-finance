@@ -1,7 +1,11 @@
 ﻿import { useQuery } from '@tanstack/react-query';
 import {
   getAllCommercialPapers,
+  getAllCashVouchers,
+  getBankAccountsList,
   getBanks,
+  getBanksList,
+  getCashVoucherById,
   getCommercialPaperById,
   getCurrencies,
   getFinancialPeriods,
@@ -28,6 +32,37 @@ export const useBanks = () => {
   return useQuery({
     queryKey: commercialPapersKeys.banks(),
     queryFn: getBanks,
+  });
+};
+
+export const useBanksList = () => {
+  return useQuery({
+    queryKey: commercialPapersKeys.banksList(),
+    queryFn: getBanksList,
+  });
+};
+
+export const useBankAccounts = (bankId) => {
+  return useQuery({
+    queryKey: commercialPapersKeys.bankAccounts(bankId),
+    queryFn: () => getBankAccountsList(bankId),
+    enabled: !!bankId,
+  });
+};
+
+export const useCashVouchers = (filters) => {
+  return useQuery({
+    queryKey: commercialPapersKeys.cashVouchers(filters),
+    queryFn: () => getAllCashVouchers(filters),
+    keepPreviousData: true,
+  });
+};
+
+export const useCashVoucher = (id) => {
+  return useQuery({
+    queryKey: commercialPapersKeys.cashVoucherDetail(id),
+    queryFn: () => getCashVoucherById(id),
+    enabled: !!id,
   });
 };
 

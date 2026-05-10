@@ -74,6 +74,11 @@ const Sidebar = () => {
           link: '/commercial-papers/payable',
           icon: FileText,
         },
+        {
+          name: 'السندات',
+          link: '/commercial-papers/cash-vouchers',
+          icon: Receipt,
+        },
         { name: 'الشيكات', link: '/cheques', icon: CreditCard },
       ],
     },
@@ -81,6 +86,7 @@ const Sidebar = () => {
       name: 'التقارير',
       icon: BarChart3,
       sub: [
+        { name: 'أعمار الذمم', link: '/aging-report', icon: BookOpen },
         { name: 'حساب الأستاذ', link: '/general-ledger', icon: BookOpen },
         { name: 'ميزان المراجعة', link: '/trial-balance', icon: Scale },
         { name: 'الميزانية العمومية', link: '/balance-sheet', icon: Wallet },

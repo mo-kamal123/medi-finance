@@ -124,7 +124,7 @@ const SelectField = ({
 );
 
 const DetailField = ({ label, children }) => (
-  <div className="space-y-1">0
+  <div className="space-y-1">
     <label className="text-sm font-medium text-gray-700">{label}</label>
     {children}
   </div>
