@@ -27,6 +27,18 @@ export const getBanks = async () => {
   return data;
 };
 
+export const getBanksList = async () => {
+  const { data } = await axiosInstance.get('/Banks/list');
+  return data;
+};
+
+export const getBankAccountsList = async (bankId) => {
+  const { data } = await axiosInstance.get('/BankAccounts/list', {
+    params: bankId ? { bankId } : undefined,
+  });
+  return data;
+};
+
 export const getCurrencies = async () => {
   const { data } = await axiosInstance.get('/currencies');
   return data;
@@ -34,6 +46,40 @@ export const getCurrencies = async () => {
 
 export const getFinancialPeriods = async () => {
   const { data } = await axiosInstance.get('/financial-periods');
+  return data;
+};
+
+export const getAllCashVouchers = async (params = {}) => {
+  const { data } = await axiosInstance.get('/cash-vouchers', {
+    params: {
+      pageNumber: 1,
+      pageSize: 20,
+      ...params,
+    },
+  });
+  return data;
+};
+
+export const getCashVoucherById = async (id) => {
+  const { data } = await axiosInstance.get(`/cash-vouchers/${id}`);
+  return data;
+};
+
+export const createCashVoucher = async (payload) => {
+  const { data } = await axiosInstance.post('/cash-vouchers', payload, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return data;
+};
+
+export const getInvoiceForCashVoucher = async (invoiceNumber) => {
+  const { data } = await axiosInstance.get('/invoices', {
+    params: {
+      invoiceNumber,
+      pageNumber: 1,
+      pageSize: 10,
+    },
+  });
   return data;
 };
 

@@ -39,3 +39,8 @@ export const reverseJournalEntry = async ({ id, reversedBy }) => {
   });
   return data;
 };
+
+export const getBatchSummary = async (batchNumber) => {
+  const { data } = await axiosInstance.get(`/batches/${batchNumber}/summary`);
+  return data;
+};

@@ -1,5 +1,6 @@
 ﻿import { createBrowserRouter } from 'react-router-dom';
 import { authRoutes } from '../../features/auth/routes/routes';
+import { agingReportRoutes } from '../../features/aging-report/routes/routes';
 import { balanceSheetRoutes } from '../../features/balance-sheet/routes/routes';
 import { banksRoutes } from '../../features/banks/routes/routes';
 import { cashTransactionsRoutes } from '../../features/cash-transactions/routes/routes';
@@ -42,6 +43,7 @@ export const router = createBrowserRouter([
       ...accountsTreeRoutes,
       ...costCenterRoutes,
       ...linkAccountCostRoutes,
+      ...agingReportRoutes,
       ...InvoicesRoutes,
       ...entriesRoutes,
       ...cashTransactionsRoutes,
