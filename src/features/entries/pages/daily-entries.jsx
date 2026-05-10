@@ -102,17 +102,6 @@ const DailyEntriesPage = () => {
       key: 'journalType',
     },
     {
-      header: 'الوصف',
-      key: 'descriptionAr',
-    },
-    {
-      header: 'الفترة المالية',
-      key: 'financialPeriodNameAr',
-      type: 'custom',
-      render: (row) =>
-        row.financialPeriodNameAr || row.financialPeriodNameEn || '-',
-    },
-    {
       header: 'مدين',
       key: 'totalDebit',
       type: 'custom',
@@ -127,6 +116,17 @@ const DailyEntriesPage = () => {
       render: (row) => (
         <span className="font-medium text-red-600">{row.totalCredit} ج.م</span>
       ),
+    },
+    {
+      header: 'الوصف',
+      key: 'descriptionAr',
+    },
+    {
+      header: 'الفترة المالية',
+      key: 'financialPeriodNameAr',
+      type: 'custom',
+      render: (row) =>
+        row.financialPeriodNameAr || row.financialPeriodNameEn || '-',
     },
     {
       header: 'الحالة',
