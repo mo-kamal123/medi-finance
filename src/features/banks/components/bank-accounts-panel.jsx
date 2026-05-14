@@ -214,14 +214,14 @@ const BankAccountsPanel = ({ bankId }) => {
             الحسابات المرتبطة بهذا البنك
           </p>
         </div>
-        <button
+        {/* <button
           type="button"
           onClick={openCreateForm}
           className="flex w-fit items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary/90"
         >
           <Plus size={16} />
           إضافة حساب
-        </button>
+        </button> */}
       </div>
 
       {isLoading ? (
