@@ -33,8 +33,10 @@ export const getBanksList = async () => {
 };
 
 export const getBankAccountsList = async (bankId) => {
-  const { data } = await axiosInstance.get('/BankAccounts/list', {
-    params: bankId ? { bankId } : undefined,
+  const { data } = await axiosInstance.get('/BankAccounts', {
+    params: bankId
+      ? { pageNumber: 1, pageSize: 20, bankId }
+      : { pageNumber: 1, pageSize: 20 },
   });
   return data;
 };

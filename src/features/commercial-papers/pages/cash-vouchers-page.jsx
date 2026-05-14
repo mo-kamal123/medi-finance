@@ -5,6 +5,7 @@ import FormInput from '../../../shared/ui/input';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
 import { matchesSearch, paginateItems } from '../../../shared/utils/list-utils';
+import { formatDate, formatNumber } from '../../../shared/utils/formatters';
 import { useCashVouchers } from '../hooks/commercial-papers.queries';
 
 const normalizeCollection = (value) => {
@@ -104,16 +105,14 @@ const CashVouchersPage = () => {
         header: 'المبلغ',
         key: 'amount',
         type: 'custom',
-        render: (row) => Number(row.amount || 0).toFixed(2),
+        render: (row) => formatNumber(row.amount || 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
       },
       {
         header: 'التاريخ',
         key: 'date',
         type: 'custom',
         render: (row) =>
-          row.date || row.voucherDate
-            ? new Date(row.date || row.voucherDate).toLocaleDateString('ar-EG')
-            : '-',
+          formatDate(row.date || row.voucherDate),
       },
       {
         header: 'الإجراءات',

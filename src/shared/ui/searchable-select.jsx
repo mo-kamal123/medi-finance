@@ -2,8 +2,8 @@ import {
   Children,
   forwardRef,
   isValidElement,
-  useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -58,6 +58,7 @@ const SearchableSelect = forwardRef(
   ) => {
     const generatedId = useId();
     const fieldId = props.id || generatedId;
+
     const wrapperRef = useRef(null);
     const portalRef = useRef(null);
     const selectRef = useRef(null);
@@ -65,7 +66,8 @@ const SearchableSelect = forwardRef(
 
     const [isOpen, setIsOpen] = useState(false);
     const [query, setQuery] = useState('');
-    const [dropdownStyle, setDropdownStyle] = useState({});
+    const [dropdownStyle, setDropdownStyle] = useState(null);
+
     const [internalValue, setInternalValue] = useState(
       String(value ?? defaultValue ?? '')
     );
@@ -97,6 +99,7 @@ const SearchableSelect = forwardRef(
 
     const filteredOptions = useMemo(() => {
       const searchValue = query.trim().toLowerCase();
+
       if (!searchValue) return normalizedOptions;
 
       return normalizedOptions.filter((option) =>
@@ -104,8 +107,54 @@ const SearchableSelect = forwardRef(
       );
     }, [normalizedOptions, query]);
 
-    useEffect(() => {
-      if (!isOpen) return undefined;
+    useLayoutEffect(() => {
+      if (!isOpen || !wrapperRef.current) return;
+
+      const updateDropdownPosition = () => {
+        if (!wrapperRef.current) return;
+
+        const rect = wrapperRef.current.getBoundingClientRect();
+        const viewportPadding = 16;
+
+        setDropdownStyle({
+          position: 'fixed',
+          top:
+            dropdownPosition === 'top'
+              ? 'auto'
+              : Math.min(rect.bottom + 8, window.innerHeight - viewportPadding),
+
+          bottom:
+            dropdownPosition === 'top'
+              ? Math.max(window.innerHeight - rect.top + 8, viewportPadding)
+              : 'auto',
+
+          left: Math.max(rect.left, viewportPadding),
+
+          width: rect.width,
+
+          zIndex: 9999,
+        });
+      };
+
+      updateDropdownPosition();
+
+      window.addEventListener('scroll', updateDropdownPosition, true);
+      window.addEventListener('resize', updateDropdownPosition);
+
+      const timer = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 0);
+
+      return () => {
+        clearTimeout(timer);
+
+        window.removeEventListener('scroll', updateDropdownPosition, true);
+        window.removeEventListener('resize', updateDropdownPosition);
+      };
+    }, [dropdownPosition, isOpen]);
+
+    useLayoutEffect(() => {
+      if (!isOpen) return;
 
       const handlePointerDown = (event) => {
         const clickedInsideTrigger = wrapperRef.current?.contains(event.target);
@@ -125,53 +174,11 @@ const SearchableSelect = forwardRef(
       };
 
       document.addEventListener('mousedown', handlePointerDown);
-      return () => document.removeEventListener('mousedown', handlePointerDown);
-    }, [isOpen, onBlur]);
-
-    useEffect(() => {
-      if (!isOpen || !wrapperRef.current) return undefined;
-
-      const updateDropdownPosition = () => {
-        if (!wrapperRef.current) return;
-
-        const rect = wrapperRef.current.getBoundingClientRect();
-        const viewportPadding = 16;
-        const availableWidth = Math.max(
-          rect.width,
-          window.innerWidth - rect.left - viewportPadding
-        );
-
-        setDropdownStyle({
-          position: 'fixed',
-          top:
-            dropdownPosition === 'top'
-              ? 'auto'
-              : Math.min(rect.bottom + 8, window.innerHeight - viewportPadding),
-          bottom:
-            dropdownPosition === 'top'
-              ? Math.max(window.innerHeight - rect.top + 8, viewportPadding)
-              : 'auto',
-          left: Math.max(rect.left, viewportPadding),
-          minWidth: rect.width,
-          width: 'max-content',
-          maxWidth: availableWidth,
-          zIndex: 9999,
-        });
-      };
-
-      updateDropdownPosition();
-      window.addEventListener('scroll', updateDropdownPosition, true);
-      window.addEventListener('resize', updateDropdownPosition);
-
-      requestAnimationFrame(() => {
-        searchInputRef.current?.focus();
-      });
 
       return () => {
-        window.removeEventListener('scroll', updateDropdownPosition, true);
-        window.removeEventListener('resize', updateDropdownPosition);
+        document.removeEventListener('mousedown', handlePointerDown);
       };
-    }, [dropdownPosition, isOpen]);
+    }, [isOpen, onBlur]);
 
     const setRefs = (node) => {
       selectRef.current = node;
@@ -204,6 +211,7 @@ const SearchableSelect = forwardRef(
       }
 
       emitChange(normalizedValue);
+
       setIsOpen(false);
       setQuery('');
 
@@ -226,7 +234,10 @@ const SearchableSelect = forwardRef(
     return (
       <div className={cn('w-full', containerClass)}>
         {label ? (
-          <label htmlFor={fieldId} className="mb-1 block font-medium text-gray-700">
+          <label
+            htmlFor={fieldId}
+            className="mb-1 block font-medium text-gray-700"
+          >
             {label}
           </label>
         ) : null}
@@ -246,6 +257,7 @@ const SearchableSelect = forwardRef(
             aria-hidden="true"
           >
             <option value="">{placeholder}</option>
+
             {normalizedOptions.map((option) => (
               <option key={option.value || '__empty__'} value={option.value}>
                 {option.label}
@@ -257,12 +269,14 @@ const SearchableSelect = forwardRef(
             type="button"
             disabled={disabled}
             onClick={() => {
-              setIsOpen((prev) => !prev);
               setQuery('');
+              setIsOpen((prev) => !prev);
             }}
             className={cn(
               'flex min-h-[44px] w-full items-center justify-between gap-3 rounded-xl border bg-white px-4 py-2 text-right transition',
-              error ? 'border-red-400' : 'border-gray-200 shadow-sm hover:border-primary/40',
+              error
+                ? 'border-red-400'
+                : 'border-gray-200 shadow-sm hover:border-primary/40',
               disabled && 'cursor-not-allowed bg-gray-100 text-gray-400',
               className,
               inputClass
@@ -279,21 +293,25 @@ const SearchableSelect = forwardRef(
 
             <ChevronDown
               size={18}
-              className={cn('text-gray-400 transition-transform', isOpen && 'rotate-180')}
+              className={cn(
+                'text-gray-400 transition-transform duration-200',
+                isOpen && 'rotate-180'
+              )}
             />
           </button>
         </div>
 
-        {isOpen
+        {isOpen && dropdownStyle
           ? createPortal(
               <div
                 ref={portalRef}
                 style={dropdownStyle}
-                className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_20px_40px_rgba(15,23,42,0.14)]"
+                className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl"
               >
                 <div className="border-b border-gray-100 p-3">
                   <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
                     <Search size={16} className="text-gray-400" />
+
                     <input
                       ref={searchInputRef}
                       type="text"
@@ -316,13 +334,16 @@ const SearchableSelect = forwardRef(
                           type="button"
                           onClick={() => handleOptionSelect(option.value)}
                           className={cn(
-                            'flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm',
+                            'flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm transition-colors',
                             isSelected
                               ? 'bg-primary/10 text-primary'
                               : 'hover:bg-gray-50'
                           )}
                         >
-                          <span className="text-right">{option.label}</span>
+                          <span className="text-right">
+                            {option.label}
+                          </span>
+
                           {isSelected ? <Check size={16} /> : null}
                         </button>
                       );
@@ -338,7 +359,9 @@ const SearchableSelect = forwardRef(
             )
           : null}
 
-        {error ? <p className="mt-1 text-sm text-red-500">{error}</p> : null}
+        {error ? (
+          <p className="mt-1 text-sm text-red-500">{error}</p>
+        ) : null}
       </div>
     );
   }

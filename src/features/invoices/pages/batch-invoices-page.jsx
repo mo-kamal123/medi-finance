@@ -5,6 +5,7 @@ import InvoiceFilters from '../components/invoice-filter';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
 import { paginateItems } from '../../../shared/utils/list-utils';
+import { formatDate } from '../../../shared/utils/formatters';
 import { getStatusStyle } from '../utils/status-style';
 import {
   useCustomers,
@@ -67,9 +68,7 @@ const BatchInvoicesPage = () => {
         key: 'invoiceDate',
         type: 'custom',
         render: (row) =>
-          row.invoiceDate
-            ? new Date(row.invoiceDate).toLocaleDateString('ar-EG')
-            : '-',
+          formatDate(row.invoiceDate),
       },
       {
         header: 'الإجمالي',
