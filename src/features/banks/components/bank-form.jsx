@@ -92,18 +92,18 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
         />
 
         <FormInput
-          label="اسم البنك بالعربية"
+          label="اسم البنك"
           {...register('bankNameAr')}
           error={errors.bankNameAr?.message}
           readOnly={isViewMode}
         />
 
-        <FormInput
+        {/* <FormInput
           label="اسم البنك بالإنجليزية"
           {...register('bankNameEn')}
           error={errors.bankNameEn?.message}
           readOnly={isViewMode}
-        />
+        /> */}
 
         <FormInput
           label="كود الدولة"
@@ -135,28 +135,28 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
         />
 
         <FormInput
-          label="العنوان بالعربية"
+          label="العنوان"
           {...register('addressAr')}
           error={errors.addressAr?.message}
           readOnly={isViewMode}
         />
 
-        <FormInput
+        {/* <FormInput
           label="العنوان بالإنجليزية"
           {...register('addressEn')}
           error={errors.addressEn?.message}
           readOnly={isViewMode}
-        />
+        /> */}
       </div>
 
-      <label className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border border-gray-300 w-fit">
+      {/* <label className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border border-gray-300 w-fit">
         <input
           type="checkbox"
           {...register('isActive')}
           disabled={isViewMode}
         />
         <span>البنك نشط</span>
-      </label>
+      </label> */}
 
       <div className="flex justify-end gap-3">
         <button

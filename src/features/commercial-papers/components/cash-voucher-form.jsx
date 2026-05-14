@@ -635,18 +635,18 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
             </div>
           </div>
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">الحالة</label>
             <div className="flex h-11 items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700">
               {selectedVoucherLabel}
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">تفاصيل السند</h2>
-            {!isViewMode ? (
+            {/* {!isViewMode ? (
               <button
                 type="button"
                 onClick={addDetailRow}
@@ -655,7 +655,7 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
                 <Plus size={16} />
                 إضافة سطر
               </button>
-            ) : null}
+            ) : null} */}
           </div>
 
           <div className="hidden w-full max-w-full overflow-x-auto lg:block">
@@ -863,12 +863,12 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
         ) : null}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          {/* <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
             <div className="text-sm text-gray-500">رقم السند</div>
             <div className="mt-2 font-semibold text-gray-900">
               {formData.voucherID || '-'}
             </div>
-          </div>
+          </div> */}
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
             <div className="text-sm text-gray-500">إجمالي المبلغ</div>
             <div className="mt-2 text-2xl font-bold text-primary">
