@@ -7,6 +7,7 @@ import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
 import { toast } from '../../../shared/lib/toast';
 import { matchesSearch, paginateItems } from '../../../shared/utils/list-utils';
+import { formatCurrency, formatDate } from '../../../shared/utils/formatters';
 import {
   usePostJournalEntry,
   useReverseJournalEntry,
@@ -93,9 +94,7 @@ const DailyEntriesPage = () => {
       key: 'entryDate',
       type: 'custom',
       render: (row) =>
-        row.entryDate
-          ? new Date(row.entryDate).toLocaleDateString('ar-EG')
-          : '-',
+        formatDate(row.entryDate),
     },
     {
       header: 'النوع',
@@ -106,7 +105,7 @@ const DailyEntriesPage = () => {
       key: 'totalDebit',
       type: 'custom',
       render: (row) => (
-        <span className="font-medium text-green-600">{row.totalDebit} ج.م</span>
+        <span className="font-medium text-green-600">{formatCurrency(row.totalDebit)}</span>
       ),
     },
     {
@@ -114,7 +113,7 @@ const DailyEntriesPage = () => {
       key: 'totalCredit',
       type: 'custom',
       render: (row) => (
-        <span className="font-medium text-red-600">{row.totalCredit} ج.م</span>
+        <span className="font-medium text-red-600">{formatCurrency(row.totalCredit)}</span>
       ),
     },
     {

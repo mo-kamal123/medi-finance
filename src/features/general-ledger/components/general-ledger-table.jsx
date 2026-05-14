@@ -1,4 +1,5 @@
 import Table from '../../../shared/ui/table';
+import { formatNumber } from '../../../shared/utils/formatters';
 import { groupByAccount } from '../utils/group-by-account';
 
 const GeneralLedgerTable = ({ data }) => {
@@ -19,7 +20,7 @@ const GeneralLedgerTable = ({ data }) => {
       type: 'custom',
       render: (row) => (
         <span className="text-green-600 font-medium">
-          {row.DebitAmount?.toLocaleString()}
+          {formatNumber(row.DebitAmount)}
         </span>
       ),
     },
@@ -29,7 +30,7 @@ const GeneralLedgerTable = ({ data }) => {
       type: 'custom',
       render: (row) => (
         <span className="text-red-600 font-medium">
-          {row.CreditAmount?.toLocaleString()}
+          {formatNumber(row.CreditAmount)}
         </span>
       ),
     },
@@ -45,7 +46,7 @@ const GeneralLedgerTable = ({ data }) => {
               : 'text-red-600 font-semibold'
           }
         >
-          {row.RunningBalance?.toLocaleString()}
+          {formatNumber(row.RunningBalance)}
         </span>
       ),
     },
@@ -80,10 +81,10 @@ const GeneralLedgerTable = ({ data }) => {
                     الإجمالي
                   </td>
                   <td className="p-3 border border-gray-300 text-green-600">
-                    {totalDebit.toLocaleString()}
+                    {formatNumber(totalDebit)}
                   </td>
                   <td className="p-3 border border-gray-300 text-red-600">
-                    {totalCredit.toLocaleString()}
+                    {formatNumber(totalCredit)}
                   </td>
                   <td className="p-3 border border-gray-300"></td>
                 </tr>

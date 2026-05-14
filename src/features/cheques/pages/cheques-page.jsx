@@ -6,6 +6,7 @@ import SearchableSelect from '../../../shared/ui/searchable-select';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
 import { matchesSearch, paginateItems } from '../../../shared/utils/list-utils';
+import { formatDate } from '../../../shared/utils/formatters';
 import { useCheques } from '../hooks/cheques.queries';
 
 const statusOptions = [
@@ -47,9 +48,7 @@ const ChequesPage = () => {
       key: 'chequeDate',
       type: 'custom',
       render: (row) =>
-        row.chequeDate
-          ? new Date(row.chequeDate).toLocaleDateString('ar-EG')
-          : '-',
+        formatDate(row.chequeDate),
     },
     { header: 'القيمة', key: 'amount' },
     { header: 'العميل', key: 'customerName' },
@@ -59,9 +58,7 @@ const ChequesPage = () => {
       key: 'receiptDate',
       type: 'custom',
       render: (row) =>
-        row.receiptDate
-          ? new Date(row.receiptDate).toLocaleDateString('ar-EG')
-          : '-',
+        formatDate(row.receiptDate),
     },
     { header: 'الحالة', key: 'status' },
     { header: 'أيام الانتظار', key: 'daysPending' },

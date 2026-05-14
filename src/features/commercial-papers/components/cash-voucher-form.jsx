@@ -98,7 +98,11 @@ const getInitialValues = (defaultValues = {}) => {
       : defaultValues?.bankAccountId
         ? String(defaultValues.bankAccountId)
         : '',
-    bankAccount: defaultValues?.bankAccount ?? '',
+    bankAccount:
+      defaultValues?.bankAccount ??
+      defaultValues?.accountNumberWithBranch ??
+      defaultValues?.accountNumber ??
+      '',
     checkNumber: defaultValues?.checkNumber ?? '',
     description: initialNotes,
     date: toDateInputValue(defaultValues?.date || defaultValues?.voucherDate),
@@ -206,6 +210,7 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
       bankAccounts.map((account) => ({
         value: String(account.bankAccountID || account.id),
         label:
+          account.accountNumberWithBranch ||
           account.accountNumber ||
           account.iban ||
           account.accountNameAr ||
@@ -320,6 +325,7 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
       ...prev,
       bankAccountID,
       bankAccount:
+        selectedAccount?.accountNumberWithBranch ||
         selectedAccount?.accountNumber ||
         selectedAccount?.iban ||
         selectedAccount?.accountNameAr ||
@@ -487,7 +493,7 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
       return;
     }
 
-    if (!formData.bankName || !formData.bankAccount) {
+    if (!formData.bankID || !formData.bankAccountID) {
       toast.error('اختر البنك وحساب البنك');
       return;
     }
@@ -495,8 +501,8 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
     const firstDetail = formData.details[0] || emptyDetail;
     const payload = {
       isReceipt: formData.isReceipt,
-      bankName: formData.bankName,
-      bankAccount: formData.bankAccount,
+      bankID: Number(formData.bankID),
+      bankAccountID: Number(formData.bankAccountID),
       checkNumber: formData.checkNumber || null,
       description: firstDetail.notes || formData.description || '',
       date: new Date(formData.date).toISOString(),

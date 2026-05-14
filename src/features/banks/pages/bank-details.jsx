@@ -1,5 +1,6 @@
-﻿import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import PageLoader from '../../../shared/ui/page-loader';
+import BankAccountsPanel from '../components/bank-accounts-panel';
 import BankForm from '../components/bank-form';
 import { useBank } from '../hooks/banks.queries';
 
@@ -15,7 +16,12 @@ const BankDetails = () => {
     return <div>لا توجد بيانات.</div>;
   }
 
-  return <BankForm defaultValues={data} mode="view" />;
+  return (
+    <div className="space-y-6">
+      <BankForm defaultValues={data} mode="view" />
+      <BankAccountsPanel bankId={id} />
+    </div>
+  );
 };
 
 export default BankDetails;

@@ -6,6 +6,7 @@ import InvoiceFilters from '../components/invoice-filter';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
 import { paginateItems } from '../../../shared/utils/list-utils';
+import { formatCurrency, formatDate } from '../../../shared/utils/formatters';
 import { getStatusStyle } from '../utils/status-style';
 import {
   useCustomers,
@@ -55,10 +56,7 @@ const InvoicesPage = () => {
         header: 'Invoice Date',
         key: 'invoiceDate',
         type: 'custom',
-        render: (row) =>
-          row.invoiceDate
-            ? new Date(row.invoiceDate).toLocaleDateString()
-            : '-',
+        render: (row) => formatDate(row.invoiceDate),
       },
       {
         header: 'Total',
@@ -183,11 +181,5 @@ const InvoicesPage = () => {
     </div>
   );
 };
-
-const formatCurrency = (value = 0) =>
-  new Intl.NumberFormat('ar-EG', {
-    style: 'currency',
-    currency: 'EGP',
-  }).format(value);
 
 export default InvoicesPage;

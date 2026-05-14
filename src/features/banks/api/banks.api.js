@@ -21,3 +21,28 @@ export const createBank = async (payload) => {
   const { data } = await axiosInstance.post('/Banks', payload);
   return data;
 };
+
+export const getBankAccounts = async (bankId, params = {}) => {
+  const { data } = await axiosInstance.get('/BankAccounts', {
+    params: {
+      pageNumber: 1,
+      pageSize: 20,
+      bankId,
+      ...params,
+    },
+  });
+
+  return data;
+};
+
+export const getBankAccountById = async (id) => {
+  const { data } = await axiosInstance.get(`/BankAccounts/${id}`);
+  return data;
+};
+
+export const saveBankAccount = async (payload) => {
+  const { data } = await axiosInstance.post('/BankAccounts', payload, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return data;
+};

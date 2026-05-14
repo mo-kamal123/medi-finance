@@ -1,4 +1,5 @@
 import SearchableSelect from './searchable-select';
+import { formatNumber } from '../utils/formatters';
 
 const Pagination = ({
   currentPage = 1,
@@ -41,7 +42,7 @@ const Pagination = ({
                   : 'border-gray-300 text-gray-700'
               }`}
             >
-              {page}
+              {formatNumber(page, { useGrouping: false })}
             </button>
           ))}
         </div>
@@ -58,7 +59,7 @@ const Pagination = ({
 
       <div className="flex items-center gap-3 text-sm text-gray-600">
         <span>
-          صفحة {currentPage} من {totalPages}
+          صفحة {formatNumber(currentPage, { useGrouping: false })} من {formatNumber(totalPages, { useGrouping: false })}
         </span>
 
         {onPageSizeChange ? (

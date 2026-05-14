@@ -6,6 +6,7 @@ import FormInput from '../../../shared/ui/input';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
 import { matchesSearch, paginateItems } from '../../../shared/utils/list-utils';
+import { formatDate, formatNumber } from '../../../shared/utils/formatters';
 import { useCommercialPapers } from '../hooks/commercial-papers.queries';
 import { useDeleteCommercialPaper } from '../hooks/commercial-papers.mutations';
 
@@ -101,18 +102,14 @@ const CommercialPapersPage = ({ paperType }) => {
         key: 'issueDate',
         type: 'custom',
         render: (row) =>
-          row.issueDate
-            ? new Date(row.issueDate).toLocaleDateString('ar-EG')
-            : '-',
+          formatDate(row.issueDate),
       },
       {
         header: 'تاريخ الاستحقاق',
         key: 'maturityDate',
         type: 'custom',
         render: (row) =>
-          row.maturityDate
-            ? new Date(row.maturityDate).toLocaleDateString('ar-EG')
-            : '-',
+          formatDate(row.maturityDate),
       },
       {
         header: 'الحالة',
@@ -134,7 +131,7 @@ const CommercialPapersPage = ({ paperType }) => {
               row.daysToMaturity < 0 ? 'text-red-500' : 'text-green-600'
             }
           >
-            {row.daysToMaturity}
+            {formatNumber(row.daysToMaturity, { useGrouping: false })}
           </span>
         ),
       },
