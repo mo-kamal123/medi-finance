@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import FormInput from '../../../shared/ui/input';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
+import { formatDate, formatCurrency } from '../../../shared/utils/formatters';
 import {
   useCashTransactions,
   useCashTransactionsBalance,
@@ -37,7 +38,7 @@ const CashTransactionsPage = () => {
         header: 'التاريخ',
         key: 'entryDate',
         type: 'custom',
-        render: (row) => (row.entryDate ? new Date(row.entryDate).toLocaleDateString('ar-EG') : '-'),
+        render: (row) => formatDate(row.entryDate),
       },
       { header: 'النوع', key: 'transactionType' },
       { header: 'الوصف', key: 'descriptionAr' },
@@ -76,15 +77,15 @@ const CashTransactionsPage = () => {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="mb-2 flex items-center gap-2 text-gray-500"><Wallet size={18} /> إجمالي الإيداعات</div>
-          <div className="text-2xl font-bold text-green-600">{balance?.totalDeposits ?? 0}</div>
+          <div className="text-2xl font-bold text-green-600">{formatCurrency(balance?.totalDeposits ?? 0)}</div>
         </div>
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="mb-2 flex items-center gap-2 text-gray-500"><Wallet size={18} /> إجمالي السحوبات</div>
-          <div className="text-2xl font-bold text-red-600">{balance?.totalWithdrawals ?? 0}</div>
+          <div className="text-2xl font-bold text-red-600">{formatCurrency(balance?.totalWithdrawals ?? 0)}</div>
         </div>
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="mb-2 flex items-center gap-2 text-gray-500"><Wallet size={18} /> الرصيد</div>
-          <div className={`text-2xl font-bold ${(balance?.balance ?? 0) >= 0 ? 'text-primary' : 'text-red-600'}`}>{balance?.balance ?? 0}</div>
+          <div className={`text-2xl font-bold ${(balance?.balance ?? 0) >= 0 ? 'text-primary' : 'text-red-600'}`}>{formatCurrency(balance?.balance ?? 0)}</div>
         </div>
       </div>
 

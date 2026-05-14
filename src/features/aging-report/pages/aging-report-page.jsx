@@ -3,6 +3,7 @@ import FormInput from '../../../shared/ui/input';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
 import PageLoader from '../../../shared/ui/page-loader';
+import { formatCurrency, formatDate } from '../../../shared/utils/formatters';
 import { useCustomers, useFinancialPeriods, useSuppliers } from '../../invoices/hooks/invoices.queries';
 import { useAgingReport } from '../hooks/aging-report.queries';
 
@@ -20,16 +21,6 @@ const STATUS_OPTIONS = [
   { value: 'PartiallyPaid', label: 'مدفوعة جزئيًا' },
   { value: 'Overdue', label: 'متأخرة' },
 ];
-
-const formatCurrency = (value = 0) =>
-  new Intl.NumberFormat('ar-EG', {
-    style: 'currency',
-    currency: 'EGP',
-    maximumFractionDigits: 2,
-  }).format(Number(value) || 0);
-
-const formatDate = (value) =>
-  value ? new Date(value).toLocaleDateString('ar-EG') : '-';
 
 const getStatusClasses = (status, isOverdue) => {
   if (isOverdue) return 'bg-red-100 text-red-700';

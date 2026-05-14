@@ -1,4 +1,5 @@
 import SearchableSelect from '../ui/searchable-select';
+import { formatNumber } from '../utils/formatters';
 
 const Pagination = ({
   currentPage = 1,
@@ -22,7 +23,7 @@ const Pagination = ({
   return (
     <div className="flex flex-col items-center justify-between gap-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:flex-row">
       <div className="text-sm text-gray-600">
-        صفحة {currentPage} من {totalPages} - إجمالي {totalCount} عنصر
+        صفحة {formatNumber(currentPage, { useGrouping: false })} من {formatNumber(totalPages, { useGrouping: false })} - إجمالي {formatNumber(totalCount, { useGrouping: false })} عنصر
       </div>
 
       <div className="flex items-center gap-2">
@@ -42,7 +43,7 @@ const Pagination = ({
               page === currentPage ? 'bg-primary text-white' : 'bg-white'
             }`}
           >
-            {page}
+            {formatNumber(page, { useGrouping: false })}
           </button>
         ))}
 

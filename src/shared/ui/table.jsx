@@ -1,6 +1,7 @@
 ﻿import { Trash2 } from 'lucide-react';
 import Spinner from './spinner';
 import SearchableSelect from './searchable-select';
+import { formatDisplayValue } from '../utils/formatters';
 
 const Table = ({
   columns = [],
@@ -120,7 +121,7 @@ const renderCell = (col, row, rowIndex, onChange) => {
       return col.render(row, rowIndex);
 
     default:
-      return row[col.key];
+      return formatDisplayValue(row[col.key]);
   }
 };
 

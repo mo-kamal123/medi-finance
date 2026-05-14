@@ -1,15 +1,9 @@
 ﻿import { useMemo, useState } from 'react';
 import FormInput from '../../../shared/ui/input';
 import PageLoader from '../../../shared/ui/page-loader';
+import { formatCurrency } from '../../../shared/utils/formatters';
 import { useFinancialPeriods } from '../../invoices/hooks/invoices.queries';
 import { useBalanceSheet } from '../hooks/balance-sheet.queries';
-
-const formatCurrency = (value = 0) =>
-  new Intl.NumberFormat('ar-EG', {
-    style: 'currency',
-    currency: 'EGP',
-    maximumFractionDigits: 2,
-  }).format(value);
 
 const groupRowsBySection = (rows = []) => {
   const sectionsMap = new Map();
