@@ -16,6 +16,11 @@ export const getJournalEntryById = async (id) => {
   return data;
 };
 
+export const getJournalEntryStatuses = async () => {
+  const { data } = await axiosInstance.get('/journal-entries/statuses');
+  return data;
+};
+
 export const createJournalEntry = async (payload) => {
   const { data } = await axiosInstance.post('/journal-entries', payload);
   return data;

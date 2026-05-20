@@ -1,10 +1,21 @@
 import { CircleChevronRight, Power, Settings } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
+import { clearCredentials } from '../../features/auth/store/auth-slice';
 import { toggleSidebar } from '../store/main-slice';
+import { removeFromLocalStorage } from '../utils/local-storage-actions';
 
 const Navbar = () => {
   const dispatch = useDispatch();
   const isOpen = useSelector((state) => state.main.sidebar);
+  const user = useSelector((state) => state.auth.user);
+  const displayName = user?.fullName || user?.username || '';
+
+  const handleLogout = () => {
+    removeFromLocalStorage('token');
+    removeFromLocalStorage('user');
+    dispatch(clearCredentials());
+  };
+
   return (
     <header className="bg-white border-b border-gray-200 shadow-lg px-4 sm:px-6 h-16 flex items-center justify-between">
       {/* welcome section */}
@@ -15,8 +26,13 @@ const Navbar = () => {
         />
         <h1 className="text-lg sm:text-xl font-semibold text-gray-800">
           مرحباً بك{' '}
-          <p className="sub-font font-bold inline text-primary">Mostafa</p> في{' '}
-          <p className="sub-font font-bold inline text-primary">Medi Finance</p>
+          <span className="sub-font font-bold inline text-primary">
+            {displayName}
+          </span>{' '}
+          في{' '}
+          <span className="sub-font font-bold inline text-primary">
+            Medi Finance
+          </span>
         </h1>
       </div>
 
@@ -32,6 +48,7 @@ const Navbar = () => {
         <button
           className="p-2 rounded-lg hover:bg-red-50 transition"
           aria-label="Logout"
+          onClick={handleLogout}
         >
           <Power className="w-5 h-5 text-red-500" />
         </button>

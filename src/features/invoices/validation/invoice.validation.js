@@ -3,8 +3,6 @@
 export const invoiceDetailSchema = z.object({
   productServiceID: z.coerce.number().min(1, 'معرف المنتج أو الخدمة مطلوب'),
 
-  serviceTypeID: z.coerce.number().min(1, 'معرف المنتج أو الخدمة مطلوب'),
-
   quantity: z.coerce.number().min(1, 'الكمية يجب أن تكون على الأقل 1'),
 
   unitPrice: z.coerce.number().min(0, 'سعر الوحدة لا يمكن أن يكون سالب'),
@@ -32,7 +30,7 @@ export const invoiceSchema = z.object({
 
   financialPeriodID: z.string().nonempty('الفترة المالية مطلوبة'),
 
-  status: z.string().nonempty('الحالة مطلوبة'),
+  statusId: z.string().nonempty('الحالة مطلوبة'),
 
   details: z.array(invoiceDetailSchema).min(1, 'يجب إضافة سطر واحد على الأقل'),
 });

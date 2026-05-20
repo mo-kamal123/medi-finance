@@ -129,10 +129,10 @@ const DailyEntriesPage = () => {
     },
     {
       header: 'الحالة',
-      key: 'status',
+      key: 'statusName',
       type: 'custom',
       render: (row) => {
-        const statusMeta = getStatusMeta(row.status);
+        const statusMeta = getStatusMeta(row.statusName);
 
         return (
           <span
