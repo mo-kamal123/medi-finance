@@ -9,11 +9,12 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: login,
     onSuccess: (data) => {
-      addToLocalStorage('token', data.data.token);
-      dispatch(
-        setCredentials({ user: { name: 'mostafa' }, token: data.data.token })
-      );
-      console.log(data.data.token);
+      const { token, username, fullName } = data.data;
+      const user = { username, fullName };
+
+      addToLocalStorage('token', token);
+      addToLocalStorage('user', JSON.stringify(user));
+      dispatch(setCredentials({ user, token }));
     },
   });
 };

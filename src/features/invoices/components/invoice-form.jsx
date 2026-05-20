@@ -5,13 +5,34 @@ import { Plus, Trash2 } from 'lucide-react';
 import FormInput from '../../../shared/ui/input';
 import { invoiceSchema } from '../validation/invoice.validation';
 import { useNextInvoiceNumber } from '../hooks/invoices.queries';
-import { createEmptyDetail, mapInvoiceToFormValues, defaultValues } from '../utils/mapInvoiceToFormValues';
+import {
+  createEmptyDetail,
+  defaultValues,
+  getInvoiceStatusName,
+  INVOICE_STATUS_OPTIONS,
+  mapInvoiceToFormValues,
+} from '../utils/mapInvoiceToFormValues';
 import useDropdowns from '../hooks/dropdowns';
 import NormalSelect from '../../../shared/ui/NormalSelect';
 import SearchableSelect from '../../../shared/ui/searchable-select';
 import { formatCurrency } from '../utils/format-currency';
 
-const InvoiceForm = ({ initialData = {}, onSubmit, isLoading, invoiceType }) => {
+const DetailField = ({ label, children, error }) => (
+  <div className="space-y-1">
+    <label className="text-sm font-medium text-gray-700">{label}</label>
+    {children}
+    {error ? <p className="text-sm text-red-500">{error}</p> : null}
+  </div>
+);
+
+const EMPTY_INVOICE = {};
+
+const InvoiceForm = ({
+  initialData = EMPTY_INVOICE,
+  onSubmit,
+  isLoading,
+  invoiceType,
+}) => {
   const isEditMode = Boolean(initialData?.invoiceID);
   const {
     customers,
@@ -70,6 +91,7 @@ const InvoiceForm = ({ initialData = {}, onSubmit, isLoading, invoiceType }) => 
     }
   }, [
     isEditMode,
+    initialData,
     initialData?.invoiceID,
     nextInvoiceNumberData?.nextInvoiceNumber,
     reset,
@@ -90,12 +112,14 @@ const InvoiceForm = ({ initialData = {}, onSubmit, isLoading, invoiceType }) => 
           invoiceDate: new Date(data.invoiceDate).toISOString(),
           dueDate: new Date(data.dueDate).toISOString(),
           invoiceTypeID: Number(data.invoiceTypeID),
-          customerID: Number(data.customerID) || null,
-          supplierID: Number(data.supplierID) || null,
+          customerID: data.customerID ? Number(data.customerID) : null,
+          supplierID: data.supplierID ? Number(data.supplierID) : null,
           taxAmount: Number(data.taxAmount),
           discountAmount: Number(data.discountAmount),
           financialPeriodID: Number(data.financialPeriodID),
-          status: data.status,
+          status: getInvoiceStatusName(data.statusId),
+          statusId: Number(data.statusId),
+          createdBy: initialData?.createdBy || 'ms',
           details: data.details.map((item) => ({
             productServiceID: Number(item.productServiceID),
             quantity: Number(item.quantity),
@@ -104,8 +128,6 @@ const InvoiceForm = ({ initialData = {}, onSubmit, isLoading, invoiceType }) => 
             taxPercentage: Number(item.taxPercentage),
           })),
         };
-
-        if (!isEditMode) payload.createdBy = 'ms';
 
         onSubmit(payload);
       })}
@@ -151,7 +173,13 @@ const InvoiceForm = ({ initialData = {}, onSubmit, isLoading, invoiceType }) => 
         {invoiceType !== 'supplier' && (
           <NormalSelect
             label="العميل"
-            {...register('customerID')}
+            {...register('customerID', {
+              onChange: (event) => {
+                if (event.target.value) {
+                  setValue('supplierID', '');
+                }
+              },
+            })}
             options={[
               { value: '', label: 'اختر' },
               ...(customers?.map((c) => ({
@@ -165,7 +193,13 @@ const InvoiceForm = ({ initialData = {}, onSubmit, isLoading, invoiceType }) => 
         {invoiceType !== 'customer' && (
           <NormalSelect
             label="المورد"
-            {...register('supplierID')}
+            {...register('supplierID', {
+              onChange: (event) => {
+                if (event.target.value) {
+                  setValue('customerID', '');
+                }
+              },
+            })}
             options={[
               { value: '', label: 'اختر' },
               ...(suppliers?.map((s) => ({
@@ -201,17 +235,16 @@ const InvoiceForm = ({ initialData = {}, onSubmit, isLoading, invoiceType }) => 
 
         <NormalSelect
           label="الحالة"
-          {...register('status')}
-          options={[
-            { value: 'Posted', label: 'قيد الانتظار' },
-            { value: 'paid', label: 'مدفوعة' },
-            { value: 'overdue', label: 'متأخرة' },
-          ]}
+          {...register('statusId')}
+          options={INVOICE_STATUS_OPTIONS.map((status) => ({
+            value: status.value,
+            label: status.label,
+          }))}
         />
       </div>
 
-      <div className="space-y-4 w-full overflow-x-auto">
-        <div className="flex justify-between items-center">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-800">
             تفاصيل الخدمات
           </h2>
@@ -219,126 +252,224 @@ const InvoiceForm = ({ initialData = {}, onSubmit, isLoading, invoiceType }) => 
           <button
             type="button"
             onClick={() => append(createEmptyDetail())}
-            className="flex items-center gap-2 text-white bg-primary hover:bg-primary/90 px-3 py-1 rounded-lg transition"
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white transition hover:bg-primary/90"
           >
             <Plus size={16} />
             إضافة خدمة
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-8 gap-3 font-semibold text-gray-700 px-4 py-2 bg-gray-200 rounded-xl">
-          <span>الخدمه</span>
-          <span>نوع الخدمه</span>
-          <span>التاريخ</span>
-          <span>الكمية</span>
-          <span>سعر الوحدة</span>
-          <span>خصم %</span>
-          <span>ضريبة %</span>
-          <span>حذف</span>
+        <div className="space-y-4 lg:hidden">
+          {fields.map((field, index) => {
+            const detailErrors = errors?.details?.[index] || {};
+
+            return (
+              <div
+                key={field.id}
+                className="space-y-4 rounded-xl border border-gray-200 bg-gray-50 p-4"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-700">
+                    {`الخدمة ${index + 1}`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => remove(index)}
+                    disabled={fields.length === 1}
+                    className="text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <DetailField
+                    label="الخدمة"
+                    error={detailErrors?.productServiceID?.message}
+                  >
+                    <SearchableSelect
+                      {...register(`details.${index}.productServiceID`, {
+                        valueAsNumber: true,
+                      })}
+                      options={
+                        productsServices?.map((product) => ({
+                          value: product.id ?? product.productServiceID,
+                          label:
+                            product.name ??
+                            product.productServiceNameAr ??
+                            product.productServiceNameEn,
+                        })) || []
+                      }
+                    />
+                  </DetailField>
+
+                  <DetailField
+                    label="الكمية"
+                    error={detailErrors?.quantity?.message}
+                  >
+                    <input
+                      type="number"
+                      {...register(`details.${index}.quantity`, {
+                        valueAsNumber: true,
+                      })}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                    />
+                  </DetailField>
+
+                  <DetailField
+                    label="سعر الوحدة"
+                    error={detailErrors?.unitPrice?.message}
+                  >
+                    <input
+                      type="number"
+                      {...register(`details.${index}.unitPrice`, {
+                        valueAsNumber: true,
+                      })}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                    />
+                  </DetailField>
+
+                  <DetailField
+                    label="خصم %"
+                    error={detailErrors?.discountPercentage?.message}
+                  >
+                    <input
+                      type="number"
+                      {...register(`details.${index}.discountPercentage`, {
+                        valueAsNumber: true,
+                      })}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                    />
+                  </DetailField>
+
+                  <DetailField
+                    label="ضريبة %"
+                    error={detailErrors?.taxPercentage?.message}
+                  >
+                    <input
+                      type="number"
+                      {...register(`details.${index}.taxPercentage`, {
+                        valueAsNumber: true,
+                      })}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                    />
+                  </DetailField>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        {fields.map((field, index) => {
-          const detailErrors = errors?.details?.[index] || {};
+        <div className="hidden max-w-full overflow-x-auto lg:block">
+          <table className="min-w-max overflow-hidden rounded-lg border border-gray-200 text-sm">
+            <thead className="bg-primary/90 text-white">
+              <tr>
+                <th className="p-3 text-right">الخدمة</th>
+                <th className="p-3 text-right">الكمية</th>
+                <th className="p-3 text-right">سعر الوحدة</th>
+                <th className="p-3 text-right">خصم %</th>
+                <th className="p-3 text-right">ضريبة %</th>
+                <th className="p-3 text-right">الإجمالي</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {fields.map((field, index) => {
+                const detailErrors = errors?.details?.[index] || {};
+                const row = watchedDetails?.[index] || {};
+                const quantity = Number(row.quantity) || 0;
+                const unitPrice = Number(row.unitPrice) || 0;
+                const discountPercentage = Number(row.discountPercentage) || 0;
+                const taxPercentage = Number(row.taxPercentage) || 0;
+                const gross = quantity * unitPrice;
+                const discount = (gross * discountPercentage) / 100;
+                const tax = ((gross - discount) * taxPercentage) / 100;
+                const rowTotal = gross - discount + tax;
 
-          return (
-            <div
-              key={field.id}
-              className="grid grid-cols-1 md:grid-cols-9 gap-3 items-end border border-gray-300 rounded-xl p-4 bg-gray-50"
-            >
-              <div className="flex flex-col">
-                <SearchableSelect
-                  {...register(`details.${index}.productServiceID`, {
-                    valueAsNumber: true,
-                  })}
-                  className="input-modern"
-                  options={
-                    productsServices?.map((product) => ({
-                      value: product.id,
-                      label: product.name,
-                    })) || []
-                  }
-                />
-                {detailErrors?.productServiceID?.message && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {detailErrors.productServiceID.message}
-                  </p>
-                )}
-              </div>
-              <div className="flex flex-col">
-                <SearchableSelect
-                  {...register(`details.${index}.ServiceTypeID`, {
-                    valueAsNumber: true,
-                  })}
-                  className="input-modern"
-                  options={
-                    productsServices?.map((product) => ({
-                      value: product.id,
-                      label: product.name,
-                    })) || []
-                  }
-                />
-                {detailErrors?.serviceTypeID?.message && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {detailErrors.serviceTypeID.message}
-                  </p>
-                )}
-              </div>
+                return (
+                  <tr key={field.id} className="align-top border border-gray-200">
+                    <td className="min-w-[260px] p-2">
+                      <SearchableSelect
+                        {...register(`details.${index}.productServiceID`, {
+                          valueAsNumber: true,
+                        })}
+                        options={
+                          productsServices?.map((product) => ({
+                            value: product.id ?? product.productServiceID,
+                            label:
+                              product.name ??
+                              product.productServiceNameAr ??
+                              product.productServiceNameEn,
+                          })) || []
+                        }
+                      />
+                      {detailErrors?.productServiceID?.message ? (
+                        <p className="mt-1 text-sm text-red-500">
+                          {detailErrors.productServiceID.message}
+                        </p>
+                      ) : null}
+                    </td>
 
-              <input
-                type="date"
-                {...register(`details.${index}.quantity`, {
-                  valueAsNumber: true,
-                })}
-                className="input-modern"
-              />
+                    <td className="min-w-[120px] p-2">
+                      <input
+                        type="number"
+                        {...register(`details.${index}.quantity`, {
+                          valueAsNumber: true,
+                        })}
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                      />
+                    </td>
 
-              <input
-                type="number"
-                {...register(`details.${index}.quantity`, {
-                  valueAsNumber: true,
-                })}
-                className="input-modern"
-              />
-              <input
-                type="number"
-                {...register(`details.${index}.quantity`, {
-                  valueAsNumber: true,
-                })}
-                className="input-modern"
-              />
-              <input
-                type="number"
-                {...register(`details.${index}.unitPrice`, {
-                  valueAsNumber: true,
-                })}
-                className="input-modern"
-              />
-              <input
-                type="number"
-                {...register(`details.${index}.discountPercentage`, {
-                  valueAsNumber: true,
-                })}
-                className="input-modern"
-              />
-              <input
-                type="number"
-                {...register(`details.${index}.taxPercentage`, {
-                  valueAsNumber: true,
-                })}
-                className="input-modern"
-              />
+                    <td className="min-w-[140px] p-2">
+                      <input
+                        type="number"
+                        {...register(`details.${index}.unitPrice`, {
+                          valueAsNumber: true,
+                        })}
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                      />
+                    </td>
 
-              <button
-                type="button"
-                onClick={() => remove(index)}
-                disabled={fields.length === 1}
-                className="text-red-500 hover:text-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <Trash2 size={18} />
-              </button>
-            </div>
-          );
-        })}
+                    <td className="min-w-[120px] p-2">
+                      <input
+                        type="number"
+                        {...register(`details.${index}.discountPercentage`, {
+                          valueAsNumber: true,
+                        })}
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                      />
+                    </td>
+
+                    <td className="min-w-[120px] p-2">
+                      <input
+                        type="number"
+                        {...register(`details.${index}.taxPercentage`, {
+                          valueAsNumber: true,
+                        })}
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                      />
+                    </td>
+
+                    <td className="min-w-[140px] p-3 font-semibold text-gray-700">
+                      {formatCurrency(rowTotal)}
+                    </td>
+
+                    <td className="p-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => remove(index)}
+                        disabled={fields.length === 1}
+                        className="text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="space-y-4">

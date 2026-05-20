@@ -1,11 +1,32 @@
 export const createEmptyDetail = () => ({
   productServiceID: '',
-  serviceTypeID: '',
   quantity: 1,
   unitPrice: 0,
   discountPercentage: 0,
   taxPercentage: 0,
 });
+
+export const INVOICE_STATUS_OPTIONS = [
+  { value: '0', label: 'Draft' },
+  { value: '1', label: 'Paid' },
+  { value: '2', label: 'Overdue' },
+];
+
+export const getInvoiceStatusId = (status) => {
+  const matchedStatus = INVOICE_STATUS_OPTIONS.find(
+    (option) => option.label.toLowerCase() === String(status).toLowerCase()
+  );
+
+  return matchedStatus?.value || '0';
+};
+
+export const getInvoiceStatusName = (statusId) => {
+  const matchedStatus = INVOICE_STATUS_OPTIONS.find(
+    (option) => option.value === String(statusId)
+  );
+
+  return matchedStatus?.label || 'Draft';
+};
 
 export const defaultValues = {
   invoiceNumber: '',
@@ -17,7 +38,8 @@ export const defaultValues = {
   taxAmount: 0,
   discountAmount: 0,
   financialPeriodID: '',
-  status: 'Posted',
+  status: 'Draft',
+  statusId: '0',
   details: [createEmptyDetail()],
 };
 
@@ -43,14 +65,17 @@ export const mapInvoiceToFormValues = (invoice) => {
     financialPeriodID: invoice.financialPeriodID
       ? String(invoice.financialPeriodID)
       : '',
-    status: invoice.status || 'Posted',
+    status: invoice.status || getInvoiceStatusName(invoice.statusId),
+    statusId:
+      invoice.statusId !== undefined && invoice.statusId !== null
+        ? String(invoice.statusId)
+        : getInvoiceStatusId(invoice.status),
     details:
       invoice.invoiceDetails?.length > 0
         ? invoice.invoiceDetails.map((item) => ({
             productServiceID: item.productServiceID
               ? String(item.productServiceID)
               : '',
-            serviceTypeID: item.serviceTypeID ? String(item.serviceTypeID) : '',
             quantity: item.quantity ?? 1,
             unitPrice: item.unitPrice ?? 0,
             discountPercentage: item.discountPercentage ?? 0,

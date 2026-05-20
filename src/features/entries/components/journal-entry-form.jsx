@@ -12,11 +12,7 @@ import FormInput from '../../../shared/ui/input';
 import SearchableSelect from '../../../shared/ui/searchable-select';
 import { toast } from '../../../shared/lib/toast';
 import { useCurrencies } from '../../commercial-papers/hooks/commercial-papers.queries';
-import {
-  useCustomers,
-  useFinancialPeriods,
-  useSuppliers,
-} from '../../invoices/hooks/invoices.queries';
+import { useFinancialPeriods } from '../../invoices/hooks/invoices.queries';
 import useAccountsTree from '../../tree/accouts-tree/hooks/use-accounts-tree';
 import useCostTree from '../../tree/cost-tree/hooks/use-cost-tree';
 import {
@@ -26,6 +22,7 @@ import {
   useUpdateJournalEntry,
 } from '../hooks/entries.mutations';
 import { getBatchSummary } from '../api/entries.api';
+import { useJournalEntryStatuses } from '../hooks/entries.queries';
 
 const JOURNAL_TYPES = [
   { value: '1', label: 'قيد يومية' },
@@ -33,33 +30,15 @@ const JOURNAL_TYPES = [
   { value: '3', label: 'قيد إقفال' },
 ];
 
-const getStatusMeta = (status) => {
-  if (status === 'Posted') {
-    return { badgeClass: 'bg-green-100 text-green-700', label: status };
-  }
-
-  if (String(status).toLowerCase().includes('reverse')) {
-    return { badgeClass: 'bg-red-100 text-red-700', label: status };
-  }
-
-  return { badgeClass: 'bg-yellow-100 text-yellow-700', label: status || '-' };
-};
-
 const emptyDetail = {
   batchNumber: '',
   accountID: '',
   costCenterID: '',
-  supplierName: '',
   recordDate: '',
   documentNumber: '',
   debitAmount: '',
   creditAmount: '',
-  descriptionAr: '',
-  descriptionEn: '',
-  customerID: '',
-  supplierID: '',
-  currencyID: '',
-  exchangeRate: '',
+  description: '',
 };
 
 const toDateInputValue = (value) => {
@@ -81,28 +60,28 @@ const getFinalNodes = (nodes = []) => {
 const getInitialValues = (defaultValues = {}) => ({
   entryDate: toDateInputValue(defaultValues.entryDate),
   journalType: defaultValues.journalType ?? '1',
-  descriptionAr: defaultValues.descriptionAr ?? '',
+  description: defaultValues.description ?? defaultValues.descriptionAr ?? '',
   referenceNumber: defaultValues.referenceNumber ?? '',
   financialPeriodID: defaultValues.financialPeriodID
     ? String(defaultValues.financialPeriodID)
     : '',
-  status: defaultValues.status ?? 'Posted',
+  statusID:
+    defaultValues.statusID !== undefined && defaultValues.statusID !== null
+      ? String(defaultValues.statusID)
+      : '0',
+  currencyID: defaultValues.currencyID ? String(defaultValues.currencyID) : '',
+  exchangeRate: defaultValues.exchangeRate ?? '',
   details:
     defaultValues.details?.length > 0
       ? defaultValues.details.map((detail) => ({
           batchNumber: detail.batchNumber ?? '',
           accountID: detail.accountID ? String(detail.accountID) : '',
           costCenterID: detail.costCenterID ? String(detail.costCenterID) : '',
-          supplierName: detail.supplierName ?? '',
           recordDate: toDateInputValue(detail.recordDate),
           documentNumber: detail.documentNumber ?? '',
           debitAmount: detail.debitAmount ?? '',
           creditAmount: detail.creditAmount ?? '',
-          descriptionAr: detail.descriptionAr ?? '',
-          customerID: detail.customerID ? String(detail.customerID) : '',
-          supplierID: detail.supplierID ? String(detail.supplierID) : '',
-          currencyID: detail.currencyID ? String(detail.currencyID) : '',
-          exchangeRate: detail.exchangeRate ?? '',
+          description: detail.description ?? detail.descriptionAr ?? '',
         }))
       : [{ ...emptyDetail }, { ...emptyDetail }],
 });
@@ -142,10 +121,9 @@ const JournalEntryForm = ({
   const reverseMutation = useReverseJournalEntry();
   const { data: accountsTree = [] } = useAccountsTree();
   const { data: costTree = [] } = useCostTree();
-  const { data: customers = [] } = useCustomers();
-  const { data: suppliers = [] } = useSuppliers();
   const { data: currencies = [] } = useCurrencies();
   const { data: financialPeriods = [] } = useFinancialPeriods();
+  const { data: statuses = [] } = useJournalEntryStatuses();
   const isEditMode = mode === 'edit';
   const entryId = defaultValues?.journalEntryID || defaultValues?.id;
 
@@ -165,27 +143,14 @@ const JournalEntryForm = ({
       })),
     [costTree]
   );
-  const customerOptions = useMemo(
-    () =>
-      customers.map((customer) => ({
-        value: String(customer.customerID),
-        label: customer.customerNameAr || customer.customerNameEn,
-      })),
-    [customers]
-  );
-  const supplierOptions = useMemo(
-    () =>
-      suppliers.map((supplier) => ({
-        value: String(supplier.supplierID),
-        label: supplier.supplierNameAr || supplier.supplierNameEn,
-      })),
-    [suppliers]
-  );
   const currencyOptions = useMemo(
     () =>
       currencies.map((currency) => ({
         value: String(currency.currencyID),
-        label: currency.currencyNameEn || currency.currencyCode,
+        label:
+          currency.currencyNameAr ||
+          currency.currencyNameEn ||
+          currency.currencyCode,
       })),
     [currencies]
   );
@@ -197,12 +162,24 @@ const JournalEntryForm = ({
       })),
     [financialPeriods]
   );
+  const statusOptions = useMemo(
+    () =>
+      statuses.map((status) => ({
+        value: String(status.id),
+        label: status.name,
+      })),
+    [statuses]
+  );
 
   const [formData, setFormData] = useState(() =>
     getInitialValues(defaultValues)
   );
-  const entryStatus = defaultValues.status ?? formData.status ?? 'Draft';
-  const statusMeta = getStatusMeta(entryStatus);
+  const selectedStatus = statusOptions.find(
+    (status) => status.value === String(formData.statusID)
+  );
+  const entryStatus =
+    selectedStatus?.label || defaultValues.statusName || defaultValues.status;
+  const isPosted = Number(formData.statusID) === 1 || entryStatus === 'Posted';
   const isReversed = String(entryStatus).toLowerCase().includes('reverse');
 
   const handleFieldChange = (field, value) => {
@@ -252,23 +229,10 @@ const JournalEntryForm = ({
         return;
       }
 
-      const matchedSupplier = suppliers.find((supplier) => {
-        const supplierNameAr = String(supplier.supplierNameAr || '').trim();
-        const supplierNameEn = String(supplier.supplierNameEn || '').trim();
-        const summaryName = String(summary.supplierName || '').trim();
-
-        return (
-          summaryName &&
-          (supplierNameAr === summaryName || supplierNameEn === summaryName)
-        );
-      });
-
       setFormData((prev) => {
         const details = [...prev.details];
         details[index] = {
           ...details[index],
-          supplierName: summary.supplierName || '',
-          supplierID: matchedSupplier ? String(matchedSupplier.supplierID) : '',
           accountID: summary.accountID ? String(summary.accountID) : '',
           debitAmount:
             summary.totalAmount === null || summary.totalAmount === undefined
@@ -324,7 +288,7 @@ const JournalEntryForm = ({
   const handlePostEntry = () => {
     if (!entryId) return;
 
-    if (entryStatus === 'Posted') {
+    if (isPosted) {
       toast.info('تم ترحيل هذا القيد بالفعل');
       return;
     }
@@ -345,7 +309,7 @@ const JournalEntryForm = ({
       return;
     }
 
-    if (entryStatus !== 'Posted') {
+    if (!isPosted) {
       toast.info('يجب ترحيل القيد أولاً قبل إجراء العكس');
       return;
     }
@@ -364,28 +328,22 @@ const JournalEntryForm = ({
     const payload = {
       entryDate: new Date(formData.entryDate).toISOString(),
       journalType: formData.journalType,
-      descriptionAr: formData.descriptionAr,
-      descriptionEn: '',
+      description: formData.description,
       referenceNumber: formData.referenceNumber || '',
       financialPeriodID: Number(formData.financialPeriodID),
-      status: formData.status,
-      user: 'ms',
+      statusID: Number(formData.statusID),
+      currencyID: Number(formData.currencyID),
+      exchangeRate: Number(formData.exchangeRate) || 0,
       details: formData.details.map((detail) => ({
         accountID: Number(detail.accountID),
-        costCenterID: detail.costCenterID ? Number(detail.costCenterID) : null,
+        costCenterID: detail.costCenterID ? Number(detail.costCenterID) : 0,
+        debitAmount: Number(detail.debitAmount) || 0,
+        creditAmount: Number(detail.creditAmount) || 0,
+        description: detail.description || '',
         recordDate: detail.recordDate
           ? new Date(detail.recordDate).toISOString()
           : null,
         documentNumber: detail.documentNumber || '',
-        debitAmount: Number(detail.debitAmount) || 0,
-        creditAmount: Number(detail.creditAmount) || 0,
-        descriptionAr: detail.descriptionAr || '',
-        descriptionEn: '',
-        customerID: detail.customerID ? Number(detail.customerID) : null,
-        supplierID: detail.supplierID ? Number(detail.supplierID) : null,
-        currencyID: detail.currencyID ? Number(detail.currencyID) : null,
-        exchangeRate:
-          detail.exchangeRate === '' ? null : Number(detail.exchangeRate),
       })),
     };
 
@@ -438,7 +396,7 @@ const JournalEntryForm = ({
               disabled={
                 isPosting ||
                 isReversing ||
-                entryStatus === 'Posted' ||
+                isPosted ||
                 isReversed
               }
               className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
@@ -452,7 +410,7 @@ const JournalEntryForm = ({
               disabled={
                 isPosting ||
                 isReversing ||
-                entryStatus !== 'Posted' ||
+                !isPosted ||
                 isReversed
               }
               className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
@@ -504,9 +462,9 @@ const JournalEntryForm = ({
 
           <FormInput
             label="الوصف عربي"
-            value={formData.descriptionAr}
+            value={formData.description}
             onChange={(event) =>
-              handleFieldChange('descriptionAr', event.target.value)
+              handleFieldChange('description', event.target.value)
             }
           />
 
@@ -526,16 +484,45 @@ const JournalEntryForm = ({
             ))}
           </FormInput>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">الحالة</label>
-            <div className="flex h-11 items-center rounded-lg border border-gray-200 bg-gray-50 px-3">
-              <span
-                className={`rounded-full px-2 py-1 text-xs ${statusMeta.badgeClass}`}
-              >
-                {statusMeta.label}
-              </span>
-            </div>
-          </div>
+          <FormInput
+            as="select"
+            label="الحالة"
+            value={formData.statusID}
+            onChange={(event) =>
+              handleFieldChange('statusID', event.target.value)
+            }
+          >
+            {statusOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </FormInput>
+
+          <FormInput
+            as="select"
+            label="العملة"
+            value={formData.currencyID}
+            onChange={(event) =>
+              handleFieldChange('currencyID', event.target.value)
+            }
+          >
+            <option value="">اختر</option>
+            {currencyOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </FormInput>
+
+          <FormInput
+            type="number"
+            label="سعر الصرف"
+            value={formData.exchangeRate}
+            onChange={(event) =>
+              handleFieldChange('exchangeRate', event.target.value)
+            }
+          />
         </div>
 
         <div className="space-y-4">
@@ -664,59 +651,9 @@ const JournalEntryForm = ({
                   <DetailField label="الوصف عربي">
                     <input
                       type="text"
-                      value={row.descriptionAr}
+                      value={row.description}
                       onChange={(e) =>
-                        handleRowChange(index, 'descriptionAr', e.target.value)
-                      }
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                    />
-                  </DetailField>
-
-                  <DetailField label="العميل">
-                    <SelectField
-                      value={row.customerID}
-                      onChange={(e) =>
-                        handleRowChange(index, 'customerID', e.target.value)
-                      }
-                      options={customerOptions}
-                    />
-                  </DetailField>
-
-                  <DetailField label="المورد">
-                    <SelectField
-                      value={row.supplierID}
-                      onChange={(e) =>
-                        handleRowChange(index, 'supplierID', e.target.value)
-                      }
-                      options={supplierOptions}
-                    />
-                  </DetailField>
-
-                  <DetailField label="بيانات المورد">
-                    <input
-                      type="text"
-                      value={row.supplierName}
-                      readOnly
-                      className="w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-gray-700"
-                    />
-                  </DetailField>
-
-                  <DetailField label="العملة">
-                    <SelectField
-                      value={row.currencyID}
-                      onChange={(e) =>
-                        handleRowChange(index, 'currencyID', e.target.value)
-                      }
-                      options={currencyOptions}
-                    />
-                  </DetailField>
-
-                  <DetailField label="سعر الصرف">
-                    <input
-                      type="number"
-                      value={row.exchangeRate}
-                      onChange={(e) =>
-                        handleRowChange(index, 'exchangeRate', e.target.value)
+                        handleRowChange(index, 'description', e.target.value)
                       }
                       className="w-full rounded-lg border border-gray-200 px-3 py-2"
                     />
@@ -737,11 +674,6 @@ const JournalEntryForm = ({
                   <th className="p-3 text-right">الوصف</th>
                   <th className="p-3 text-right">تاريخ السجل</th>
                   <th className="p-3 text-right">رقم المستند</th>
-                  <th className="p-3 text-right">العميل</th>
-                  <th className="p-3 text-right">المورد</th>
-                  <th className="p-3 text-right">بيانات المورد</th>
-                  <th className="p-3 text-right">العملة</th>
-                  <th className="p-3 text-right">سعر الصرف</th>
                   <th className="p-3 text-right">رقم الدفعة</th>
                   <th></th>
                 </tr>
@@ -814,11 +746,11 @@ const JournalEntryForm = ({
                     <td className="min-w-[180px] p-2">
                       <input
                         type="text"
-                        value={row.descriptionAr}
+                        value={row.description}
                         onChange={(event) =>
                           handleRowChange(
                             index,
-                            'descriptionAr',
+                            'description',
                             event.target.value
                           )
                         }
@@ -850,77 +782,6 @@ const JournalEntryForm = ({
                           handleRowChange(
                             index,
                             'documentNumber',
-                            event.target.value
-                          )
-                        }
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                      />
-                    </td>
-
-                    {/* العميل */}
-                    <td className="min-w-[180px] p-2">
-                      <SelectField
-                        value={row.customerID}
-                        onChange={(event) =>
-                          handleRowChange(
-                            index,
-                            'customerID',
-                            event.target.value
-                          )
-                        }
-                        options={customerOptions}
-                      />
-                    </td>
-
-                    {/* المورد */}
-                    <td className="min-w-[180px] p-2">
-                      <SelectField
-                        value={row.supplierID}
-                        onChange={(event) =>
-                          handleRowChange(
-                            index,
-                            'supplierID',
-                            event.target.value
-                          )
-                        }
-                        options={supplierOptions}
-                      />
-                    </td>
-
-                    {/* بيانات المورد */}
-                    <td className="min-w-[220px] p-2">
-                      <input
-                        type="text"
-                        value={row.supplierName}
-                        readOnly
-                        className="w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2"
-                      />
-                    </td>
-
-                    {/* العملة */}
-                    <td className="min-w-[180px] p-2">
-                      <SelectField
-                        value={row.currencyID}
-                        onChange={(event) =>
-                          handleRowChange(
-                            index,
-                            'currencyID',
-                            event.target.value
-                          )
-                        }
-                        options={currencyOptions}
-                      />
-                    </td>
-
-                    {/* سعر الصرف */}
-                    <td className="min-w-[120px] p-2">
-                      <input
-                        type="number"
-                        value={row.exchangeRate}
-                        onChange={(event) =>
-                          handleRowChange(
-                            index,
-                            'exchangeRate',
                             event.target.value
                           )
                         }
@@ -968,14 +829,13 @@ const JournalEntryForm = ({
               </tbody>
               <tfoot className="bg-gray-50 font-semibold">
                 <tr>
-                  <td colSpan="3" className="p-3 text-right">
-                    الإجمالي
-                  </td>
                   <td className="p-3 text-green-600">
                     {totalDebit.toFixed(2)}
                   </td>
                   <td className="p-3 text-red-600">{totalCredit.toFixed(2)}</td>
-                  <td colSpan="9"></td>
+                  <td colSpan="7" className="p-3 text-right">
+                    الإجمالي
+                  </td>
                 </tr>
               </tfoot>
             </table>

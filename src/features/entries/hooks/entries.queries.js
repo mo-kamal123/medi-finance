@@ -1,5 +1,9 @@
 ﻿import { useQuery } from '@tanstack/react-query';
-import { getJournalEntries, getJournalEntryById } from '../api/entries.api';
+import {
+  getJournalEntries,
+  getJournalEntryById,
+  getJournalEntryStatuses,
+} from '../api/entries.api';
 
 export const useJournalEntries = (filters) => {
   return useQuery({
@@ -14,5 +18,12 @@ export const useJournalEntry = (id) => {
     queryKey: ['journalEntry', id],
     queryFn: () => getJournalEntryById(id),
     enabled: !!id,
+  });
+};
+
+export const useJournalEntryStatuses = () => {
+  return useQuery({
+    queryKey: ['journalEntryStatuses'],
+    queryFn: getJournalEntryStatuses,
   });
 };
