@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import FormInput from '../../../shared/ui/input';
+import DateInput from '../../../shared/ui/date-input';
 import SearchableSelect from '../../../shared/ui/searchable-select';
 import { toast } from '../../../shared/lib/toast';
 import { useCurrencies } from '../../commercial-papers/hooks/commercial-papers.queries';
@@ -30,11 +31,21 @@ const JOURNAL_TYPES = [
   { value: '3', label: 'قيد إقفال' },
 ];
 
+const getTodayDateInputValue = () => {
+  const today = new Date();
+
+  return [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, '0'),
+    String(today.getDate()).padStart(2, '0'),
+  ].join('-');
+};
+
 const emptyDetail = {
   batchNumber: '',
   accountID: '',
   costCenterID: '',
-  recordDate: '',
+  recordDate: getTodayDateInputValue(),
   documentNumber: '',
   debitAmount: '',
   creditAmount: '',
@@ -58,7 +69,7 @@ const getFinalNodes = (nodes = []) => {
 };
 
 const getInitialValues = (defaultValues = {}) => ({
-  entryDate: toDateInputValue(defaultValues.entryDate),
+  entryDate: toDateInputValue(defaultValues.entryDate) || getTodayDateInputValue(),
   journalType: defaultValues.journalType ?? '1',
   description: defaultValues.description ?? defaultValues.descriptionAr ?? '',
   referenceNumber: defaultValues.referenceNumber ?? '',
@@ -427,8 +438,7 @@ const JournalEntryForm = ({
         className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:space-y-6 md:p-6"
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <FormInput
-            type="date"
+          <DateInput
             label="التاريخ"
             value={formData.entryDate}
             onChange={(event) =>
@@ -627,13 +637,11 @@ const JournalEntryForm = ({
                   </DetailField>
 
                   <DetailField label="تاريخ السجل">
-                    <input
-                      type="date"
+                    <DateInput
                       value={row.recordDate}
                       onChange={(e) =>
                         handleRowChange(index, 'recordDate', e.target.value)
                       }
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
                     />
                   </DetailField>
 
@@ -759,8 +767,7 @@ const JournalEntryForm = ({
                     </td>
                     {/* تاريخ السجل */}
                     <td className="min-w-[160px] p-2">
-                      <input
-                        type="date"
+                      <DateInput
                         value={row.recordDate}
                         onChange={(event) =>
                           handleRowChange(
@@ -769,7 +776,6 @@ const JournalEntryForm = ({
                             event.target.value
                           )
                         }
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
                       />
                     </td>
 
