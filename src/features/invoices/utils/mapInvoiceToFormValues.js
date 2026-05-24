@@ -28,10 +28,20 @@ export const getInvoiceStatusName = (statusId) => {
   return matchedStatus?.label || 'Draft';
 };
 
+const getTodayDateInputValue = () => {
+  const today = new Date();
+
+  return [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, '0'),
+    String(today.getDate()).padStart(2, '0'),
+  ].join('-');
+};
+
 export const defaultValues = {
   invoiceNumber: '',
-  invoiceDate: '',
-  dueDate: '',
+  invoiceDate: getTodayDateInputValue(),
+  dueDate: getTodayDateInputValue(),
   invoiceTypeID: '',
   customerID: '',
   supplierID: '',

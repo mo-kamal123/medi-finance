@@ -1,4 +1,5 @@
 import { Eye, Edit, Trash } from 'lucide-react';
+import { formatDate } from '../../../shared/utils/formatters';
 
 const InvoiceRow = ({ invoice }) => {
   const handleView = () => console.log('View', invoice.id);
@@ -9,7 +10,9 @@ const InvoiceRow = ({ invoice }) => {
     <tr className="hover:bg-gray-50 transition-colors">
       <td className="px-4 py-3 text-sm text-gray-700">{invoice.number}</td>
       <td className="px-4 py-3 text-sm text-gray-700">{invoice.client}</td>
-      <td className="px-4 py-3 text-sm text-gray-700">{invoice.date}</td>
+      <td className="px-4 py-3 text-sm text-gray-700">
+        {formatDate(invoice.date)}
+      </td>
       <td className="px-4 py-3 text-sm text-gray-700">{invoice.amount}</td>
       <td className="px-4 py-3 text-sm">
         <span

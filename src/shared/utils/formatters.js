@@ -26,7 +26,12 @@ export const formatCurrency = (value = 0, options = {}) =>
 export const formatDate = (value, options = {}) =>
   value
     ? toEnglishDigits(
-        new Date(value).toLocaleDateString(ENGLISH_NUMBER_LOCALE, options)
+        new Date(value).toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          ...options,
+        })
       )
     : '-';
 

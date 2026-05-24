@@ -1,8 +1,9 @@
 ﻿import React, { useEffect } from 'react';
-import { useForm, useFieldArray, useWatch } from 'react-hook-form';
+import { Controller, useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2 } from 'lucide-react';
 import FormInput from '../../../shared/ui/input';
+import DateInput from '../../../shared/ui/date-input';
 import { invoiceSchema } from '../validation/invoice.validation';
 import { useNextInvoiceNumber } from '../hooks/invoices.queries';
 import {
@@ -157,17 +158,27 @@ const InvoiceForm = ({
           ]}
         />
 
-        <FormInput
-          type="date"
-          label="تاريخ الإصدار"
-          {...register('invoiceDate')}
-          error={errors.invoiceDate?.message}
+        <Controller
+          name="invoiceDate"
+          control={control}
+          render={({ field }) => (
+            <DateInput
+              label="تاريخ الإصدار"
+              error={errors.invoiceDate?.message}
+              {...field}
+            />
+          )}
         />
-        <FormInput
-          type="date"
-          label="تاريخ الاستحقاق"
-          {...register('dueDate')}
-          error={errors.dueDate?.message}
+        <Controller
+          name="dueDate"
+          control={control}
+          render={({ field }) => (
+            <DateInput
+              label="تاريخ الاستحقاق"
+              error={errors.dueDate?.message}
+              {...field}
+            />
+          )}
         />
 
         {invoiceType !== 'supplier' && (
