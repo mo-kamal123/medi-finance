@@ -13,18 +13,14 @@ import {
   useReverseJournalEntry,
 } from '../hooks/entries.mutations';
 import { useJournalEntries } from '../hooks/entries.queries';
-
-const getStatusMeta = (status) => {
-  if (status === 'Posted') {
-    return { badgeClass: 'bg-green-100 text-green-700', label: status };
-  }
-
-  if (String(status).toLowerCase().includes('reverse')) {
-    return { badgeClass: 'bg-red-100 text-red-700', label: status };
-  }
-
-  return { badgeClass: 'bg-yellow-100 text-yellow-700', label: status || '-' };
-};
+import {
+  getJournalEntryDescription,
+  getJournalEntryStatusMeta,
+  getJournalTypeLabel,
+  isJournalEntryPosted,
+  isJournalEntryReversed,
+  JOURNAL_TYPES,
+} from '../utils/journal-entry.utils';
 
 const DailyEntriesPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,8 +40,11 @@ const DailyEntriesPage = () => {
   const filteredEntries = useMemo(() => {
     return entries.filter((entry) =>
       matchesSearch(
-        entry,
-        ['descriptionAr', 'journalEntryNumber', 'referenceNumber'],
+        {
+          ...entry,
+          description: getJournalEntryDescription(entry),
+        },
+        ['description', 'journalEntryNumber', 'referenceNumber'],
         searchQuery
       )
     );
@@ -56,32 +55,32 @@ const DailyEntriesPage = () => {
     [filteredEntries, pageNumber, pageSize]
   );
 
-  const handlePostEntry = (entryId, status) => {
-    if (status === 'Posted') {
+  const handlePostEntry = (entry) => {
+    if (isJournalEntryPosted(entry)) {
       toast.info('تم ترحيل هذا القيد بالفعل');
       return;
     }
 
-    if (String(status).toLowerCase().includes('reverse')) {
+    if (isJournalEntryReversed(entry)) {
       toast.info('لا يمكن ترحيل قيد تم عكسه');
       return;
     }
 
-    postMutation.mutate({ id: entryId, postedBy: 'ms' });
+    postMutation.mutate({ id: entry.journalEntryID, postedBy: 'ms' });
   };
 
-  const handleReverseEntry = (entryId, status) => {
-    if (String(status).toLowerCase().includes('reverse')) {
+  const handleReverseEntry = (entry) => {
+    if (isJournalEntryReversed(entry)) {
       toast.info('تم عكس هذا القيد بالفعل');
       return;
     }
 
-    if (status !== 'Posted') {
+    if (!isJournalEntryPosted(entry)) {
       toast.info('يجب ترحيل القيد أولاً قبل إجراء العكس');
       return;
     }
 
-    reverseMutation.mutate({ id: entryId, reversedBy: 'ms' });
+    reverseMutation.mutate({ id: entry.journalEntryID, reversedBy: 'ms' });
   };
 
   const columns = [
@@ -99,6 +98,8 @@ const DailyEntriesPage = () => {
     {
       header: 'النوع',
       key: 'journalType',
+      type: 'custom',
+      render: (row) => getJournalTypeLabel(row.journalType),
     },
     {
       header: 'مدين',
@@ -118,7 +119,9 @@ const DailyEntriesPage = () => {
     },
     {
       header: 'الوصف',
-      key: 'descriptionAr',
+      key: 'description',
+      type: 'custom',
+      render: (row) => getJournalEntryDescription(row),
     },
     {
       header: 'الفترة المالية',
@@ -132,7 +135,7 @@ const DailyEntriesPage = () => {
       key: 'statusName',
       type: 'custom',
       render: (row) => {
-        const statusMeta = getStatusMeta(row.statusName);
+        const statusMeta = getJournalEntryStatusMeta(row);
 
         return (
           <span
@@ -154,7 +157,8 @@ const DailyEntriesPage = () => {
         const isReversing =
           reverseMutation.isPending &&
           reverseMutation.variables?.id === row.journalEntryID;
-        const isReversed = String(row.status).toLowerCase().includes('reverse');
+        const isPosted = isJournalEntryPosted(row);
+        const isReversed = isJournalEntryReversed(row);
 
         return (
           <div className="flex items-center justify-center gap-3">
@@ -168,11 +172,11 @@ const DailyEntriesPage = () => {
 
             <button
               type="button"
-              onClick={() => handlePostEntry(row.journalEntryID, row.status)}
+              onClick={() => handlePostEntry(row)}
               disabled={
                 isPosting ||
                 isReversing ||
-                row.status === 'Posted' ||
+                isPosted ||
                 isReversed
               }
               className="text-emerald-600 transition-colors hover:text-emerald-800 disabled:cursor-not-allowed disabled:opacity-40"
@@ -183,11 +187,11 @@ const DailyEntriesPage = () => {
 
             <button
               type="button"
-              onClick={() => handleReverseEntry(row.journalEntryID, row.status)}
+              onClick={() => handleReverseEntry(row)}
               disabled={
                 isPosting ||
                 isReversing ||
-                row.status !== 'Posted' ||
+                !isPosted ||
                 isReversed
               }
               className="text-amber-600 transition-colors hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-40"
@@ -245,9 +249,11 @@ const DailyEntriesPage = () => {
           }}
         >
           <option value="all">الكل</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
+          {JOURNAL_TYPES.map((type) => (
+            <option key={type.value} value={type.value}>
+              {type.label}
+            </option>
+          ))}
         </FormInput>
       </div>
 
