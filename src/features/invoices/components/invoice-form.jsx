@@ -1,15 +1,15 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Controller, useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2 } from 'lucide-react';
 import FormInput from '../../../shared/ui/input';
 import DateInput from '../../../shared/ui/date-input';
 import { invoiceSchema } from '../validation/invoice.validation';
-import { useNextInvoiceNumber } from '../hooks/invoices.queries';
+import { useNextInvoiceNumber, useInvoiceStatuses } from '../hooks/invoices.queries';
 import {
+  buildInvoicePayload,
   createEmptyDetail,
   defaultValues,
-  getInvoiceStatusName,
   INVOICE_STATUS_OPTIONS,
   mapInvoiceToFormValues,
 } from '../utils/mapInvoiceToFormValues';
@@ -43,6 +43,14 @@ const InvoiceForm = ({
     suppliers,
   } = useDropdowns();
   const { data: nextInvoiceNumberData } = useNextInvoiceNumber(!isEditMode);
+  const { data: invoiceStatuses = [] } = useInvoiceStatuses();
+  const statusOptions =
+    invoiceStatuses.length > 0
+      ? invoiceStatuses.map((status) => ({
+          value: String(status.id ?? status.statusId),
+          label: status.nameAr ?? status.name ?? status.nameEn,
+        }))
+      : INVOICE_STATUS_OPTIONS;
   const {
     register,
     control,
@@ -83,7 +91,7 @@ const InvoiceForm = ({
 
   useEffect(() => {
     if (isEditMode && initialData?.invoiceID) {
-      reset(mapInvoiceToFormValues(initialData));
+      reset(mapInvoiceToFormValues(initialData, invoiceStatuses));
     } else if (!isEditMode && nextInvoiceNumberData?.nextInvoiceNumber) {
       reset({
         ...defaultValues,
@@ -95,6 +103,7 @@ const InvoiceForm = ({
     initialData,
     initialData?.invoiceID,
     nextInvoiceNumberData?.nextInvoiceNumber,
+    invoiceStatuses,
     reset,
   ]);
 
@@ -108,29 +117,7 @@ const InvoiceForm = ({
   return (
     <form
       onSubmit={handleSubmit((data) => {
-        const payload = {
-          invoiceNumber: data.invoiceNumber,
-          invoiceDate: new Date(data.invoiceDate).toISOString(),
-          dueDate: new Date(data.dueDate).toISOString(),
-          invoiceTypeID: Number(data.invoiceTypeID),
-          customerID: data.customerID ? Number(data.customerID) : null,
-          supplierID: data.supplierID ? Number(data.supplierID) : null,
-          taxAmount: Number(data.taxAmount),
-          discountAmount: Number(data.discountAmount),
-          financialPeriodID: Number(data.financialPeriodID),
-          status: getInvoiceStatusName(data.statusId),
-          statusId: Number(data.statusId),
-          createdBy: initialData?.createdBy || 'ms',
-          details: data.details.map((item) => ({
-            productServiceID: Number(item.productServiceID),
-            quantity: Number(item.quantity),
-            unitPrice: Number(item.unitPrice),
-            discountPercentage: Number(item.discountPercentage),
-            taxPercentage: Number(item.taxPercentage),
-          })),
-        };
-
-        onSubmit(payload);
+        onSubmit(buildInvoicePayload(data, { isEditMode }));
       })}
       className="bg-white shadow-lg rounded-2xl p-8 space-y-8"
     >
@@ -247,12 +234,44 @@ const InvoiceForm = ({
         <NormalSelect
           label="الحالة"
           {...register('statusId')}
-          options={INVOICE_STATUS_OPTIONS.map((status) => ({
-            value: status.value,
-            label: status.label,
-          }))}
+          options={[
+            { value: '', label: 'اختر' },
+            ...statusOptions.map((status) => ({
+              value: status.value,
+              label: status.label,
+            })),
+          ]}
         />
       </div>
+
+      {isEditMode && initialData?.invoiceID ? (
+        <div className="grid grid-cols-1 gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 md:grid-cols-4">
+          <div>
+            <p className="text-sm text-gray-500">الإجمالي</p>
+            <p className="font-semibold text-gray-900">
+              {formatCurrency(initialData.totalAmount ?? 0)}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">الصافي</p>
+            <p className="font-semibold text-primary">
+              {formatCurrency(initialData.netAmount ?? 0)}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">المدفوع</p>
+            <p className="font-semibold text-green-600">
+              {formatCurrency(initialData.paidAmount ?? 0)}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">المتبقي</p>
+            <p className="font-semibold text-red-600">
+              {formatCurrency(initialData.remainingAmount ?? 0)}
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">

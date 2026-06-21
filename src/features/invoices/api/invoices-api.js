@@ -1,4 +1,11 @@
-﻿import { axiosInstance } from '../../../app/api/axiosInstance';
+import { axiosInstance } from '../../../app/api/axiosInstance';
+
+export const normalizeInvoicesResponse = (data) => {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.items)) return data.items;
+  return [];
+};
 
 export const getAllInvoices = async (params = {}, type) => {
   const requestParams = {
@@ -25,12 +32,17 @@ export const getAllInvoices = async (params = {}, type) => {
     params: requestParams,
   });
 
-  return data;
+  return normalizeInvoicesResponse(data);
 };
 
 export const getInvoiceById = async (id) => {
-  const response = await axiosInstance.get(`/invoices/${id}/with-journal`);
-  return response.data;
+  const { data } = await axiosInstance.get(`/invoices/${id}`);
+  return data;
+};
+
+export const getInvoiceStatuses = async () => {
+  const { data } = await axiosInstance.get('/invoices/statuses');
+  return Array.isArray(data) ? data : data?.data || [];
 };
 
 export const getNextInvoiceNumber = async () => {

@@ -1,5 +1,7 @@
 import { Search } from 'lucide-react';
 import SearchableSelect from '../../../shared/ui/searchable-select';
+import { useInvoiceStatuses } from '../hooks/invoices.queries';
+import { INVOICE_STATUS_OPTIONS } from '../utils/mapInvoiceToFormValues';
 
 const InvoiceFilters = ({
   filters,
@@ -8,6 +10,16 @@ const InvoiceFilters = ({
   customers,
   suppliers,
 }) => {
+  const { data: invoiceStatuses = [] } = useInvoiceStatuses();
+
+  const statusOptions =
+    invoiceStatuses.length > 0
+      ? invoiceStatuses.map((status) => ({
+          value: String(status.id ?? status.statusId),
+          label: status.nameAr ?? status.name ?? status.nameEn,
+        }))
+      : INVOICE_STATUS_OPTIONS;
+
   const handleChange = (key, value) => {
     setFilters((prev) => ({
       ...prev,
@@ -33,14 +45,10 @@ const InvoiceFilters = ({
       </div>
 
       <SearchableSelect
-        value={filters.status || ''}
-        onChange={(event) => handleChange('status', event.target.value)}
+        value={filters.statusId || ''}
+        onChange={(event) => handleChange('statusId', event.target.value)}
         placeholder="كل الحالات"
-        options={[
-          { value: 'paid', label: 'مدفوعة' },
-          { value: 'pending', label: 'قيد الانتظار' },
-          { value: 'overdue', label: 'متأخرة' },
-        ]}
+        options={statusOptions}
       />
 
       <SearchableSelect
