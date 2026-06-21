@@ -20,4 +20,6 @@ export const invoicesKeys = {
   services: () => [...invoicesKeys.all, 'products-services'],
 
   nextNumber: () => [...invoicesKeys.all, 'next-number'],
+
+  statuses: () => [...invoicesKeys.all, 'statuses'],
 };

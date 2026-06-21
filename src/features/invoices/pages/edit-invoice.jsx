@@ -1,4 +1,4 @@
-﻿import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import PageLoader from '../../../shared/ui/page-loader';
 import JournalEntryForm from '../../entries/components/journal-entry-form';
 import { useJournalEntry } from '../../entries/hooks/entries.queries';
@@ -27,7 +27,13 @@ const EditInvoice = () => {
         ...data,
       });
 
-      navigate('/invoices'); // adjust if needed
+      const redirectPath = invoice?.customerID
+        ? '/customers-invoices'
+        : invoice?.supplierID
+          ? '/suppliers-invoices'
+          : '/customers-invoices';
+
+      navigate(redirectPath);
     } catch (error) {
       console.error(error);
     }
@@ -50,6 +56,9 @@ const EditInvoice = () => {
         initialData={invoice}
         onSubmit={handleUpdate}
         isLoading={updateInvoiceMutation.isPending}
+        invoiceType={
+          invoice?.customerID ? 'customer' : invoice?.supplierID ? 'supplier' : undefined
+        }
       />
 
       {journalEntryId && (

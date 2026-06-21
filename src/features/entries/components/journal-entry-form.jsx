@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -24,12 +24,13 @@ import {
 } from '../hooks/entries.mutations';
 import { getBatchSummary } from '../api/entries.api';
 import { useJournalEntryStatuses } from '../hooks/entries.queries';
-
-const JOURNAL_TYPES = [
-  { value: '1', label: 'قيد يومية' },
-  { value: '2', label: 'قيد تسوية' },
-  { value: '3', label: 'قيد إقفال' },
-];
+import {
+  buildJournalEntryPayload,
+  isJournalEntryPosted,
+  isJournalEntryReversed,
+  JOURNAL_TYPES,
+  toDateInputValue,
+} from '../utils/journal-entry.utils';
 
 const getTodayDateInputValue = () => {
   const today = new Date();
@@ -52,11 +53,6 @@ const emptyDetail = {
   description: '',
 };
 
-const toDateInputValue = (value) => {
-  if (!value) return '';
-  return String(value).split('T')[0];
-};
-
 const getFinalNodes = (nodes = []) => {
   let finalNodes = [];
   nodes.forEach((node) => {
@@ -70,7 +66,7 @@ const getFinalNodes = (nodes = []) => {
 
 const getInitialValues = (defaultValues = {}) => ({
   entryDate: toDateInputValue(defaultValues.entryDate) || getTodayDateInputValue(),
-  journalType: defaultValues.journalType ?? '1',
+  journalType: defaultValues.journalType ?? 'DailyEntry',
   description: defaultValues.description ?? defaultValues.descriptionAr ?? '',
   referenceNumber: defaultValues.referenceNumber ?? '',
   financialPeriodID: defaultValues.financialPeriodID
@@ -85,14 +81,26 @@ const getInitialValues = (defaultValues = {}) => ({
   details:
     defaultValues.details?.length > 0
       ? defaultValues.details.map((detail) => ({
+          journalEntryDetailID: detail.journalEntryDetailID ?? null,
           batchNumber: detail.batchNumber ?? '',
           accountID: detail.accountID ? String(detail.accountID) : '',
-          costCenterID: detail.costCenterID ? String(detail.costCenterID) : '',
+          costCenterID:
+            detail.costCenterID !== undefined && detail.costCenterID !== null
+              ? String(detail.costCenterID)
+              : '',
           recordDate: toDateInputValue(detail.recordDate),
           documentNumber: detail.documentNumber ?? '',
           debitAmount: detail.debitAmount ?? '',
           creditAmount: detail.creditAmount ?? '',
           description: detail.description ?? detail.descriptionAr ?? '',
+          customerID:
+            detail.customerID !== undefined && detail.customerID !== null
+              ? String(detail.customerID)
+              : '',
+          supplierID:
+            detail.supplierID !== undefined && detail.supplierID !== null
+              ? String(detail.supplierID)
+              : '',
         }))
       : [{ ...emptyDetail }, { ...emptyDetail }],
 });
@@ -185,13 +193,26 @@ const JournalEntryForm = ({
   const [formData, setFormData] = useState(() =>
     getInitialValues(defaultValues)
   );
+
+  useEffect(() => {
+    if (!defaultValues?.journalEntryID) return;
+    setFormData(getInitialValues(defaultValues));
+  }, [defaultValues?.journalEntryID, defaultValues?.modifiedAt]);
+
   const selectedStatus = statusOptions.find(
     (status) => status.value === String(formData.statusID)
   );
   const entryStatus =
     selectedStatus?.label || defaultValues.statusName || defaultValues.status;
-  const isPosted = Number(formData.statusID) === 1 || entryStatus === 'Posted';
-  const isReversed = String(entryStatus).toLowerCase().includes('reverse');
+  const isPosted = isJournalEntryPosted({
+    ...defaultValues,
+    statusID: formData.statusID,
+    statusName: entryStatus,
+  });
+  const isReversed = isJournalEntryReversed({
+    ...defaultValues,
+    statusName: entryStatus,
+  });
 
   const handleFieldChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -336,27 +357,9 @@ const JournalEntryForm = ({
       return;
     }
 
-    const payload = {
-      entryDate: new Date(formData.entryDate).toISOString(),
-      journalType: formData.journalType,
-      description: formData.description,
-      referenceNumber: formData.referenceNumber || '',
-      financialPeriodID: Number(formData.financialPeriodID),
-      statusID: Number(formData.statusID),
-      currencyID: Number(formData.currencyID),
-      exchangeRate: Number(formData.exchangeRate) || 0,
-      details: formData.details.map((detail) => ({
-        accountID: Number(detail.accountID),
-        costCenterID: detail.costCenterID ? Number(detail.costCenterID) : 0,
-        debitAmount: Number(detail.debitAmount) || 0,
-        creditAmount: Number(detail.creditAmount) || 0,
-        description: detail.description || '',
-        recordDate: detail.recordDate
-          ? new Date(detail.recordDate).toISOString()
-          : null,
-        documentNumber: detail.documentNumber || '',
-      })),
-    };
+    const payload = buildJournalEntryPayload(formData, {
+      isCreate: !isEditMode,
+    });
 
     if (isEditMode) {
       updateMutation.mutate(
@@ -432,6 +435,40 @@ const JournalEntryForm = ({
           </div>
         ) : null}
       </div>
+
+      {isEditMode && defaultValues.journalEntryNumber ? (
+        <div className="grid grid-cols-1 gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:grid-cols-2 xl:grid-cols-4 md:p-6">
+          <div>
+            <p className="text-sm text-gray-500">رقم القيد</p>
+            <p className="font-semibold text-gray-900">
+              {defaultValues.journalEntryNumber}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">إجمالي المدين / الدائن</p>
+            <p className="font-semibold text-gray-900">
+              {Number(defaultValues.totalDebit || 0).toFixed(2)} /{' '}
+              {Number(defaultValues.totalCredit || 0).toFixed(2)}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">العملة</p>
+            <p className="font-semibold text-gray-900">
+              {defaultValues.currencyNameAr ||
+                defaultValues.currencyCode ||
+                '-'}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">الفترة المالية</p>
+            <p className="font-semibold text-gray-900">
+              {defaultValues.financialPeriodNameAr ||
+                defaultValues.financialPeriodNameEn ||
+                '-'}
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <form
         onSubmit={handleSubmit}

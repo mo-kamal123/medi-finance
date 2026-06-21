@@ -1,4 +1,5 @@
 ﻿import { axiosInstance } from '../../../app/api/axiosInstance';
+import { normalizeJournalEntriesResponse } from '../utils/journal-entry.utils';
 
 export const getJournalEntries = async (params = {}) => {
   const { data } = await axiosInstance.get('/journal-entries', {
@@ -8,7 +9,7 @@ export const getJournalEntries = async (params = {}) => {
       ...params,
     },
   });
-  return data;
+  return normalizeJournalEntriesResponse(data);
 };
 
 export const getJournalEntryById = async (id) => {

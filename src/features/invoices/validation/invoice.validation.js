@@ -1,6 +1,8 @@
-﻿import { z } from 'zod';
+import { z } from 'zod';
 
 export const invoiceDetailSchema = z.object({
+  invoiceDetailID: z.coerce.number().optional(),
+
   productServiceID: z.coerce.number().min(1, 'معرف المنتج أو الخدمة مطلوب'),
 
   quantity: z.coerce.number().min(1, 'الكمية يجب أن تكون على الأقل 1'),
