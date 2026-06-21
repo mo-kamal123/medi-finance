@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import {
   Calculator,
   FolderTree,
@@ -37,6 +37,7 @@ const Sidebar = () => {
         { name: 'شجرة التكاليف', link: '/cost-tree', icon: FolderTree },
         { name: 'القيود اليومية', link: '/entries', icon: FileText },
         { name: 'الصندوق', link: '/cash-transactions', icon: Wallet },
+        { name: 'السندات', link: '/cash-vouchers', icon: Receipt },
       ],
     },
     {
@@ -73,11 +74,6 @@ const Sidebar = () => {
           name: 'أوراق الدفع',
           link: '/commercial-papers/payable',
           icon: FileText,
-        },
-        {
-          name: 'السندات',
-          link: '/commercial-papers/cash-vouchers',
-          icon: Receipt,
         },
         { name: 'الشيكات', link: '/cheques', icon: CreditCard },
       ],

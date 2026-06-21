@@ -1,31 +1,59 @@
 export const createEmptyDetail = () => ({
   productServiceID: '',
-  quantity: 1,
-  unitPrice: 0,
-  discountPercentage: 0,
-  taxPercentage: 0,
+  quantity: '1',
+  unitPrice: '',
+  discountPercentage: '0',
+  taxPercentage: '0',
 });
 
 export const INVOICE_STATUS_OPTIONS = [
-  { value: '0', label: 'Draft' },
-  { value: '1', label: 'Paid' },
-  { value: '2', label: 'Overdue' },
+  { value: '0', label: 'مسودة' },
+  { value: '1', label: 'مرحل' },
+  { value: '2', label: 'مدفوعة' },
+  { value: '3', label: 'متأخرة' },
 ];
 
-export const getInvoiceStatusId = (status) => {
-  const matchedStatus = INVOICE_STATUS_OPTIONS.find(
-    (option) => option.label.toLowerCase() === String(status).toLowerCase()
-  );
+const getStatusOptionValue = (status) =>
+  String(status?.id ?? status?.statusId ?? status?.value ?? '');
 
-  return matchedStatus?.value || '0';
+const getStatusOptionLabel = (status) =>
+  status?.nameAr ?? status?.name ?? status?.nameEn ?? status?.label ?? '';
+
+export const resolveInvoiceStatusId = (invoice, statuses = []) => {
+  if (invoice?.statusId !== undefined && invoice?.statusId !== null) {
+    return String(invoice.statusId);
+  }
+
+  const statusText = String(invoice?.status ?? '').trim();
+  if (!statusText) return '0';
+
+  const fromApi = statuses.find(
+    (option) =>
+      getStatusOptionLabel(option) === statusText ||
+      getStatusOptionValue(option) === statusText
+  );
+  if (fromApi) return getStatusOptionValue(fromApi);
+
+  const fromFallback = INVOICE_STATUS_OPTIONS.find(
+    (option) =>
+      option.label === statusText ||
+      option.label.toLowerCase() === statusText.toLowerCase()
+  );
+  if (fromFallback) return fromFallback.value;
+
+  return '0';
 };
 
-export const getInvoiceStatusName = (statusId) => {
-  const matchedStatus = INVOICE_STATUS_OPTIONS.find(
+export const getInvoiceStatusName = (statusId, statuses = []) => {
+  const fromApi = statuses.find(
+    (option) => getStatusOptionValue(option) === String(statusId)
+  );
+  if (fromApi) return getStatusOptionLabel(fromApi);
+
+  const fromFallback = INVOICE_STATUS_OPTIONS.find(
     (option) => option.value === String(statusId)
   );
-
-  return matchedStatus?.label || 'Draft';
+  return fromFallback?.label || 'مسودة';
 };
 
 const getTodayDateInputValue = () => {
@@ -48,7 +76,6 @@ export const defaultValues = {
   taxAmount: 0,
   discountAmount: 0,
   financialPeriodID: '',
-  status: 'Draft',
   statusId: '0',
   details: [createEmptyDetail()],
 };
@@ -58,10 +85,42 @@ export const toDateInputValue = (value) => {
   return String(value).split('T')[0];
 };
 
-export const mapInvoiceToFormValues = (invoice) => {
+const mapDetailToForm = (item) => ({
+  ...(item.invoiceDetailID
+    ? { invoiceDetailID: item.invoiceDetailID }
+    : {}),
+  productServiceID: item.productServiceID
+    ? String(item.productServiceID)
+    : '',
+  quantity:
+    item.quantity !== undefined && item.quantity !== null
+      ? String(item.quantity)
+      : '1',
+  unitPrice:
+    item.unitPrice !== undefined && item.unitPrice !== null
+      ? String(item.unitPrice)
+      : '',
+  discountPercentage:
+    item.discountPercentage !== undefined && item.discountPercentage !== null
+      ? String(item.discountPercentage)
+      : '0',
+  taxPercentage:
+    item.taxPercentage !== undefined && item.taxPercentage !== null
+      ? String(item.taxPercentage)
+      : '0',
+});
+
+export const mapInvoiceToFormValues = (invoice, statuses = []) => {
   if (!invoice || Object.keys(invoice).length === 0) {
     return defaultValues;
   }
+
+  const sourceDetails =
+    invoice.details?.length > 0
+      ? invoice.details
+      : invoice.invoiceDetails?.length > 0
+        ? invoice.invoiceDetails
+        : [];
 
   return {
     invoiceNumber: invoice.invoiceNumber || '',
@@ -75,32 +134,38 @@ export const mapInvoiceToFormValues = (invoice) => {
     financialPeriodID: invoice.financialPeriodID
       ? String(invoice.financialPeriodID)
       : '',
-    status: invoice.status || getInvoiceStatusName(invoice.statusId),
-    statusId:
-      invoice.statusId !== undefined && invoice.statusId !== null
-        ? String(invoice.statusId)
-        : getInvoiceStatusId(invoice.status),
+    statusId: resolveInvoiceStatusId(invoice, statuses),
     details:
-      invoice.invoiceDetails?.length > 0
-        ? invoice.invoiceDetails.map((item) => ({
-            productServiceID: item.productServiceID
-              ? String(item.productServiceID)
-              : '',
-            quantity: item.quantity ?? 1,
-            unitPrice: item.unitPrice ?? 0,
-            discountPercentage: item.discountPercentage ?? 0,
-            taxPercentage: item.taxPercentage ?? 0,
-          }))
-        : invoice.details?.length > 0
-          ? invoice.details.map((item) => ({
-              productServiceID: item.productServiceID
-                ? String(item.productServiceID)
-                : '',
-              quantity: item.quantity ?? 1,
-              unitPrice: item.unitPrice ?? 0,
-              discountPercentage: item.discountPercentage ?? 0,
-              taxPercentage: item.taxPercentage ?? 0,
-            }))
-          : [createEmptyDetail()],
+      sourceDetails.length > 0
+        ? sourceDetails.map(mapDetailToForm)
+        : [createEmptyDetail()],
   };
 };
+
+export const buildInvoicePayload = (data, { isEditMode = false } = {}) => ({
+  invoiceNumber: data.invoiceNumber,
+  invoiceDate: new Date(data.invoiceDate).toISOString(),
+  dueDate: new Date(data.dueDate).toISOString(),
+  invoiceTypeID: Number(data.invoiceTypeID),
+  customerID: data.customerID ? Number(data.customerID) : null,
+  supplierID: data.supplierID ? Number(data.supplierID) : null,
+  taxAmount: Number(data.taxAmount),
+  discountAmount: Number(data.discountAmount),
+  financialPeriodID: Number(data.financialPeriodID),
+  statusId: Number(data.statusId),
+  details: data.details.map((item) => {
+    const detail = {
+      productServiceID: Number(item.productServiceID),
+      quantity: Number(item.quantity),
+      unitPrice: Number(item.unitPrice),
+      discountPercentage: Number(item.discountPercentage),
+      taxPercentage: Number(item.taxPercentage),
+    };
+
+    if (isEditMode && item.invoiceDetailID) {
+      detail.invoiceDetailID = Number(item.invoiceDetailID);
+    }
+
+    return detail;
+  }),
+});

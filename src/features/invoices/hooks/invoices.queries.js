@@ -1,10 +1,11 @@
-﻿import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   getAllInvoices,
   getBatchByNumber,
   getCustomers,
   getFinancialPeriods,
   getInvoiceById,
+  getInvoiceStatuses,
   getInvoiceTypes,
   getNextInvoiceNumber,
   getProductsServices,
@@ -14,7 +15,7 @@ import { invoicesKeys } from './invoices.keys';
 
 export const useInvoices = (filters, type) => {
   return useQuery({
-    queryKey: invoicesKeys.lists({ ...filters, type }),
+    queryKey: invoicesKeys.list({ ...filters, type }),
     queryFn: () => getAllInvoices(filters, type),
     keepPreviousData: true,
   });
@@ -76,5 +77,12 @@ export const useNextInvoiceNumber = (enabled = true) => {
     queryKey: invoicesKeys.nextNumber(),
     queryFn: getNextInvoiceNumber,
     enabled,
+  });
+};
+
+export const useInvoiceStatuses = () => {
+  return useQuery({
+    queryKey: invoicesKeys.statuses(),
+    queryFn: getInvoiceStatuses,
   });
 };

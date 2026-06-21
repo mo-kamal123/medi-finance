@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -10,12 +10,16 @@ import {
 import { useNavigate } from 'react-router-dom';
 import FormInput from '../../../shared/ui/input';
 import DateInput from '../../../shared/ui/date-input';
-import SearchableSelect from '../../../shared/ui/searchable-select';
 import { toast } from '../../../shared/lib/toast';
 import { useCurrencies } from '../../commercial-papers/hooks/commercial-papers.queries';
-import { useFinancialPeriods } from '../../invoices/hooks/invoices.queries';
+import {
+  useCustomers,
+  useFinancialPeriods,
+  useSuppliers,
+} from '../../invoices/hooks/invoices.queries';
 import useAccountsTree from '../../tree/accouts-tree/hooks/use-accounts-tree';
 import useCostTree from '../../tree/cost-tree/hooks/use-cost-tree';
+import JournalEntryDetailRow from './journal-entry-detail-row';
 import {
   useCreateJournalEntry,
   usePostJournalEntry,
@@ -24,12 +28,17 @@ import {
 } from '../hooks/entries.mutations';
 import { getBatchSummary } from '../api/entries.api';
 import { useJournalEntryStatuses } from '../hooks/entries.queries';
-
-const JOURNAL_TYPES = [
-  { value: '1', label: 'قيد يومية' },
-  { value: '2', label: 'قيد تسوية' },
-  { value: '3', label: 'قيد إقفال' },
-];
+import {
+  buildAccountOptions,
+  buildCostCenterOptions,
+  buildJournalEntryPayload,
+  buildPartyOptions,
+  isJournalEntryPosted,
+  isJournalEntryReversed,
+  JOURNAL_TYPES,
+  toDateInputValue,
+  withCurrentOption,
+} from '../utils/journal-entry.utils';
 
 const getTodayDateInputValue = () => {
   const today = new Date();
@@ -42,9 +51,14 @@ const getTodayDateInputValue = () => {
 };
 
 const emptyDetail = {
+  rowKey: '',
   batchNumber: '',
   accountID: '',
   costCenterID: '',
+  customerID: '',
+  supplierID: '',
+  customerNameAr: '',
+  supplierNameAr: '',
   recordDate: getTodayDateInputValue(),
   documentNumber: '',
   debitAmount: '',
@@ -52,25 +66,14 @@ const emptyDetail = {
   description: '',
 };
 
-const toDateInputValue = (value) => {
-  if (!value) return '';
-  return String(value).split('T')[0];
-};
-
-const getFinalNodes = (nodes = []) => {
-  let finalNodes = [];
-  nodes.forEach((node) => {
-    if (node.isFinal) finalNodes.push(node);
-    if (node.children?.length) {
-      finalNodes = finalNodes.concat(getFinalNodes(node.children));
-    }
-  });
-  return finalNodes;
-};
+const createDetailRow = () => ({
+  ...emptyDetail,
+  rowKey: `row-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+});
 
 const getInitialValues = (defaultValues = {}) => ({
   entryDate: toDateInputValue(defaultValues.entryDate) || getTodayDateInputValue(),
-  journalType: defaultValues.journalType ?? '1',
+  journalType: defaultValues.journalType ?? 'DailyEntry',
   description: defaultValues.description ?? defaultValues.descriptionAr ?? '',
   referenceNumber: defaultValues.referenceNumber ?? '',
   financialPeriodID: defaultValues.financialPeriodID
@@ -85,33 +88,44 @@ const getInitialValues = (defaultValues = {}) => ({
   details:
     defaultValues.details?.length > 0
       ? defaultValues.details.map((detail) => ({
+          rowKey: `detail-${detail.journalEntryDetailID || Math.random()}`,
+          journalEntryDetailID: detail.journalEntryDetailID ?? null,
           batchNumber: detail.batchNumber ?? '',
-          accountID: detail.accountID ? String(detail.accountID) : '',
-          costCenterID: detail.costCenterID ? String(detail.costCenterID) : '',
+          accountID: detail.accountID
+            ? String(detail.accountID)
+            : detail.id
+              ? String(detail.id)
+              : '',
+          costCenterID:
+            detail.costCenterID !== undefined && detail.costCenterID !== null
+              ? String(detail.costCenterID)
+              : '',
           recordDate: toDateInputValue(detail.recordDate),
           documentNumber: detail.documentNumber ?? '',
           debitAmount: detail.debitAmount ?? '',
           creditAmount: detail.creditAmount ?? '',
           description: detail.description ?? detail.descriptionAr ?? '',
+          customerID:
+            detail.customerID !== undefined &&
+            detail.customerID !== null &&
+            detail.customerID !== 0 &&
+            detail.customerID !== '0'
+              ? String(detail.customerID)
+              : '',
+          supplierID:
+            detail.supplierID !== undefined &&
+            detail.supplierID !== null &&
+            detail.supplierID !== 0 &&
+            detail.supplierID !== '0'
+              ? String(detail.supplierID)
+              : '',
+          customerNameAr:
+            detail.customerNameAr ?? detail.customerName ?? '',
+          supplierNameAr:
+            detail.supplierNameAr ?? detail.supplierName ?? '',
         }))
-      : [{ ...emptyDetail }, { ...emptyDetail }],
+      : [createDetailRow(), createDetailRow()],
 });
-
-const SelectField = ({
-  value,
-  onChange,
-  options,
-  placeholder = 'اختر',
-  dropdownPosition = 'bottom',
-}) => (
-  <SearchableSelect
-    value={value}
-    onChange={onChange}
-    options={options}
-    placeholder={placeholder}
-    dropdownPosition={dropdownPosition}
-  />
-);
 
 const DetailField = ({ label, children }) => (
   <div className="space-y-1">
@@ -134,25 +148,37 @@ const JournalEntryForm = ({
   const { data: costTree = [] } = useCostTree();
   const { data: currencies = [] } = useCurrencies();
   const { data: financialPeriods = [] } = useFinancialPeriods();
+  const { data: customers = [] } = useCustomers();
+  const { data: suppliers = [] } = useSuppliers();
   const { data: statuses = [] } = useJournalEntryStatuses();
   const isEditMode = mode === 'edit';
   const entryId = defaultValues?.journalEntryID || defaultValues?.id;
 
   const accountOptions = useMemo(
-    () =>
-      getFinalNodes(accountsTree).map((account) => ({
-        value: String(account.accountID),
-        label: `${account.accountCode} - ${account.nameAr}`,
-      })),
+    () => buildAccountOptions(accountsTree),
     [accountsTree]
   );
   const costCenterOptions = useMemo(
-    () =>
-      getFinalNodes(costTree).map((center) => ({
-        value: String(center.costCenterID),
-        label: `${center.ccCode} - ${center.nameAr}`,
-      })),
+    () => buildCostCenterOptions(costTree),
     [costTree]
+  );
+  const customerOptions = useMemo(
+    () =>
+      buildPartyOptions(customers, {
+        idKey: 'customerID',
+        nameArKey: 'customerNameAr',
+        nameEnKey: 'customerNameEn',
+      }),
+    [customers]
+  );
+  const supplierOptions = useMemo(
+    () =>
+      buildPartyOptions(suppliers, {
+        idKey: 'supplierID',
+        nameArKey: 'supplierNameAr',
+        nameEnKey: 'supplierNameEn',
+      }),
+    [suppliers]
   );
   const currencyOptions = useMemo(
     () =>
@@ -185,27 +211,64 @@ const JournalEntryForm = ({
   const [formData, setFormData] = useState(() =>
     getInitialValues(defaultValues)
   );
+
+  useEffect(() => {
+    if (!defaultValues?.journalEntryID) return;
+    setFormData(getInitialValues(defaultValues));
+  }, [defaultValues?.journalEntryID, defaultValues?.modifiedAt]);
+
   const selectedStatus = statusOptions.find(
     (status) => status.value === String(formData.statusID)
   );
   const entryStatus =
     selectedStatus?.label || defaultValues.statusName || defaultValues.status;
-  const isPosted = Number(formData.statusID) === 1 || entryStatus === 'Posted';
-  const isReversed = String(entryStatus).toLowerCase().includes('reverse');
+  const isPosted = isJournalEntryPosted({
+    ...defaultValues,
+    statusID: formData.statusID,
+    statusName: entryStatus,
+  });
+  const isReversed = isJournalEntryReversed({
+    ...defaultValues,
+    statusName: entryStatus,
+  });
 
-  const handleFieldChange = (field, value) => {
+  const handleFieldChange = useCallback((field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
-  const handleRowChange = (index, field, value) => {
+  const handleRowChange = useCallback((index, field, value) => {
     setFormData((prev) => {
       const details = [...prev.details];
-      details[index] = { ...details[index], [field]: value };
+      const nextRow = { ...details[index], [field]: value };
+
+      if (field === 'customerID') {
+        if (value) {
+          nextRow.supplierID = '';
+          nextRow.supplierNameAr = '';
+        }
+        nextRow.customerNameAr = value
+          ? customerOptions.find((option) => option.value === String(value))
+              ?.label || ''
+          : '';
+      }
+
+      if (field === 'supplierID') {
+        if (value) {
+          nextRow.customerID = '';
+          nextRow.customerNameAr = '';
+        }
+        nextRow.supplierNameAr = value
+          ? supplierOptions.find((option) => option.value === String(value))
+              ?.label || ''
+          : '';
+      }
+
+      details[index] = nextRow;
       return { ...prev, details };
     });
-  };
+  }, [customerOptions, supplierOptions]);
 
-  const handleAmountChange = (index, field, value) => {
+  const handleAmountChange = useCallback((index, field, value) => {
     setFormData((prev) => {
       const details = [...prev.details];
       const oppositeField =
@@ -219,9 +282,9 @@ const JournalEntryForm = ({
 
       return { ...prev, details };
     });
-  };
+  }, []);
 
-  const handleLoadBatchSummary = async (index) => {
+  const handleLoadBatchSummary = useCallback(async (index) => {
     const batchNumber = String(
       formData.details[index]?.batchNumber || ''
     ).trim();
@@ -244,7 +307,11 @@ const JournalEntryForm = ({
         const details = [...prev.details];
         details[index] = {
           ...details[index],
-          accountID: summary.accountID ? String(summary.accountID) : '',
+          accountID: summary.accountID
+            ? String(summary.accountID)
+            : summary.id
+              ? String(summary.id)
+              : '',
           debitAmount:
             summary.totalAmount === null || summary.totalAmount === undefined
               ? ''
@@ -258,21 +325,21 @@ const JournalEntryForm = ({
     } catch (error) {
       toast.error(error?.response?.data?.message || 'فشل في جلب بيانات الدفعة');
     }
-  };
+  }, [formData.details]);
 
-  const addRow = () => {
+  const addRow = useCallback(() => {
     setFormData((prev) => ({
       ...prev,
-      details: [...prev.details, { ...emptyDetail }],
+      details: [...prev.details, createDetailRow()],
     }));
-  };
+  }, []);
 
-  const removeRow = (index) => {
+  const removeRow = useCallback((index) => {
     setFormData((prev) => ({
       ...prev,
       details: prev.details.filter((_, rowIndex) => rowIndex !== index),
     }));
-  };
+  }, []);
 
   const totalDebit = useMemo(
     () =>
@@ -336,27 +403,18 @@ const JournalEntryForm = ({
       return;
     }
 
-    const payload = {
-      entryDate: new Date(formData.entryDate).toISOString(),
-      journalType: formData.journalType,
-      description: formData.description,
-      referenceNumber: formData.referenceNumber || '',
-      financialPeriodID: Number(formData.financialPeriodID),
-      statusID: Number(formData.statusID),
-      currencyID: Number(formData.currencyID),
-      exchangeRate: Number(formData.exchangeRate) || 0,
-      details: formData.details.map((detail) => ({
-        accountID: Number(detail.accountID),
-        costCenterID: detail.costCenterID ? Number(detail.costCenterID) : 0,
-        debitAmount: Number(detail.debitAmount) || 0,
-        creditAmount: Number(detail.creditAmount) || 0,
-        description: detail.description || '',
-        recordDate: detail.recordDate
-          ? new Date(detail.recordDate).toISOString()
-          : null,
-        documentNumber: detail.documentNumber || '',
-      })),
-    };
+    const missingAccount = formData.details.some(
+      (detail) => !detail.accountID || Number(detail.accountID) <= 0
+    );
+
+    if (missingAccount) {
+      toast.error('يجب اختيار حساب لكل سطر');
+      return;
+    }
+
+    const payload = buildJournalEntryPayload(formData, {
+      isCreate: !isEditMode,
+    });
 
     if (isEditMode) {
       updateMutation.mutate(
@@ -432,6 +490,40 @@ const JournalEntryForm = ({
           </div>
         ) : null}
       </div>
+
+      {isEditMode && defaultValues.journalEntryNumber ? (
+        <div className="grid grid-cols-1 gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:grid-cols-2 xl:grid-cols-4 md:p-6">
+          <div>
+            <p className="text-sm text-gray-500">رقم القيد</p>
+            <p className="font-semibold text-gray-900">
+              {defaultValues.journalEntryNumber}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">إجمالي المدين / الدائن</p>
+            <p className="font-semibold text-gray-900">
+              {Number(defaultValues.totalDebit || 0).toFixed(2)} /{' '}
+              {Number(defaultValues.totalCredit || 0).toFixed(2)}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">العملة</p>
+            <p className="font-semibold text-gray-900">
+              {defaultValues.currencyNameAr ||
+                defaultValues.currencyCode ||
+                '-'}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">الفترة المالية</p>
+            <p className="font-semibold text-gray-900">
+              {defaultValues.financialPeriodNameAr ||
+                defaultValues.financialPeriodNameEn ||
+                '-'}
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <form
         onSubmit={handleSubmit}
@@ -591,23 +683,85 @@ const JournalEntryForm = ({
                   </DetailField>
 
                   <DetailField label="الحساب">
-                    <SelectField
+                    <FormInput
+                      as="select"
                       value={row.accountID}
                       onChange={(e) =>
                         handleRowChange(index, 'accountID', e.target.value)
                       }
-                      options={accountOptions}
-                    />
+                    >
+                      <option value="">اختر الحساب</option>
+                      {accountOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </FormInput>
                   </DetailField>
 
                   <DetailField label="مركز التكلفة">
-                    <SelectField
+                    <FormInput
+                      as="select"
                       value={row.costCenterID}
                       onChange={(e) =>
                         handleRowChange(index, 'costCenterID', e.target.value)
                       }
-                      options={costCenterOptions}
-                    />
+                    >
+                      <option value="">اختر مركز التكلفة</option>
+                      {costCenterOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </FormInput>
+                  </DetailField>
+
+                  <DetailField label="العميل">
+                    <FormInput
+                      as="select"
+                      value={row.customerID}
+                      onChange={(e) =>
+                        handleRowChange(index, 'customerID', e.target.value)
+                      }
+                      disabled={
+                        (isEditMode && isPosted) || Boolean(row.supplierID)
+                      }
+                    >
+                      <option value="">اختر العميل</option>
+                      {withCurrentOption(
+                        customerOptions,
+                        row.customerID,
+                        row.customerNameAr || row.customerName
+                      ).map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </FormInput>
+                  </DetailField>
+
+                  <DetailField label="المورد">
+                    <FormInput
+                      as="select"
+                      value={row.supplierID}
+                      onChange={(e) =>
+                        handleRowChange(index, 'supplierID', e.target.value)
+                      }
+                      disabled={
+                        (isEditMode && isPosted) || Boolean(row.customerID)
+                      }
+                    >
+                      <option value="">اختر المورد</option>
+                      {withCurrentOption(
+                        supplierOptions,
+                        row.supplierID,
+                        row.supplierNameAr || row.supplierName
+                      ).map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </FormInput>
                   </DetailField>
 
                   <DetailField label="مدين">
@@ -679,6 +833,8 @@ const JournalEntryForm = ({
                   <th className="p-3 text-right">دائن</th>
                   <th className="p-3 text-right">الحساب</th>
                   <th className="p-3 text-right">مركز التكلفة</th>
+                  <th className="p-3 text-right">العميل</th>
+                  <th className="p-3 text-right">المورد</th>
                   <th className="p-3 text-right">الوصف</th>
                   <th className="p-3 text-right">تاريخ السجل</th>
                   <th className="p-3 text-right">رقم المستند</th>
@@ -688,149 +844,20 @@ const JournalEntryForm = ({
               </thead>
               <tbody>
                 {formData.details.map((row, index) => (
-                  <tr key={index} className="align-top border border-gray-200">
-                    {/* مدين */}
-                    <td className="min-w-[120px] p-2">
-                      <input
-                        type="number"
-                        value={row.debitAmount}
-                        onChange={(event) =>
-                          handleAmountChange(
-                            index,
-                            'debitAmount',
-                            event.target.value
-                          )
-                        }
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                      />
-                    </td>
-
-                    {/* دائن */}
-                    <td className="min-w-[120px] p-2">
-                      <input
-                        type="number"
-                        value={row.creditAmount}
-                        onChange={(event) =>
-                          handleAmountChange(
-                            index,
-                            'creditAmount',
-                            event.target.value
-                          )
-                        }
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                      />
-                    </td>
-
-                    {/* الحساب */}
-                    <td className="min-w-[220px] p-2">
-                      <SelectField
-                        value={row.accountID}
-                        onChange={(event) =>
-                          handleRowChange(
-                            index,
-                            'accountID',
-                            event.target.value
-                          )
-                        }
-                        options={accountOptions}
-                      />
-                    </td>
-
-                    {/* مركز التكلفة */}
-                    <td className="min-w-[200px] p-2">
-                      <SelectField
-                        value={row.costCenterID}
-                        onChange={(event) =>
-                          handleRowChange(
-                            index,
-                            'costCenterID',
-                            event.target.value
-                          )
-                        }
-                        options={costCenterOptions}
-                      />
-                    </td>
-                    {/* الوصف */}
-                    <td className="min-w-[180px] p-2">
-                      <input
-                        type="text"
-                        value={row.description}
-                        onChange={(event) =>
-                          handleRowChange(
-                            index,
-                            'description',
-                            event.target.value
-                          )
-                        }
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                      />
-                    </td>
-                    {/* تاريخ السجل */}
-                    <td className="min-w-[160px] p-2">
-                      <DateInput
-                        value={row.recordDate}
-                        onChange={(event) =>
-                          handleRowChange(
-                            index,
-                            'recordDate',
-                            event.target.value
-                          )
-                        }
-                      />
-                    </td>
-
-                    {/* رقم المستند */}
-                    <td className="min-w-[160px] p-2">
-                      <input
-                        type="text"
-                        value={row.documentNumber}
-                        onChange={(event) =>
-                          handleRowChange(
-                            index,
-                            'documentNumber',
-                            event.target.value
-                          )
-                        }
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                      />
-                    </td>
-
-                    {/* رقم الدفعة (آخر حاجة) */}
-                    <td className="min-w-[190px] p-2">
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={row.batchNumber}
-                          onChange={(event) =>
-                            handleRowChange(
-                              index,
-                              'batchNumber',
-                              event.target.value
-                            )
-                          }
-                          className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleLoadBatchSummary(index)}
-                          className="shrink-0 rounded-lg bg-primary px-3 py-2 text-white"
-                        >
-                          جلب
-                        </button>
-                      </div>
-                    </td>
-
-                    {/* حذف */}
-                    <td className="p-2 text-center">
-                      <button
-                        type="button"
-                        onClick={() => removeRow(index)}
-                        className="text-red-600"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
+                  <JournalEntryDetailRow
+                    key={row.rowKey || `row-${index}`}
+                    row={row}
+                    index={index}
+                    accountOptions={accountOptions}
+                    costCenterOptions={costCenterOptions}
+                    customerOptions={customerOptions}
+                    supplierOptions={supplierOptions}
+                    onRowChange={handleRowChange}
+                    onAmountChange={handleAmountChange}
+                    onLoadBatchSummary={handleLoadBatchSummary}
+                    onRemove={removeRow}
+                    readOnly={isEditMode && isPosted}
+                  />
                 ))}
               </tbody>
               <tfoot className="bg-gray-50 font-semibold">
@@ -839,7 +866,7 @@ const JournalEntryForm = ({
                     {totalDebit.toFixed(2)}
                   </td>
                   <td className="p-3 text-red-600">{totalCredit.toFixed(2)}</td>
-                  <td colSpan="7" className="p-3 text-right">
+                  <td colSpan="9" className="p-3 text-right">
                     الإجمالي
                   </td>
                 </tr>

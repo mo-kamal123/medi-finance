@@ -1,15 +1,15 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Controller, useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2 } from 'lucide-react';
 import FormInput from '../../../shared/ui/input';
 import DateInput from '../../../shared/ui/date-input';
 import { invoiceSchema } from '../validation/invoice.validation';
-import { useNextInvoiceNumber } from '../hooks/invoices.queries';
+import { useNextInvoiceNumber, useInvoiceStatuses } from '../hooks/invoices.queries';
 import {
+  buildInvoicePayload,
   createEmptyDetail,
   defaultValues,
-  getInvoiceStatusName,
   INVOICE_STATUS_OPTIONS,
   mapInvoiceToFormValues,
 } from '../utils/mapInvoiceToFormValues';
@@ -27,6 +27,7 @@ const DetailField = ({ label, children, error }) => (
 );
 
 const EMPTY_INVOICE = {};
+const EMPTY_STATUSES = [];
 
 const InvoiceForm = ({
   initialData = EMPTY_INVOICE,
@@ -43,6 +44,14 @@ const InvoiceForm = ({
     suppliers,
   } = useDropdowns();
   const { data: nextInvoiceNumberData } = useNextInvoiceNumber(!isEditMode);
+  const { data: invoiceStatuses = EMPTY_STATUSES } = useInvoiceStatuses();
+  const statusOptions =
+    invoiceStatuses.length > 0
+      ? invoiceStatuses.map((status) => ({
+          value: String(status.id ?? status.statusId),
+          label: status.nameAr ?? status.name ?? status.nameEn,
+        }))
+      : INVOICE_STATUS_OPTIONS;
   const {
     register,
     control,
@@ -53,6 +62,7 @@ const InvoiceForm = ({
   } = useForm({
     defaultValues,
     resolver: zodResolver(invoiceSchema),
+    shouldUnregister: false,
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -81,22 +91,24 @@ const InvoiceForm = ({
   const taxAmount = Number(watchedTaxAmount) || 0;
   const netAmount = Math.max(totalAmount - totalDiscounts + taxAmount, 0);
 
+  const hasSetInvoiceNumber = useRef(false);
+
+  useEffect(() => {
+    if (
+      !isEditMode &&
+      nextInvoiceNumberData?.nextInvoiceNumber &&
+      !hasSetInvoiceNumber.current
+    ) {
+      setValue('invoiceNumber', nextInvoiceNumberData.nextInvoiceNumber);
+      hasSetInvoiceNumber.current = true;
+    }
+  }, [isEditMode, nextInvoiceNumberData?.nextInvoiceNumber, setValue]);
+
   useEffect(() => {
     if (isEditMode && initialData?.invoiceID) {
-      reset(mapInvoiceToFormValues(initialData));
-    } else if (!isEditMode && nextInvoiceNumberData?.nextInvoiceNumber) {
-      reset({
-        ...defaultValues,
-        invoiceNumber: nextInvoiceNumberData.nextInvoiceNumber,
-      });
+      reset(mapInvoiceToFormValues(initialData, invoiceStatuses));
     }
-  }, [
-    isEditMode,
-    initialData,
-    initialData?.invoiceID,
-    nextInvoiceNumberData?.nextInvoiceNumber,
-    reset,
-  ]);
+  }, [isEditMode, initialData, initialData?.invoiceID, invoiceStatuses, reset]);
 
   useEffect(() => {
     if (!invoiceType) return;
@@ -105,32 +117,53 @@ const InvoiceForm = ({
     if (invoiceType === 'supplier') setValue('customerID', '');
   }, [invoiceType, setValue]);
 
+  const productOptions =
+    productsServices?.map((product) => ({
+      value: String(product.id ?? product.productServiceID ?? ''),
+      label:
+        product.name ??
+        product.productServiceNameAr ??
+        product.productServiceNameEn ??
+        '',
+    })) || [];
+
+  const renderDetailNumberInput = (name, index) => (
+    <Controller
+      name={`details.${index}.${name}`}
+      control={control}
+      render={({ field }) => (
+        <input
+          type="number"
+          min="0"
+          step="any"
+          value={field.value ?? ''}
+          onChange={(event) => field.onChange(event.target.value)}
+          onBlur={field.onBlur}
+          className="w-full rounded-lg border border-gray-200 px-3 py-2"
+        />
+      )}
+    />
+  );
+
+  const renderProductSelect = (index) => (
+    <Controller
+      name={`details.${index}.productServiceID`}
+      control={control}
+      render={({ field }) => (
+        <SearchableSelect
+          value={field.value ?? ''}
+          onChange={(event) => field.onChange(event.target.value)}
+          onBlur={field.onBlur}
+          options={productOptions}
+        />
+      )}
+    />
+  );
+
   return (
     <form
       onSubmit={handleSubmit((data) => {
-        const payload = {
-          invoiceNumber: data.invoiceNumber,
-          invoiceDate: new Date(data.invoiceDate).toISOString(),
-          dueDate: new Date(data.dueDate).toISOString(),
-          invoiceTypeID: Number(data.invoiceTypeID),
-          customerID: data.customerID ? Number(data.customerID) : null,
-          supplierID: data.supplierID ? Number(data.supplierID) : null,
-          taxAmount: Number(data.taxAmount),
-          discountAmount: Number(data.discountAmount),
-          financialPeriodID: Number(data.financialPeriodID),
-          status: getInvoiceStatusName(data.statusId),
-          statusId: Number(data.statusId),
-          createdBy: initialData?.createdBy || 'ms',
-          details: data.details.map((item) => ({
-            productServiceID: Number(item.productServiceID),
-            quantity: Number(item.quantity),
-            unitPrice: Number(item.unitPrice),
-            discountPercentage: Number(item.discountPercentage),
-            taxPercentage: Number(item.taxPercentage),
-          })),
-        };
-
-        onSubmit(payload);
+        onSubmit(buildInvoicePayload(data, { isEditMode }));
       })}
       className="bg-white shadow-lg rounded-2xl p-8 space-y-8"
     >
@@ -247,12 +280,44 @@ const InvoiceForm = ({
         <NormalSelect
           label="الحالة"
           {...register('statusId')}
-          options={INVOICE_STATUS_OPTIONS.map((status) => ({
-            value: status.value,
-            label: status.label,
-          }))}
+          options={[
+            { value: '', label: 'اختر' },
+            ...statusOptions.map((status) => ({
+              value: status.value,
+              label: status.label,
+            })),
+          ]}
         />
       </div>
+
+      {isEditMode && initialData?.invoiceID ? (
+        <div className="grid grid-cols-1 gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 md:grid-cols-4">
+          <div>
+            <p className="text-sm text-gray-500">الإجمالي</p>
+            <p className="font-semibold text-gray-900">
+              {formatCurrency(initialData.totalAmount ?? 0)}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">الصافي</p>
+            <p className="font-semibold text-primary">
+              {formatCurrency(initialData.netAmount ?? 0)}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">المدفوع</p>
+            <p className="font-semibold text-green-600">
+              {formatCurrency(initialData.paidAmount ?? 0)}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">المتبقي</p>
+            <p className="font-semibold text-red-600">
+              {formatCurrency(initialData.remainingAmount ?? 0)}
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -298,72 +363,35 @@ const InvoiceForm = ({
                     label="الخدمة"
                     error={detailErrors?.productServiceID?.message}
                   >
-                    <SearchableSelect
-                      {...register(`details.${index}.productServiceID`, {
-                        valueAsNumber: true,
-                      })}
-                      options={
-                        productsServices?.map((product) => ({
-                          value: product.id ?? product.productServiceID,
-                          label:
-                            product.name ??
-                            product.productServiceNameAr ??
-                            product.productServiceNameEn,
-                        })) || []
-                      }
-                    />
+                    {renderProductSelect(index)}
                   </DetailField>
 
                   <DetailField
                     label="الكمية"
                     error={detailErrors?.quantity?.message}
                   >
-                    <input
-                      type="number"
-                      {...register(`details.${index}.quantity`, {
-                        valueAsNumber: true,
-                      })}
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                    />
+                    {renderDetailNumberInput('quantity', index)}
                   </DetailField>
 
                   <DetailField
                     label="سعر الوحدة"
                     error={detailErrors?.unitPrice?.message}
                   >
-                    <input
-                      type="number"
-                      {...register(`details.${index}.unitPrice`, {
-                        valueAsNumber: true,
-                      })}
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                    />
+                    {renderDetailNumberInput('unitPrice', index)}
                   </DetailField>
 
                   <DetailField
                     label="خصم %"
                     error={detailErrors?.discountPercentage?.message}
                   >
-                    <input
-                      type="number"
-                      {...register(`details.${index}.discountPercentage`, {
-                        valueAsNumber: true,
-                      })}
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                    />
+                    {renderDetailNumberInput('discountPercentage', index)}
                   </DetailField>
 
                   <DetailField
                     label="ضريبة %"
                     error={detailErrors?.taxPercentage?.message}
                   >
-                    <input
-                      type="number"
-                      {...register(`details.${index}.taxPercentage`, {
-                        valueAsNumber: true,
-                      })}
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                    />
+                    {renderDetailNumberInput('taxPercentage', index)}
                   </DetailField>
                 </div>
               </div>
@@ -400,20 +428,7 @@ const InvoiceForm = ({
                 return (
                   <tr key={field.id} className="align-top border border-gray-200">
                     <td className="min-w-[260px] p-2">
-                      <SearchableSelect
-                        {...register(`details.${index}.productServiceID`, {
-                          valueAsNumber: true,
-                        })}
-                        options={
-                          productsServices?.map((product) => ({
-                            value: product.id ?? product.productServiceID,
-                            label:
-                              product.name ??
-                              product.productServiceNameAr ??
-                              product.productServiceNameEn,
-                          })) || []
-                        }
-                      />
+                      {renderProductSelect(index)}
                       {detailErrors?.productServiceID?.message ? (
                         <p className="mt-1 text-sm text-red-500">
                           {detailErrors.productServiceID.message}
@@ -422,43 +437,19 @@ const InvoiceForm = ({
                     </td>
 
                     <td className="min-w-[120px] p-2">
-                      <input
-                        type="number"
-                        {...register(`details.${index}.quantity`, {
-                          valueAsNumber: true,
-                        })}
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                      />
+                      {renderDetailNumberInput('quantity', index)}
                     </td>
 
                     <td className="min-w-[140px] p-2">
-                      <input
-                        type="number"
-                        {...register(`details.${index}.unitPrice`, {
-                          valueAsNumber: true,
-                        })}
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                      />
+                      {renderDetailNumberInput('unitPrice', index)}
                     </td>
 
                     <td className="min-w-[120px] p-2">
-                      <input
-                        type="number"
-                        {...register(`details.${index}.discountPercentage`, {
-                          valueAsNumber: true,
-                        })}
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                      />
+                      {renderDetailNumberInput('discountPercentage', index)}
                     </td>
 
                     <td className="min-w-[120px] p-2">
-                      <input
-                        type="number"
-                        {...register(`details.${index}.taxPercentage`, {
-                          valueAsNumber: true,
-                        })}
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                      />
+                      {renderDetailNumberInput('taxPercentage', index)}
                     </td>
 
                     <td className="min-w-[140px] p-3 font-semibold text-gray-700">

@@ -1,4 +1,4 @@
-﻿import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createBatchInvoice, createInvoice, updateInvoice } from '../api/invoices-api';
 import { invoicesKeys } from './invoices.keys';
 import { getErrorMessage, toast } from '../../../shared/lib/toast';
@@ -8,9 +8,12 @@ export const useCreateInvoice = () => {
 
   return useMutation({
     mutationFn: createInvoice,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: invoicesKeys.lists(),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: invoicesKeys.nextNumber(),
       });
       toast.success('تم إنشاء الفاتورة بنجاح');
     },
@@ -25,13 +28,13 @@ export const useUpdateInvoice = () => {
 
   return useMutation({
     mutationFn: updateInvoice,
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: invoicesKeys.lists(),
       });
 
       if (variables?.id) {
-        queryClient.invalidateQueries({
+        await queryClient.invalidateQueries({
           queryKey: invoicesKeys.detail(variables.id),
         });
       }
@@ -49,8 +52,8 @@ export const useCreateBatchInvoice = () => {
 
   return useMutation({
     mutationFn: createBatchInvoice,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: invoicesKeys.lists(),
       });
       toast.success('تم إنشاء فاتورة المطالبة بنجاح');
