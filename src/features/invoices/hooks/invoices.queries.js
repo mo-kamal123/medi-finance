@@ -15,7 +15,7 @@ import { invoicesKeys } from './invoices.keys';
 
 export const useInvoices = (filters, type) => {
   return useQuery({
-    queryKey: invoicesKeys.lists({ ...filters, type }),
+    queryKey: invoicesKeys.list({ ...filters, type }),
     queryFn: () => getAllInvoices(filters, type),
     keepPreviousData: true,
   });

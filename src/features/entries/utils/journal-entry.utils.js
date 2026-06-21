@@ -1,3 +1,5 @@
+import { buildTree } from '../../tree/utils/buildTree';
+
 export const JOURNAL_TYPES = [
   { value: 'DailyEntry', label: 'قيد يومية' },
   { value: 'ManualEntry', label: 'قيد تسوية' },
@@ -53,10 +55,145 @@ export const getJournalEntryStatusMeta = (entry = {}) => {
   return { badgeClass: 'bg-yellow-100 text-yellow-700', label: statusName };
 };
 
-const toNullableNumber = (value) => {
+const toApiNumber = (value, defaultValue = 0) => {
+  if (value === '' || value === null || value === undefined) return defaultValue;
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? defaultValue : parsed;
+};
+
+const toNullableApiNumber = (value) => {
   if (value === '' || value === null || value === undefined) return null;
   const parsed = Number(value);
-  return Number.isNaN(parsed) ? null : parsed;
+  if (Number.isNaN(parsed) || parsed === 0) return null;
+  return parsed;
+};
+
+export const normalizeTreeCollection = (value) => {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value?.data)) return value.data;
+  if (Array.isArray(value?.items)) return value.items;
+  return [];
+};
+
+const getFinalNodes = (nodes = []) => {
+  let finalNodes = [];
+
+  nodes.forEach((node) => {
+    if (node.isFinal) finalNodes.push(node);
+    if (node.children?.length) {
+      finalNodes = finalNodes.concat(getFinalNodes(node.children));
+    }
+  });
+
+  return finalNodes;
+};
+
+const isNestedTree = (nodes = []) =>
+  nodes.some((node) => Array.isArray(node.children));
+
+const resolveTreeRoots = (collection, { idKey, parentKey, sortKey }) => {
+  const roots = normalizeTreeCollection(collection);
+  if (!roots.length) return [];
+
+  if (isNestedTree(roots)) {
+    return roots;
+  }
+
+  return buildTree(roots, { idKey, parentKey, sortKey });
+};
+
+export const buildAccountOptions = (accountsTree = []) => {
+  const treeData = resolveTreeRoots(accountsTree, {
+    idKey: 'id',
+    parentKey: 'parentID',
+    sortKey: 'accountCode',
+  });
+
+  const seen = new Set();
+
+  return getFinalNodes(treeData)
+    .map((account) => {
+      const accountId = account.accountID ?? account.id;
+      if (accountId === undefined || accountId === null || accountId === '') {
+        return null;
+      }
+
+      const value = String(accountId);
+      if (seen.has(value)) return null;
+      seen.add(value);
+
+      return {
+        value,
+        label: `${account.accountCode || ''} - ${account.nameAr || account.nameEn || ''}`,
+      };
+    })
+    .filter(Boolean);
+};
+
+export const buildCostCenterOptions = (costTree = []) => {
+  const treeData = resolveTreeRoots(costTree, {
+    idKey: 'id',
+    parentKey: 'parentID',
+    sortKey: 'ccCode',
+  });
+
+  const seen = new Set();
+
+  return getFinalNodes(treeData)
+    .map((center) => {
+      const centerId = center.costCenterID ?? center.id;
+      if (centerId === undefined || centerId === null || centerId === '') {
+        return null;
+      }
+
+      const value = String(centerId);
+      if (seen.has(value)) return null;
+      seen.add(value);
+
+      return {
+        value,
+        label: `${center.costCenterCode || center.ccCode || ''} - ${center.nameAr || center.nameEn || ''}`,
+      };
+    })
+    .filter(Boolean);
+};
+
+export const withCurrentOption = (options, value, label) => {
+  if (!value) return options;
+
+  const stringValue = String(value);
+  if (options.some((option) => option.value === stringValue)) {
+    return options;
+  }
+
+  return [
+    {
+      value: stringValue,
+      label: label || stringValue,
+    },
+    ...options,
+  ];
+};
+
+export const buildPartyOptions = (
+  parties = [],
+  { idKey, nameArKey, nameEnKey }
+) => {
+  const list = normalizeTreeCollection(parties);
+
+  return list
+    .map((party) => {
+      const partyId = party[idKey] ?? party.id;
+      if (partyId === undefined || partyId === null || partyId === '') {
+        return null;
+      }
+
+      return {
+        value: String(partyId),
+        label: party[nameArKey] || party[nameEnKey] || '',
+      };
+    })
+    .filter(Boolean);
 };
 
 export const buildJournalEntryPayload = (formData, { isCreate = false } = {}) => {
@@ -65,29 +202,29 @@ export const buildJournalEntryPayload = (formData, { isCreate = false } = {}) =>
     journalType: formData.journalType,
     description: formData.description || '',
     referenceNumber: formData.referenceNumber || '',
-    financialPeriodID: Number(formData.financialPeriodID),
-    statusID: Number(formData.statusID),
-    currencyID: Number(formData.currencyID),
-    exchangeRate: Number(formData.exchangeRate) || 1,
+    financialPeriodID: toApiNumber(formData.financialPeriodID),
+    statusID: toApiNumber(formData.statusID),
+    currencyID: toApiNumber(formData.currencyID),
+    exchangeRate: toApiNumber(formData.exchangeRate, 1),
     details: formData.details.map((detail) => ({
       ...(detail.journalEntryDetailID
         ? { journalEntryDetailID: Number(detail.journalEntryDetailID) }
         : {}),
-      accountID: Number(detail.accountID),
-      costCenterID: toNullableNumber(detail.costCenterID),
-      debitAmount: Number(detail.debitAmount) || 0,
-      creditAmount: Number(detail.creditAmount) || 0,
+      accountID: toApiNumber(detail.accountID),
+      costCenterID: toApiNumber(detail.costCenterID),
+      debitAmount: toApiNumber(detail.debitAmount),
+      creditAmount: toApiNumber(detail.creditAmount),
       description: detail.description || '',
-      recordDate: toApiDateTime(detail.recordDate),
+      recordDate: toApiDateTime(detail.recordDate || formData.entryDate),
       documentNumber: detail.documentNumber || '',
-      customerID: toNullableNumber(detail.customerID),
-      supplierID: toNullableNumber(detail.supplierID),
+      customerID: toNullableApiNumber(detail.customerID),
+      supplierID: toNullableApiNumber(detail.supplierID),
     })),
   };
 
   if (isCreate) {
     payload.sourceType = 'Manual';
-    payload.sourceId = null;
+    payload.sourceId = 1;
   }
 
   return payload;

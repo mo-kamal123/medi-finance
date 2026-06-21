@@ -1,9 +1,9 @@
 export const createEmptyDetail = () => ({
   productServiceID: '',
-  quantity: 1,
-  unitPrice: 0,
-  discountPercentage: 0,
-  taxPercentage: 0,
+  quantity: '1',
+  unitPrice: '',
+  discountPercentage: '0',
+  taxPercentage: '0',
 });
 
 export const INVOICE_STATUS_OPTIONS = [
@@ -92,10 +92,22 @@ const mapDetailToForm = (item) => ({
   productServiceID: item.productServiceID
     ? String(item.productServiceID)
     : '',
-  quantity: item.quantity ?? 1,
-  unitPrice: item.unitPrice ?? 0,
-  discountPercentage: item.discountPercentage ?? 0,
-  taxPercentage: item.taxPercentage ?? 0,
+  quantity:
+    item.quantity !== undefined && item.quantity !== null
+      ? String(item.quantity)
+      : '1',
+  unitPrice:
+    item.unitPrice !== undefined && item.unitPrice !== null
+      ? String(item.unitPrice)
+      : '',
+  discountPercentage:
+    item.discountPercentage !== undefined && item.discountPercentage !== null
+      ? String(item.discountPercentage)
+      : '0',
+  taxPercentage:
+    item.taxPercentage !== undefined && item.taxPercentage !== null
+      ? String(item.taxPercentage)
+      : '0',
 });
 
 export const mapInvoiceToFormValues = (invoice, statuses = []) => {
@@ -135,8 +147,8 @@ export const buildInvoicePayload = (data, { isEditMode = false } = {}) => ({
   invoiceDate: new Date(data.invoiceDate).toISOString(),
   dueDate: new Date(data.dueDate).toISOString(),
   invoiceTypeID: Number(data.invoiceTypeID),
-  customerID: data.customerID ? Number(data.customerID) : 0,
-  supplierID: data.supplierID ? Number(data.supplierID) : 0,
+  customerID: data.customerID ? Number(data.customerID) : null,
+  supplierID: data.supplierID ? Number(data.supplierID) : null,
   taxAmount: Number(data.taxAmount),
   discountAmount: Number(data.discountAmount),
   financialPeriodID: Number(data.financialPeriodID),

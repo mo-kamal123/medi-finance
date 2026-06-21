@@ -1,6 +1,5 @@
-﻿import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  createCashVoucher,
   createCommercialPaper,
   deleteCommercialPaper,
   updateCommercialPaper,
@@ -62,23 +61,6 @@ export const useDeleteCommercialPaper = () => {
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'تعذر حذف الورقة التجارية'));
-    },
-  });
-};
-
-export const useCreateCashVoucher = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: createCashVoucher,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: commercialPapersKeys.cashVouchers(),
-      });
-      toast.success('تم إنشاء سند الصرف أو القبض بنجاح');
-    },
-    onError: (error) => {
-      toast.error(getErrorMessage(error, 'تعذر إنشاء السند'));
     },
   });
 };

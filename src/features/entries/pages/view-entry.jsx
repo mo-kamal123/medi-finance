@@ -1,4 +1,4 @@
-﻿import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import PageLoader from '../../../shared/ui/page-loader';
 import JournalEntryForm from '../components/journal-entry-form';
 import { useJournalEntry } from '../hooks/entries.queries';

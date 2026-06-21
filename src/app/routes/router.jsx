@@ -1,4 +1,4 @@
-﻿import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import { authRoutes } from '../../features/auth/routes/routes';
 import { agingReportRoutes } from '../../features/aging-report/routes/routes';
 import { balanceSheetRoutes } from '../../features/balance-sheet/routes/routes';
@@ -6,6 +6,7 @@ import { banksRoutes } from '../../features/banks/routes/routes';
 import { cashTransactionsRoutes } from '../../features/cash-transactions/routes/routes';
 import chequesRoutes from '../../features/cheques/routes/routes';
 import CommercialPapersRoutes from '../../features/commercial-papers/routes/routes';
+import cashVouchersRoutes from '../../features/cash-vouchers/routes/routes';
 import { customersRoutes } from '../../features/customers/routes/routes';
 import { entriesRoutes } from '../../features/entries/routes/routes';
 import { generalLedgerRoutes } from '../../features/general-ledger/routes/routes';
@@ -47,6 +48,7 @@ export const router = createBrowserRouter([
       ...InvoicesRoutes,
       ...entriesRoutes,
       ...cashTransactionsRoutes,
+      ...cashVouchersRoutes,
       ...generalLedgerRoutes,
       ...trialBalanceRoutes,
       ...balanceSheetRoutes,

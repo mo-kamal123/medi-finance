@@ -31,6 +31,7 @@ const InvoicesPage = () => {
   });
 
   const { data = [], isLoading } = useInvoices(filters, pageType);
+  console.log(pageType);
   const { data: invoiceTypes } = useInvoiceTypes();
   const { data: customers } = useCustomers();
   const { data: suppliers } = useSuppliers();
@@ -70,16 +71,6 @@ const InvoicesPage = () => {
         key: 'totalAmount',
         type: 'custom',
         render: (row) => formatCurrency(row.totalAmount),
-      },
-      {
-        header: 'الخصم',
-        key: 'discount',
-        type: 'custom',
-        render: (row) => (
-          <span className="text-red-500">
-            {formatCurrency(row.totalAmount - row.netAmount)}
-          </span>
-        ),
       },
       {
         header: 'الصافي',

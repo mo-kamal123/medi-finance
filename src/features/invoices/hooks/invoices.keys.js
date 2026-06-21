@@ -1,7 +1,9 @@
 export const invoicesKeys = {
   all: ['invoices'],
 
-  lists: (filters) => [...invoicesKeys.all, 'list', filters],
+  lists: () => [...invoicesKeys.all, 'list'],
+
+  list: (filters) => [...invoicesKeys.lists(), filters],
 
   details: () => [...invoicesKeys.all, 'detail'],
 
