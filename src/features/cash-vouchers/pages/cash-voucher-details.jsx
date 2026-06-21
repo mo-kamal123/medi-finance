@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import CashVoucherForm from '../components/cash-voucher-form';
-import { useCashVoucher } from '../hooks/commercial-papers.queries';
+import { useCashVoucher } from '../hooks/cash-vouchers.queries';
 
 const normalizeItem = (value) => value?.data ?? value;
 

@@ -1,17 +1,39 @@
 import { z } from 'zod';
 
+const detailNumber = (minValue, message) =>
+  z
+    .union([z.string(), z.number()])
+    .refine(
+      (value) =>
+        value !== '' &&
+        value !== null &&
+        value !== undefined &&
+        !Number.isNaN(Number(value)) &&
+        Number(value) >= minValue,
+      message
+    );
+
 export const invoiceDetailSchema = z.object({
   invoiceDetailID: z.coerce.number().optional(),
 
-  productServiceID: z.coerce.number().min(1, 'معرف المنتج أو الخدمة مطلوب'),
+  productServiceID: z
+    .union([z.string(), z.number()])
+    .refine(
+      (value) =>
+        value !== '' &&
+        value !== null &&
+        value !== undefined &&
+        Number(value) >= 1,
+      'معرف المنتج أو الخدمة مطلوب'
+    ),
 
-  quantity: z.coerce.number().min(1, 'الكمية يجب أن تكون على الأقل 1'),
+  quantity: detailNumber(1, 'الكمية يجب أن تكون على الأقل 1'),
 
-  unitPrice: z.coerce.number().min(0, 'سعر الوحدة لا يمكن أن يكون سالب'),
+  unitPrice: detailNumber(0, 'سعر الوحدة لا يمكن أن يكون سالب'),
 
-  discountPercentage: z.coerce.number().min(0, 'الخصم لا يمكن أن يكون سالب'),
+  discountPercentage: detailNumber(0, 'الخصم لا يمكن أن يكون سالب'),
 
-  taxPercentage: z.coerce.number().min(0, 'الضريبة لا يمكن أن تكون سالبة'),
+  taxPercentage: detailNumber(0, 'الضريبة لا يمكن أن تكون سالبة'),
 });
 
 export const invoiceSchema = z.object({

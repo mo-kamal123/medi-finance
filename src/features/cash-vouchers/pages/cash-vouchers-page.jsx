@@ -6,7 +6,7 @@ import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
 import { matchesSearch, paginateItems } from '../../../shared/utils/list-utils';
 import { formatDate, formatNumber } from '../../../shared/utils/formatters';
-import { useCashVouchers } from '../hooks/commercial-papers.queries';
+import { useCashVouchers } from '../hooks/cash-vouchers.queries';
 
 const normalizeCollection = (value) => {
   if (Array.isArray(value)) return value;
@@ -123,7 +123,7 @@ const CashVouchersPage = () => {
             <button
               type="button"
               onClick={() =>
-                navigate(`/commercial-papers/cash-vouchers/${row.voucherID || row.id}`)
+                navigate(`/cash-vouchers/${row.voucherID || row.id}`)
               }
               className="text-blue-600"
             >
@@ -142,7 +142,7 @@ const CashVouchersPage = () => {
         <h1 className="text-xl font-bold">سندات القبض والدفع</h1>
 
         <button
-          onClick={() => navigate('/commercial-papers/cash-vouchers/new')}
+          onClick={() => navigate('/cash-vouchers/new')}
           className="bg-primary text-white px-4 py-2 flex justify-between items-center gap-3 rounded"
         >
           <Plus size={16} /> إضافة سند

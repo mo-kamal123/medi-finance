@@ -5,18 +5,18 @@ import FormInput from '../../../shared/ui/input';
 import SearchableSelect from '../../../shared/ui/searchable-select';
 import { getErrorMessage, toast } from '../../../shared/lib/toast';
 import { useCustomers, useSuppliers } from '../../invoices/hooks/invoices.queries';
-import useAccountsTree from '../../tree/accouts-tree/hooks/use-accounts-tree';
+import { useBanks, useBankAccounts } from '../../banks/hooks/banks.queries';
+import useCostTree from '../../tree/cost-tree/hooks/use-cost-tree';
+import { getInvoiceForCashVoucher } from '../api/cash-vouchers.api';
+import { usePaymentModes } from '../hooks/cash-vouchers.queries';
+import { useCreateCashVoucher } from '../hooks/cash-vouchers.mutations';
 import {
-  getInvoiceForCashVoucher,
-} from '../api/commercial-papers.api';
-import {
-  useBankAccounts,
-  useBanksList,
-} from '../hooks/commercial-papers.queries';
-import { useCreateCashVoucher } from '../hooks/commercial-papers.mutations';
+  buildCashVoucherPayload,
+  getPaymentModeOptions,
+  mapCashVoucherToFormValues,
+} from '../utils/mapCashVoucherValues';
 
 const emptyDetail = {
-  accountCode: '',
   amount: '',
   notes: '',
   partyID: '',
@@ -24,11 +24,6 @@ const emptyDetail = {
 };
 
 const EMPTY_DEFAULT_VALUES = {};
-
-const toDateInputValue = (value) => {
-  if (!value) return '';
-  return String(value).split('T')[0];
-};
 
 const getFinalNodes = (nodes = []) => {
   let finalNodes = [];
@@ -59,127 +54,36 @@ const voucherTypeOptions = [
   { value: 'payment', label: 'سند صرف' },
 ];
 
-const getInitialValues = (defaultValues = {}) => {
-  const initialAmount =
-    defaultValues?.amount ??
-    defaultValues?.netAmount ??
-    defaultValues?.details?.[0]?.amount ??
-    '';
-  const initialName =
-    defaultValues?.name ??
-    defaultValues?.receivedFrom ??
-    defaultValues?.paidTo ??
-    defaultValues?.partyName ??
-    '';
-  const initialNotes =
-    defaultValues?.description ??
-    defaultValues?.notes ??
-    defaultValues?.details?.[0]?.notes ??
-    '';
-
-  return {
-    isReceipt:
-      typeof defaultValues?.isReceipt === 'boolean'
-        ? defaultValues.isReceipt
-        : String(defaultValues?.voucherType || '').toLowerCase() !== 'payment',
-    voucherID:
-      defaultValues?.voucherID ??
-      defaultValues?.voucherId ??
-      defaultValues?.id ??
-      '',
-    bankID: defaultValues?.bankID
-      ? String(defaultValues.bankID)
-      : defaultValues?.bankId
-        ? String(defaultValues.bankId)
-        : '',
-    bankName: defaultValues?.bankName ?? '',
-    bankAccountID: defaultValues?.bankAccountID
-      ? String(defaultValues.bankAccountID)
-      : defaultValues?.bankAccountId
-        ? String(defaultValues.bankAccountId)
-        : '',
-    bankAccount:
-      defaultValues?.bankAccount ??
-      defaultValues?.accountNumberWithBranch ??
-      defaultValues?.accountNumber ??
-      '',
-    checkNumber: defaultValues?.checkNumber ?? '',
-    description: initialNotes,
-    date: toDateInputValue(defaultValues?.date || defaultValues?.voucherDate),
-    name: initialName,
-    amount: initialAmount,
-    invoiceNumber:
-      defaultValues?.invoiceNumber ??
-      defaultValues?.relatedInvoiceNumber ??
-      '',
-    relatedInvoiceID:
-      defaultValues?.relatedInvoiceID ??
-      defaultValues?.invoiceId ??
-      defaultValues?.invoiceID ??
-      null,
-    customerID: defaultValues?.customerID ?? defaultValues?.customerId ?? null,
-    supplierID: defaultValues?.supplierID ?? defaultValues?.supplierId ?? null,
-    isCleared:
-      typeof defaultValues?.isCleared === 'boolean'
-        ? defaultValues.isCleared
-        : false,
-    isVoid:
-      typeof defaultValues?.isVoid === 'boolean' ? defaultValues.isVoid : false,
-    details:
-      defaultValues?.details?.length > 0
-        ? defaultValues.details.map((detail) => ({
-            accountCode: detail.accountCode ?? '',
-            amount: detail.amount ?? '',
-            notes: detail.notes ?? '',
-            partyID: String(
-              detail.partyID ??
-                detail.partyId ??
-                detail.customerID ??
-                detail.customerId ??
-                detail.supplierID ??
-                detail.supplierId ??
-                ''
-            ),
-            partyName: detail.partyName ?? initialName,
-          }))
-        : [
-            {
-              ...emptyDetail,
-              amount: initialAmount,
-              notes: initialNotes,
-              partyID: String(
-                defaultValues?.customerID ??
-                  defaultValues?.customerId ??
-                  defaultValues?.supplierID ??
-                  defaultValues?.supplierId ??
-                  ''
-              ),
-              partyName: initialName,
-              accountCode: defaultValues?.accountCode ?? '',
-            },
-          ],
-  };
-};
+const TRANSFER_PAYMENT_MODE_ID = '3';
 
 const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
   const navigate = useNavigate();
   const createMutation = useCreateCashVoucher();
   const safeDefaultValues = defaultValues ?? EMPTY_DEFAULT_VALUES;
-  const { data: banksResponse = [] } = useBanksList();
+  const { data: banksResponse = [] } = useBanks();
+  const { data: paymentModesResponse = [] } = usePaymentModes();
   const { data: customers = [] } = useCustomers();
   const { data: suppliers = [] } = useSuppliers();
-  const { data: accountsTree = [] } = useAccountsTree();
+  const { data: costTree = [] } = useCostTree();
+  const paymentModes = useMemo(
+    () => normalizeCollection(paymentModesResponse),
+    [paymentModesResponse]
+  );
+  const paymentModeOptions = useMemo(
+    () => getPaymentModeOptions(paymentModes),
+    [paymentModes]
+  );
   const isViewMode = mode === 'view';
   const [formData, setFormData] = useState(() =>
-    getInitialValues(safeDefaultValues)
+    mapCashVoucherToFormValues(safeDefaultValues, paymentModes)
   );
   const [invoicePreview, setInvoicePreview] = useState(null);
   const [isLoadingInvoice, setIsLoadingInvoice] = useState(false);
-  const { data: bankAccountsResponse = [] } = useBankAccounts(formData.bankID);
+  const { data: bankAccountsResponse = [] } = useBankAccounts(formData.bankId);
 
   useEffect(() => {
-    setFormData(getInitialValues(safeDefaultValues));
-  }, [safeDefaultValues]);
+    setFormData(mapCashVoucherToFormValues(safeDefaultValues, paymentModes));
+  }, [safeDefaultValues, paymentModes]);
 
   const banks = useMemo(() => normalizeCollection(banksResponse), [banksResponse]);
   const bankAccounts = useMemo(
@@ -187,13 +91,13 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
     [bankAccountsResponse]
   );
 
-  const accountOptions = useMemo(
+  const costCenterOptions = useMemo(
     () =>
-      getFinalNodes(accountsTree).map((account) => ({
-        value: account.accountCode || String(account.accountID),
-        label: `${account.accountCode} - ${account.nameAr}`,
+      getFinalNodes(costTree).map((center) => ({
+        value: String(center.costCenterID),
+        label: `${center.costCenterCode || center.code || ''} - ${center.nameAr || center.nameEn || ''}`,
       })),
-    [accountsTree]
+    [costTree]
   );
 
   const bankOptions = useMemo(
@@ -303,27 +207,27 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
   };
 
   const handleBankChange = (event) => {
-    const bankID = event.target.value;
-    const selectedBank = bankOptions.find((option) => option.value === bankID);
+    const bankId = event.target.value;
+    const selectedBank = bankOptions.find((option) => option.value === bankId);
 
     setFormData((prev) => ({
       ...prev,
-      bankID,
+      bankId,
       bankName: selectedBank?.label || '',
-      bankAccountID: '',
+      bankAccountId: '',
       bankAccount: '',
     }));
   };
 
   const handleBankAccountChange = (event) => {
-    const bankAccountID = event.target.value;
+    const bankAccountId = event.target.value;
     const selectedAccount = bankAccounts.find(
-      (account) => String(account.bankAccountID || account.id) === bankAccountID
+      (account) => String(account.bankAccountID || account.id) === bankAccountId
     );
 
     setFormData((prev) => ({
       ...prev,
-      bankAccountID,
+      bankAccountId,
       bankAccount:
         selectedAccount?.accountNumberWithBranch ||
         selectedAccount?.accountNumber ||
@@ -359,11 +263,6 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
   const applyInvoiceToDetails = (invoice) => {
     setFormData((prev) => {
       const firstDetail = prev.details[0] || { ...emptyDetail };
-      const firstAccount =
-        invoice.accountCode ||
-        firstDetail.accountCode ||
-        prev.details.find((detail) => detail.accountCode)?.accountCode ||
-        '';
       const firstAmount =
         invoice.netAmount ??
         invoice.totalAmount ??
@@ -381,7 +280,6 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
         index === 0
           ? {
               ...detail,
-              accountCode: firstAccount,
               amount: firstAmount,
               notes: firstNotes,
               partyID: String(
@@ -402,12 +300,11 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
         isReceipt:
           invoice.partyType
             ? String(invoice.partyType).toLowerCase() === 'customer'
-            : prev.isReceipt,
+            : Boolean(invoice.customerID ?? invoice.customerId ?? prev.isReceipt),
         name: firstPartyName,
         amount: firstAmount,
         description: firstNotes,
-        relatedInvoiceID:
-          invoice.invoiceId || invoice.invoiceID || prev.relatedInvoiceID,
+        invoiceNumber: invoice.invoiceNumber || prev.invoiceNumber,
         details,
       };
     });
@@ -457,8 +354,13 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
           '',
         partyType:
           matchedInvoice.partyType ||
-          (matchedInvoice.customerID ? 'Customer' : matchedInvoice.supplierID ? 'Supplier' : ''),
-        accountCode: matchedInvoice.accountCode || '',
+          (matchedInvoice.customerID || matchedInvoice.customerId
+            ? 'Customer'
+            : matchedInvoice.supplierID || matchedInvoice.supplierId
+              ? 'Supplier'
+              : ''),
+        customerID: matchedInvoice.customerID ?? matchedInvoice.customerId,
+        supplierID: matchedInvoice.supplierID ?? matchedInvoice.supplierId,
       };
 
       setInvoicePreview(preview);
@@ -484,7 +386,7 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
     event.preventDefault();
 
     if (isViewMode) {
-      navigate('/commercial-papers/cash-vouchers');
+      navigate('/cash-vouchers');
       return;
     }
 
@@ -493,26 +395,13 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
       return;
     }
 
-    if (!formData.bankID || !formData.bankAccountID) {
+    if (!formData.bankId || !formData.bankAccountId) {
       toast.error('اختر البنك وحساب البنك');
       return;
     }
 
-    const firstDetail = formData.details[0] || emptyDetail;
-    const payload = {
-      isReceipt: formData.isReceipt,
-      bankID: Number(formData.bankID),
-      bankAccountID: Number(formData.bankAccountID),
-      checkNumber: formData.checkNumber || null,
-      description: firstDetail.notes || formData.description || '',
-      date: new Date(formData.date).toISOString(),
-      name: firstDetail.partyName || formData.name || '',
-      amount: Number(firstDetail.amount || formData.amount) || 0,
-      invoiceNumber: formData.invoiceNumber || null,
-    };
-
-    createMutation.mutate(payload, {
-      onSuccess: () => navigate('/commercial-papers/cash-vouchers'),
+    createMutation.mutate(buildCashVoucherPayload(formData), {
+      onSuccess: () => navigate('/cash-vouchers'),
     });
   };
 
@@ -561,6 +450,23 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
           </FormInput>
 
           <FormInput
+            as="select"
+            label="طريقة الدفع"
+            value={formData.paymentModeId}
+            onChange={(event) =>
+              handleFieldChange('paymentModeId', event.target.value)
+            }
+            disabled={isViewMode}
+          >
+            <option value="">اختر طريقة الدفع</option>
+            {paymentModeOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </FormInput>
+
+          <FormInput
             type="date"
             label="تاريخ السند"
             value={formData.date}
@@ -571,7 +477,7 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
           <FormInput
             as="select"
             label="البنك"
-            value={formData.bankID}
+            value={formData.bankId}
             onChange={handleBankChange}
             disabled={isViewMode}
           >
@@ -586,9 +492,9 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
           <FormInput
             as="select"
             label="حساب البنك"
-            value={formData.bankAccountID}
+            value={formData.bankAccountId}
             onChange={handleBankAccountChange}
-            disabled={isViewMode || !formData.bankID}
+            disabled={isViewMode || !formData.bankId}
           >
             <option value="">اختر حساب البنك</option>
             {bankAccountOptions.map((option) => (
@@ -606,6 +512,61 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
             }
             readOnly={isViewMode}
           />
+
+          <FormInput
+            as="select"
+            label="مركز التكلفة"
+            value={formData.costCenterId}
+            onChange={(event) =>
+              handleFieldChange('costCenterId', event.target.value)
+            }
+            disabled={isViewMode}
+          >
+            <option value="">اختر مركز التكلفة</option>
+            {costCenterOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </FormInput>
+
+          {String(formData.paymentModeId) === TRANSFER_PAYMENT_MODE_ID ? (
+            <>
+              <FormInput
+                as="select"
+                label="من حساب بنكي"
+                value={formData.fromBankAccountId}
+                onChange={(event) =>
+                  handleFieldChange('fromBankAccountId', event.target.value)
+                }
+                disabled={isViewMode}
+              >
+                <option value="">اختر الحساب</option>
+                {bankAccountOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </FormInput>
+
+              <FormInput
+                as="select"
+                label="إلى حساب بنكي"
+                value={formData.toBankAccountId}
+                onChange={(event) =>
+                  handleFieldChange('toBankAccountId', event.target.value)
+                }
+                disabled={isViewMode}
+              >
+                <option value="">اختر الحساب</option>
+                {bankAccountOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </FormInput>
+            </>
+          ) : null}
 
           <div className="space-y-2 md:col-span-2">
             <label className="text-sm font-medium text-gray-700">
@@ -662,7 +623,6 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
             <table className="w-full min-w-full overflow-hidden rounded-lg border border-gray-200 text-sm">
               <thead className="bg-primary/90 text-white">
                 <tr>
-                  <th className="p-3 text-right">الحساب</th>
                   <th className="p-3 text-right">
                     {formData.isReceipt ? 'العميل' : 'المورد'}
                   </th>
@@ -674,17 +634,6 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
               <tbody>
                 {formData.details.map((detail, index) => (
                   <tr key={index} className="align-top border border-gray-200">
-                    <td className="min-w-[220px] p-2">
-                      <SearchableSelect
-                        value={detail.accountCode}
-                        onChange={(event) =>
-                          handleRowChange(index, 'accountCode', event.target.value)
-                        }
-                        options={accountOptions}
-                        placeholder="اختر الحساب"
-                        disabled={isViewMode}
-                      />
-                    </td>
                     <td className="min-w-[220px] p-2">
                       <SearchableSelect
                         value={
@@ -762,23 +711,6 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <FormInput
                     as="select"
-                    label="الحساب"
-                    value={detail.accountCode}
-                    onChange={(event) =>
-                      handleRowChange(index, 'accountCode', event.target.value)
-                    }
-                    disabled={isViewMode}
-                  >
-                    <option value="">اختر الحساب</option>
-                    {accountOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </FormInput>
-
-                  <FormInput
-                    as="select"
                     label={formData.isReceipt ? 'العميل' : 'المورد'}
                     value={
                       detail.partyID ||
@@ -829,7 +761,7 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
               <Eye size={16} />
               <h3 className="font-semibold">بيانات الفاتورة المرتبطة</h3>
             </div>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
               <div className="rounded-lg bg-white p-3">
                 <div className="text-xs text-gray-500">رقم الفاتورة</div>
                 <div className="font-medium text-gray-900">
@@ -850,12 +782,6 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
                     : invoicePreview.partyType === 'Supplier'
                       ? 'مورد'
                       : '-'}
-                </div>
-              </div>
-              <div className="rounded-lg bg-white p-3">
-                <div className="text-xs text-gray-500">رقم الحساب</div>
-                <div className="font-medium text-gray-900">
-                  {invoicePreview.accountCode || '-'}
                 </div>
               </div>
             </div>
@@ -902,7 +828,7 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button
             type="button"
-            onClick={() => navigate('/commercial-papers/cash-vouchers')}
+            onClick={() => navigate('/cash-vouchers')}
             className="rounded-lg border border-gray-300 px-6 py-2 text-gray-700"
           >
             رجوع

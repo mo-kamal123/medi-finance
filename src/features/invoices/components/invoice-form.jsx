@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Controller, useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2 } from 'lucide-react';
@@ -27,6 +27,7 @@ const DetailField = ({ label, children, error }) => (
 );
 
 const EMPTY_INVOICE = {};
+const EMPTY_STATUSES = [];
 
 const InvoiceForm = ({
   initialData = EMPTY_INVOICE,
@@ -43,7 +44,7 @@ const InvoiceForm = ({
     suppliers,
   } = useDropdowns();
   const { data: nextInvoiceNumberData } = useNextInvoiceNumber(!isEditMode);
-  const { data: invoiceStatuses = [] } = useInvoiceStatuses();
+  const { data: invoiceStatuses = EMPTY_STATUSES } = useInvoiceStatuses();
   const statusOptions =
     invoiceStatuses.length > 0
       ? invoiceStatuses.map((status) => ({
@@ -61,6 +62,7 @@ const InvoiceForm = ({
   } = useForm({
     defaultValues,
     resolver: zodResolver(invoiceSchema),
+    shouldUnregister: false,
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -89,23 +91,24 @@ const InvoiceForm = ({
   const taxAmount = Number(watchedTaxAmount) || 0;
   const netAmount = Math.max(totalAmount - totalDiscounts + taxAmount, 0);
 
+  const hasSetInvoiceNumber = useRef(false);
+
+  useEffect(() => {
+    if (
+      !isEditMode &&
+      nextInvoiceNumberData?.nextInvoiceNumber &&
+      !hasSetInvoiceNumber.current
+    ) {
+      setValue('invoiceNumber', nextInvoiceNumberData.nextInvoiceNumber);
+      hasSetInvoiceNumber.current = true;
+    }
+  }, [isEditMode, nextInvoiceNumberData?.nextInvoiceNumber, setValue]);
+
   useEffect(() => {
     if (isEditMode && initialData?.invoiceID) {
       reset(mapInvoiceToFormValues(initialData, invoiceStatuses));
-    } else if (!isEditMode && nextInvoiceNumberData?.nextInvoiceNumber) {
-      reset({
-        ...defaultValues,
-        invoiceNumber: nextInvoiceNumberData.nextInvoiceNumber,
-      });
     }
-  }, [
-    isEditMode,
-    initialData,
-    initialData?.invoiceID,
-    nextInvoiceNumberData?.nextInvoiceNumber,
-    invoiceStatuses,
-    reset,
-  ]);
+  }, [isEditMode, initialData, initialData?.invoiceID, invoiceStatuses, reset]);
 
   useEffect(() => {
     if (!invoiceType) return;
@@ -113,6 +116,49 @@ const InvoiceForm = ({
     if (invoiceType === 'customer') setValue('supplierID', '');
     if (invoiceType === 'supplier') setValue('customerID', '');
   }, [invoiceType, setValue]);
+
+  const productOptions =
+    productsServices?.map((product) => ({
+      value: String(product.id ?? product.productServiceID ?? ''),
+      label:
+        product.name ??
+        product.productServiceNameAr ??
+        product.productServiceNameEn ??
+        '',
+    })) || [];
+
+  const renderDetailNumberInput = (name, index) => (
+    <Controller
+      name={`details.${index}.${name}`}
+      control={control}
+      render={({ field }) => (
+        <input
+          type="number"
+          min="0"
+          step="any"
+          value={field.value ?? ''}
+          onChange={(event) => field.onChange(event.target.value)}
+          onBlur={field.onBlur}
+          className="w-full rounded-lg border border-gray-200 px-3 py-2"
+        />
+      )}
+    />
+  );
+
+  const renderProductSelect = (index) => (
+    <Controller
+      name={`details.${index}.productServiceID`}
+      control={control}
+      render={({ field }) => (
+        <SearchableSelect
+          value={field.value ?? ''}
+          onChange={(event) => field.onChange(event.target.value)}
+          onBlur={field.onBlur}
+          options={productOptions}
+        />
+      )}
+    />
+  );
 
   return (
     <form
@@ -317,72 +363,35 @@ const InvoiceForm = ({
                     label="الخدمة"
                     error={detailErrors?.productServiceID?.message}
                   >
-                    <SearchableSelect
-                      {...register(`details.${index}.productServiceID`, {
-                        valueAsNumber: true,
-                      })}
-                      options={
-                        productsServices?.map((product) => ({
-                          value: product.id ?? product.productServiceID,
-                          label:
-                            product.name ??
-                            product.productServiceNameAr ??
-                            product.productServiceNameEn,
-                        })) || []
-                      }
-                    />
+                    {renderProductSelect(index)}
                   </DetailField>
 
                   <DetailField
                     label="الكمية"
                     error={detailErrors?.quantity?.message}
                   >
-                    <input
-                      type="number"
-                      {...register(`details.${index}.quantity`, {
-                        valueAsNumber: true,
-                      })}
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                    />
+                    {renderDetailNumberInput('quantity', index)}
                   </DetailField>
 
                   <DetailField
                     label="سعر الوحدة"
                     error={detailErrors?.unitPrice?.message}
                   >
-                    <input
-                      type="number"
-                      {...register(`details.${index}.unitPrice`, {
-                        valueAsNumber: true,
-                      })}
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                    />
+                    {renderDetailNumberInput('unitPrice', index)}
                   </DetailField>
 
                   <DetailField
                     label="خصم %"
                     error={detailErrors?.discountPercentage?.message}
                   >
-                    <input
-                      type="number"
-                      {...register(`details.${index}.discountPercentage`, {
-                        valueAsNumber: true,
-                      })}
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                    />
+                    {renderDetailNumberInput('discountPercentage', index)}
                   </DetailField>
 
                   <DetailField
                     label="ضريبة %"
                     error={detailErrors?.taxPercentage?.message}
                   >
-                    <input
-                      type="number"
-                      {...register(`details.${index}.taxPercentage`, {
-                        valueAsNumber: true,
-                      })}
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                    />
+                    {renderDetailNumberInput('taxPercentage', index)}
                   </DetailField>
                 </div>
               </div>
@@ -419,20 +428,7 @@ const InvoiceForm = ({
                 return (
                   <tr key={field.id} className="align-top border border-gray-200">
                     <td className="min-w-[260px] p-2">
-                      <SearchableSelect
-                        {...register(`details.${index}.productServiceID`, {
-                          valueAsNumber: true,
-                        })}
-                        options={
-                          productsServices?.map((product) => ({
-                            value: product.id ?? product.productServiceID,
-                            label:
-                              product.name ??
-                              product.productServiceNameAr ??
-                              product.productServiceNameEn,
-                          })) || []
-                        }
-                      />
+                      {renderProductSelect(index)}
                       {detailErrors?.productServiceID?.message ? (
                         <p className="mt-1 text-sm text-red-500">
                           {detailErrors.productServiceID.message}
@@ -441,43 +437,19 @@ const InvoiceForm = ({
                     </td>
 
                     <td className="min-w-[120px] p-2">
-                      <input
-                        type="number"
-                        {...register(`details.${index}.quantity`, {
-                          valueAsNumber: true,
-                        })}
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                      />
+                      {renderDetailNumberInput('quantity', index)}
                     </td>
 
                     <td className="min-w-[140px] p-2">
-                      <input
-                        type="number"
-                        {...register(`details.${index}.unitPrice`, {
-                          valueAsNumber: true,
-                        })}
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                      />
+                      {renderDetailNumberInput('unitPrice', index)}
                     </td>
 
                     <td className="min-w-[120px] p-2">
-                      <input
-                        type="number"
-                        {...register(`details.${index}.discountPercentage`, {
-                          valueAsNumber: true,
-                        })}
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                      />
+                      {renderDetailNumberInput('discountPercentage', index)}
                     </td>
 
                     <td className="min-w-[120px] p-2">
-                      <input
-                        type="number"
-                        {...register(`details.${index}.taxPercentage`, {
-                          valueAsNumber: true,
-                        })}
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                      />
+                      {renderDetailNumberInput('taxPercentage', index)}
                     </td>
 
                     <td className="min-w-[140px] p-3 font-semibold text-gray-700">
