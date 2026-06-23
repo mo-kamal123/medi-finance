@@ -31,7 +31,6 @@ const InvoicesPage = () => {
   });
 
   const { data = [], isLoading } = useInvoices(filters, pageType);
-  console.log(pageType);
   const { data: invoiceTypes } = useInvoiceTypes();
   const { data: customers } = useCustomers();
   const { data: suppliers } = useSuppliers();
@@ -140,8 +139,14 @@ const InvoicesPage = () => {
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-2xl font-bold">الفواتير</h1>
-          <p className="text-sm text-gray-600">إدارة الفواتير من مكان واحد</p>
+          <h1 className="text-2xl font-bold">
+            {pageType === 'customer' ? 'فواتير العملاء' : 'فواتير الموردين'}
+          </h1>
+          <p className="text-sm text-gray-600">
+            {pageType === 'customer'
+              ? 'إدارة فواتير العملاء من مكان واحد'
+              : 'إدارة فواتير الموردين من مكان واحد'}
+          </p>
         </div>
 
         <button
