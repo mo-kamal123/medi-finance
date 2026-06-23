@@ -87,7 +87,7 @@ const SearchableSelect = forwardRef(
     );
 
     const normalizedOptions = useMemo(() => {
-      const source = options.length ? options : parsedChildrenOptions;
+      const source = Array.isArray(options) && options.length ? options : parsedChildrenOptions;
       return source.map(normalizeOption);
     }, [options, parsedChildrenOptions]);
 
@@ -100,10 +100,11 @@ const SearchableSelect = forwardRef(
 
     const filteredOptions = useMemo(() => {
       const searchValue = query.trim().toLowerCase();
+      const opts = Array.isArray(normalizedOptions) ? normalizedOptions : [];
 
-      if (!searchValue) return normalizedOptions;
+      if (!searchValue) return opts;
 
-      return normalizedOptions.filter((option) =>
+      return opts.filter((option) =>
         option.searchText.toLowerCase().includes(searchValue)
       );
     }, [normalizedOptions, query]);

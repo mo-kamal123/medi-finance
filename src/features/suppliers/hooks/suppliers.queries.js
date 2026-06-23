@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { getErrorMessage, toast } from '../../../shared/lib/toast';
 import * as api from '../api/suppliers.api';
 
@@ -6,7 +6,7 @@ export const useSuppliers = (filters) =>
   useQuery({
     queryKey: ['suppliers', 'list', filters],
     queryFn: () => api.getSuppliers(filters),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
 export const useSupplierTypes = () =>
