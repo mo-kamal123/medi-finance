@@ -1,59 +1,42 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { CheckCircle2, Eye, Plus, RotateCcw } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import FormInput from '../../../shared/ui/input';
 import PageLoader from '../../../shared/ui/page-loader';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
 import { toast } from '../../../shared/lib/toast';
-import { matchesSearch, paginateItems } from '../../../shared/utils/list-utils';
 import { formatCurrency, formatDate } from '../../../shared/utils/formatters';
+import JournalEntryFilters from '../components/journal-entry-filters';
 import {
   usePostJournalEntry,
   useReverseJournalEntry,
 } from '../hooks/entries.mutations';
 import { useJournalEntries } from '../hooks/entries.queries';
+import { DEFAULT_JOURNAL_ENTRY_FILTERS } from '../utils/journal-entry-filters.utils';
+import { buildJournalEntryQueryParams } from '../utils/journal-entry-filters.utils';
 import {
   getJournalEntryDescription,
   getJournalEntryStatusMeta,
   getJournalTypeLabel,
   isJournalEntryPosted,
   isJournalEntryReversed,
-  JOURNAL_TYPES,
 } from '../utils/journal-entry.utils';
 
 const DailyEntriesPage = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [filters, setFilters] = useState(DEFAULT_JOURNAL_ENTRY_FILTERS);
   const navigate = useNavigate();
   const postMutation = usePostJournalEntry();
   const reverseMutation = useReverseJournalEntry();
 
-  const { data: entries = [], isLoading } = useJournalEntries({
-    journalType: typeFilter !== 'all' ? typeFilter : undefined,
-    pageNumber: 1,
-    pageSize: 100,
-  });
-
-  const filteredEntries = useMemo(() => {
-    return entries.filter((entry) =>
-      matchesSearch(
-        {
-          ...entry,
-          description: getJournalEntryDescription(entry),
-        },
-        ['description', 'journalEntryNumber', 'referenceNumber'],
-        searchQuery
-      )
-    );
-  }, [entries, searchQuery]);
-
-  const pagination = useMemo(
-    () => paginateItems(filteredEntries, pageNumber, pageSize),
-    [filteredEntries, pageNumber, pageSize]
+  const queryParams = useMemo(
+    () => buildJournalEntryQueryParams(filters),
+    [filters]
   );
+
+  const { data, isLoading } = useJournalEntries(queryParams);
+
+  const entries = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 1;
 
   const handlePostEntry = (entry) => {
     if (isJournalEntryPosted(entry)) {
@@ -92,8 +75,7 @@ const DailyEntriesPage = () => {
       header: 'التاريخ',
       key: 'entryDate',
       type: 'custom',
-      render: (row) =>
-        formatDate(row.entryDate),
+      render: (row) => formatDate(row.entryDate),
     },
     {
       header: 'النوع',
@@ -106,7 +88,9 @@ const DailyEntriesPage = () => {
       key: 'totalDebit',
       type: 'custom',
       render: (row) => (
-        <span className="font-medium text-green-600">{formatCurrency(row.totalDebit)}</span>
+        <span className="font-medium text-green-600">
+          {formatCurrency(row.totalDebit)}
+        </span>
       ),
     },
     {
@@ -114,7 +98,9 @@ const DailyEntriesPage = () => {
       key: 'totalCredit',
       type: 'custom',
       render: (row) => (
-        <span className="font-medium text-red-600">{formatCurrency(row.totalCredit)}</span>
+        <span className="font-medium text-red-600">
+          {formatCurrency(row.totalCredit)}
+        </span>
       ),
     },
     {
@@ -173,12 +159,7 @@ const DailyEntriesPage = () => {
             <button
               type="button"
               onClick={() => handlePostEntry(row)}
-              disabled={
-                isPosting ||
-                isReversing ||
-                isPosted ||
-                isReversed
-              }
+              disabled={isPosting || isReversing || isPosted || isReversed}
               className="text-emerald-600 transition-colors hover:text-emerald-800 disabled:cursor-not-allowed disabled:opacity-40"
               title="ترحيل"
             >
@@ -188,12 +169,7 @@ const DailyEntriesPage = () => {
             <button
               type="button"
               onClick={() => handleReverseEntry(row)}
-              disabled={
-                isPosting ||
-                isReversing ||
-                !isPosted ||
-                isReversed
-              }
+              disabled={isPosting || isReversing || !isPosted || isReversed}
               className="text-amber-600 transition-colors hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-40"
               title="عكس القيد"
             >
@@ -205,7 +181,7 @@ const DailyEntriesPage = () => {
     },
   ];
 
-  if (isLoading) {
+  if (isLoading && !entries.length) {
     return <PageLoader label="جاري تحميل القيود اليومية..." />;
   }
 
@@ -228,48 +204,26 @@ const DailyEntriesPage = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:grid-cols-2">
-        <FormInput
-          label="بحث"
-          value={searchQuery}
-          onChange={(event) => {
-            setSearchQuery(event.target.value);
-            setPageNumber(1);
-          }}
-          placeholder="ابحث برقم القيد أو الوصف أو المرجع"
-        />
-
-        <FormInput
-          as="select"
-          label="النوع"
-          value={typeFilter}
-          onChange={(event) => {
-            setTypeFilter(event.target.value);
-            setPageNumber(1);
-          }}
-        >
-          <option value="all">الكل</option>
-          {JOURNAL_TYPES.map((type) => (
-            <option key={type.value} value={type.value}>
-              {type.label}
-            </option>
-          ))}
-        </FormInput>
-      </div>
+      <JournalEntryFilters filters={filters} setFilters={setFilters} />
 
       <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-        <Table columns={columns} data={pagination.items} loading={isLoading} />
+        <Table columns={columns} data={entries} loading={isLoading} />
       </div>
 
       <Pagination
-        currentPage={pagination.currentPage}
-        totalPages={pagination.totalPages}
-        pageSize={pagination.pageSize}
-        onPageChange={setPageNumber}
-        onPageSizeChange={(value) => {
-          setPageSize(value);
-          setPageNumber(1);
-        }}
+        currentPage={filters.pageNumber}
+        totalPages={totalPages}
+        pageSize={filters.pageSize}
+        onPageChange={(page) =>
+          setFilters((prev) => ({ ...prev, pageNumber: page }))
+        }
+        onPageSizeChange={(value) =>
+          setFilters((prev) => ({
+            ...prev,
+            pageSize: value,
+            pageNumber: 1,
+          }))
+        }
       />
     </div>
   );

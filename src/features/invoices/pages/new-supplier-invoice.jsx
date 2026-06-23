@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCreateInvoice } from '../hooks/invoices.mutations';
 import InvoiceForm from '../components/invoice-form';
@@ -20,11 +21,20 @@ const NewSupplierInvoice = () => {
     }
   };
 
+  const typeLabel = type === 'customer' ? 'عميل' : 'مورد';
+
   return (
     <div className="space-y-8 p-6 md:p-10 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-900">
-        Create New Invoice ({type})
-      </h1>
+      <div className="flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+        <ArrowLeft
+          className="cursor-pointer text-gray-500 hover:text-gray-800"
+          onClick={() => navigate(redirectPath)}
+        />
+        <div>
+          <h1 className="text-2xl font-bold">إنشاء فاتورة جديدة - {typeLabel}</h1>
+          <p className="text-sm text-gray-600">إضافة فاتورة {typeLabel} جديدة إلى النظام</p>
+        </div>
+      </div>
 
       <InvoiceForm
         invoiceType={type}

@@ -68,6 +68,12 @@ const toNullableApiNumber = (value) => {
   return parsed;
 };
 
+export const journalEntryInputClass =
+  'w-full rounded-lg border border-gray-200 px-3 py-2 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500';
+
+export const journalEntryFlexInputClass =
+  'min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500';
+
 export const normalizeTreeCollection = (value) => {
   if (Array.isArray(value)) return value;
   if (Array.isArray(value?.data)) return value.data;
@@ -230,9 +236,31 @@ export const buildJournalEntryPayload = (formData, { isCreate = false } = {}) =>
   return payload;
 };
 
-export const normalizeJournalEntriesResponse = (response) => {
+const extractJournalEntries = (response) => {
   if (Array.isArray(response)) return response;
   if (Array.isArray(response?.items)) return response.items;
   if (Array.isArray(response?.data)) return response.data;
   return [];
+};
+
+export const normalizeJournalEntriesResponse = (response) => {
+  const items = extractJournalEntries(response);
+  const pageSize = response?.pageSize ?? 10;
+  const pageNumber = response?.pageNumber ?? 1;
+  const totalCount =
+    response?.totalCount ??
+    response?.total ??
+    response?.totalItems ??
+    items.length;
+  const totalPages =
+    response?.totalPages ??
+    Math.max(1, Math.ceil(totalCount / (pageSize || 1)));
+
+  return {
+    items,
+    totalCount,
+    totalPages,
+    pageNumber,
+    pageSize,
+  };
 };

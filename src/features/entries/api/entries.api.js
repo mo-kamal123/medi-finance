@@ -1,13 +1,25 @@
-﻿import { axiosInstance } from '../../../app/api/axiosInstance';
+import { axiosInstance } from '../../../app/api/axiosInstance';
 import { normalizeJournalEntriesResponse } from '../utils/journal-entry.utils';
 
 export const getJournalEntries = async (params = {}) => {
+  const requestParams = {
+    pageNumber: 1,
+    pageSize: 100,
+    ...params,
+  };
+
+  Object.keys(requestParams).forEach((key) => {
+    if (
+      requestParams[key] === '' ||
+      requestParams[key] === null ||
+      requestParams[key] === undefined
+    ) {
+      delete requestParams[key];
+    }
+  });
+
   const { data } = await axiosInstance.get('/journal-entries', {
-    params: {
-      pageNumber: 1,
-      pageSize: 100,
-      ...params,
-    },
+    params: requestParams,
   });
   return normalizeJournalEntriesResponse(data);
 };

@@ -67,9 +67,6 @@ const EditInvoice = () => {
             <h2 className="text-2xl font-bold text-gray-900">
               القيد المرتبط بالفاتورة
             </h2>
-            <p className="mt-1 text-gray-500">
-              يظهر القيد اليومي المرتبط بهذه الفاتورة في أسفل الصفحة.
-            </p>
           </div>
 
           {isLoadingJournalEntry ? (
@@ -79,6 +76,7 @@ const EditInvoice = () => {
               defaultValues={journalEntry}
               mode="edit"
               showEntryDetailsButton
+              viewOnly
             />
           ) : (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">

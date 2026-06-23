@@ -142,9 +142,9 @@ const InvoicesPage = () => {
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-2xl font-bold">Customer Invoices</h1>
+          <h1 className="text-2xl font-bold">فواتير العملاء</h1>
           <p className="text-sm text-gray-600">
-            Manage customer invoices from one place.
+            إدارة فواتير العملاء من مكان واحد
           </p>
         </div>
 
@@ -153,7 +153,7 @@ const InvoicesPage = () => {
           className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg"
         >
           <Plus size={16} />
-          Add Invoice
+          إضافة فاتورة
         </button>
       </div>
 

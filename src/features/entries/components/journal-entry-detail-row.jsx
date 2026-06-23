@@ -1,7 +1,8 @@
 import { memo, useMemo } from 'react';
 import DateInput from '../../../shared/ui/date-input';
 import FormInput from '../../../shared/ui/input';
-import { withCurrentOption } from '../utils/journal-entry.utils';
+import { withCurrentOption, journalEntryInputClass, journalEntryFlexInputClass } from '../utils/journal-entry.utils';
+import { X } from 'lucide-react';
 
 const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
   row,
@@ -15,6 +16,7 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
   onLoadBatchSummary,
   onRemove,
   readOnly = false,
+  rowErrors = {},
 }) {
   const rowCustomerOptions = useMemo(
     () =>
@@ -49,8 +51,11 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
             onAmountChange(index, 'debitAmount', event.target.value)
           }
           readOnly={readOnly}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2"
+          className={journalEntryInputClass}
         />
+        {rowErrors.amount ? (
+          <p className="mt-1 text-xs text-red-500">{rowErrors.amount}</p>
+        ) : null}
       </td>
 
       <td className="min-w-[120px] p-2">
@@ -61,7 +66,11 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
             onAmountChange(index, 'creditAmount', event.target.value)
           }
           readOnly={readOnly}
+          className={journalEntryInputClass}
         />
+        {rowErrors.amount ? (
+          <p className="mt-1 text-xs text-red-500">{rowErrors.amount}</p>
+        ) : null}
       </td>
 
       <td className="min-w-[220px] p-2">
@@ -72,6 +81,7 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
             onRowChange(index, 'accountID', event.target.value)
           }
           disabled={readOnly}
+          error={rowErrors.accountID}
         >
           <option value="">اختر الحساب</option>
           {accountOptions.map((option) => (
@@ -144,7 +154,7 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
             onRowChange(index, 'description', event.target.value)
           }
           readOnly={readOnly}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2"
+          className={journalEntryInputClass}
         />
       </td>
 
@@ -166,11 +176,12 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
             onRowChange(index, 'documentNumber', event.target.value)
           }
           readOnly={readOnly}
+          className={journalEntryInputClass}
         />
       </td>
 
-      <td className="min-w-[190px] p-2">
-        <div className="flex gap-2">
+      <td className="min-w-[220px] p-2">
+        <div className="flex items-center gap-2">
           <input
             type="text"
             value={row.batchNumber}
@@ -178,13 +189,13 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
               onRowChange(index, 'batchNumber', event.target.value)
             }
             readOnly={readOnly}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2"
+            className={journalEntryFlexInputClass}
           />
           {!readOnly ? (
             <button
               type="button"
               onClick={() => onLoadBatchSummary(index)}
-              className="shrink-0 rounded-lg bg-primary px-3 py-2 text-white"
+              className="shrink-0 rounded-lg bg-primary px-3 py-2 text-sm text-white hover:bg-primary/90"
             >
               جلب
             </button>
@@ -197,9 +208,9 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
           <button
             type="button"
             onClick={() => onRemove(index)}
-            className="text-red-600"
+            className="text-white bg-red-400 mt-1 rounded-xl"
           >
-            ×
+            <X />
           </button>
         ) : null}
       </td>

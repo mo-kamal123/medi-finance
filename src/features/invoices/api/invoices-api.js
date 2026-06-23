@@ -78,25 +78,25 @@ export const updateInvoice = async ({ id, ...body }) => {
 
 export const getInvoiceTypes = async () => {
   const response = await axiosInstance.get('/invoice-types');
-  return response.data;
+  return normalizeInvoicesResponse(response.data);
 };
 
 export const getSuppliers = async () => {
   const response = await axiosInstance.get('/suppliers');
-  return response.data;
+  return normalizeInvoicesResponse(response.data);
 };
 
 export const getCustomers = async () => {
   const response = await axiosInstance.get('/customers');
-  return response.data;
+  return normalizeInvoicesResponse(response.data);
 };
 
 export const getFinancialPeriods = async () => {
   const response = await axiosInstance.get('/financial-periods');
-  return response.data;
+  return normalizeInvoicesResponse(response.data);
 };
 
 export const getProductsServices = async () => {
   const response = await axiosInstance.get('/products-services/dropdown');
-  return response.data;
+  return normalizeInvoicesResponse(response.data);
 };

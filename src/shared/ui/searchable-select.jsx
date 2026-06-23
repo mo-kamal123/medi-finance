@@ -48,6 +48,7 @@ const SearchableSelect = forwardRef(
       onChange,
       onBlur,
       name,
+      required,
       dropdownPosition = 'bottom',
       className = '',
       inputClass = '',
@@ -239,6 +240,7 @@ const SearchableSelect = forwardRef(
             className="mb-1 block font-medium text-gray-700"
           >
             {label}
+            {required ? <span className="text-red-500 mr-1"> *</span> : null}
           </label>
         ) : null}
 
