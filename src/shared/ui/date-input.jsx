@@ -91,7 +91,7 @@ const getMonthLabel = (value) =>
     year: 'numeric',
   });
 
-const DateInput = ({ label, value, onChange, error, ...props }) => {
+const DateInput = ({ label, value, onChange, error, required, ...props }) => {
   const wrapperRef = useRef(null);
   const [displayValue, setDisplayValue] = useState(() =>
     formatDateInputDisplay(value)
@@ -138,6 +138,11 @@ const DateInput = ({ label, value, onChange, error, ...props }) => {
     emitChange(nextDisplayValue.trim() ? parsedValue : '');
   };
 
+  const getTodayValue = () => {
+    const today = new Date();
+    return [today.getFullYear(), padDatePart(today.getMonth() + 1), padDatePart(today.getDate())].join('-');
+  };
+
   const handleSelectDate = (date) => {
     const nextValue = [
       date.getFullYear(),
@@ -147,6 +152,14 @@ const DateInput = ({ label, value, onChange, error, ...props }) => {
 
     setDisplayValue(formatDateInputDisplay(nextValue));
     emitChange(nextValue);
+    setIsOpen(false);
+  };
+
+  const handleSelectToday = () => {
+    const todayValue = getTodayValue();
+    setDisplayValue(formatDateInputDisplay(todayValue));
+    emitChange(todayValue);
+    setVisibleMonth(toLocalDate(todayValue));
     setIsOpen(false);
   };
 
@@ -160,7 +173,10 @@ const DateInput = ({ label, value, onChange, error, ...props }) => {
   return (
     <div ref={wrapperRef} className="relative w-full">
       {label ? (
-        <label className="mb-1 block font-medium text-gray-700">{label}</label>
+        <label className="mb-1 block font-medium text-gray-700">
+          {label}
+          {required ? <span className="text-red-500 mr-1"> *</span> : null}
+        </label>
       ) : null}
 
       <div className="relative">
@@ -243,6 +259,14 @@ const DateInput = ({ label, value, onChange, error, ...props }) => {
               );
             })}
           </div>
+
+          <button
+            type="button"
+            onClick={handleSelectToday}
+            className="mt-3 w-full rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-sm text-primary transition hover:bg-primary/10"
+          >
+            اليوم
+          </button>
         </div>
       ) : null}
 

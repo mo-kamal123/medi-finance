@@ -10,6 +10,11 @@ export const getAccountById = async (id) => {
   return response.data;
 };
 
+export const searchAccounts = async (params = {}) => {
+  const { data } = await axiosInstance.get('/accounts/search', { params });
+  return data;
+};
+
 // Create account
 export const createAccount = async (formData) => {
   const { data } = await axiosInstance.post('/accounts', formData, {

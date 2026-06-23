@@ -6,11 +6,12 @@ const FormInput = ({
   error,
   icon: Icon,
   type = 'text',
-  as = 'input', // 🔥 new: input | textarea | select
-  children, // 🔥 for select options
+  as = 'input',
+  children,
   containerClass = '',
   inputClass = '',
   className = '',
+  required,
   ...props
 }) => {
   const baseClasses = `
@@ -35,7 +36,10 @@ const FormInput = ({
   return (
     <div className={`w-full ${containerClass}`}>
       {label && (
-        <label className="block mb-1 font-medium text-gray-700">{label}</label>
+        <label className="block mb-1 font-medium text-gray-700">
+          {label}
+          {required ? <span className="text-red-500 mr-1"> *</span> : null}
+        </label>
       )}
 
       <div className="relative">

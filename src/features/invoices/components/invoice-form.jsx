@@ -168,27 +168,45 @@ const InvoiceForm = ({
       className="bg-white shadow-lg rounded-2xl p-8 space-y-8"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <FormInput
-          label="رقم الفاتورة"
-          {...register('invoiceNumber')}
-          error={errors.invoiceNumber?.message}
-          readOnly={!isEditMode}
-          className={
-            !isEditMode ? 'bg-gray-100 text-gray-600 cursor-not-allowed' : ''
-          }
+        <Controller
+          name="invoiceNumber"
+          control={control}
+          render={({ field }) => (
+            <FormInput
+              label="رقم الفاتورة"
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              error={errors.invoiceNumber?.message}
+              readOnly={!isEditMode}
+              required
+              className={
+                !isEditMode ? 'bg-gray-100 text-gray-600 cursor-not-allowed' : ''
+              }
+            />
+          )}
         />
 
-        <NormalSelect
-          label="نوع الفاتورة"
-          {...register('invoiceTypeID')}
-          error={errors.invoiceTypeID?.message}
-          options={[
-            { value: '', label: 'اختر' },
-            ...(invoiceTypes?.map((t) => ({
-              value: String(t.invoiceTypeID),
-              label: t.nameAr || t.invoiceTypeNameAr || t.nameEn,
-            })) || []),
-          ]}
+        <Controller
+          name="invoiceTypeID"
+          control={control}
+          render={({ field }) => (
+            <NormalSelect
+              label="نوع الفاتورة"
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              error={errors.invoiceTypeID?.message}
+              required
+              options={[
+                { value: '', label: 'اختر' },
+                ...(invoiceTypes?.map((t) => ({
+                  value: String(t.invoiceTypeID),
+                  label: t.nameAr || t.invoiceTypeNameAr || t.nameEn,
+                })) || []),
+              ]}
+            />
+          )}
         />
 
         <Controller
@@ -198,6 +216,7 @@ const InvoiceForm = ({
             <DateInput
               label="تاريخ الإصدار"
               error={errors.invoiceDate?.message}
+              required
               {...field}
             />
           )}
@@ -209,84 +228,141 @@ const InvoiceForm = ({
             <DateInput
               label="تاريخ الاستحقاق"
               error={errors.dueDate?.message}
+              required
               {...field}
             />
           )}
         />
 
         {invoiceType !== 'supplier' && (
-          <NormalSelect
-            label="العميل"
-            {...register('customerID', {
-              onChange: (event) => {
-                if (event.target.value) {
-                  setValue('supplierID', '');
-                }
-              },
-            })}
-            options={[
-              { value: '', label: 'اختر' },
-              ...(customers?.map((c) => ({
-                value: String(c.customerID),
-                label: c.customerNameAr || c.customerNameEn,
-              })) || []),
-            ]}
+          <Controller
+            name="customerID"
+            control={control}
+            render={({ field }) => (
+              <NormalSelect
+                label="العميل"
+                value={field.value ?? ''}
+                onChange={(event) => {
+                  field.onChange(event.target.value);
+                  if (event.target.value) {
+                    setValue('supplierID', '');
+                  }
+                }}
+                onBlur={field.onBlur}
+                error={errors.customerID?.message}
+                required
+                options={[
+                  { value: '', label: 'اختر' },
+                  ...(customers?.map((c) => ({
+                    value: String(c.customerID),
+                    label: c.customerNameAr || c.customerNameEn,
+                  })) || []),
+                ]}
+              />
+            )}
           />
         )}
 
         {invoiceType !== 'customer' && (
-          <NormalSelect
-            label="المورد"
-            {...register('supplierID', {
-              onChange: (event) => {
-                if (event.target.value) {
-                  setValue('customerID', '');
-                }
-              },
-            })}
-            options={[
-              { value: '', label: 'اختر' },
-              ...(suppliers?.map((s) => ({
-                value: String(s.supplierID),
-                label: s.supplierNameAr || s.supplierNameEn,
-              })) || []),
-            ]}
+          <Controller
+            name="supplierID"
+            control={control}
+            render={({ field }) => (
+              <NormalSelect
+                label="المورد"
+                value={field.value ?? ''}
+                onChange={(event) => {
+                  field.onChange(event.target.value);
+                  if (event.target.value) {
+                    setValue('customerID', '');
+                  }
+                }}
+                onBlur={field.onBlur}
+                error={errors.supplierID?.message}
+                required
+                options={[
+                  { value: '', label: 'اختر' },
+                  ...(suppliers?.map((s) => ({
+                    value: String(s.supplierID),
+                    label: s.supplierNameAr || s.supplierNameEn,
+                  })) || []),
+                ]}
+              />
+            )}
           />
         )}
 
-        <FormInput
-          type="number"
-          label="المبلغ الضريبي"
-          {...register('taxAmount', { valueAsNumber: true })}
+        <Controller
+          name="taxAmount"
+          control={control}
+          render={({ field }) => (
+            <FormInput
+              type="number"
+              label="المبلغ الضريبي"
+              value={field.value ?? ''}
+              onChange={(event) => field.onChange(event.target.valueAsNumber || 0)}
+              onBlur={field.onBlur}
+              error={errors.taxAmount?.message}
+            />
+          )}
         />
-        <FormInput
-          type="number"
-          label="المبلغ الخصم"
-          {...register('discountAmount', { valueAsNumber: true })}
+        <Controller
+          name="discountAmount"
+          control={control}
+          render={({ field }) => (
+            <FormInput
+              type="number"
+              label="المبلغ الخصم"
+              value={field.value ?? ''}
+              onChange={(event) => field.onChange(event.target.valueAsNumber || 0)}
+              onBlur={field.onBlur}
+              error={errors.discountAmount?.message}
+            />
+          )}
         />
 
-        <NormalSelect
-          label="الفترة المالية"
-          {...register('financialPeriodID')}
-          options={[
-            { value: '', label: 'اختر' },
-            ...(financialPeriods?.map((p) => ({
-              value: String(p.financialPeriodID),
-              label: p.nameAr || p.financialPeriodNameAr || p.nameEn,
-            })) || []),
-          ]}
+        <Controller
+          name="financialPeriodID"
+          control={control}
+          render={({ field }) => (
+            <NormalSelect
+              label="الفترة المالية"
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              error={errors.financialPeriodID?.message}
+              required
+              options={[
+                { value: '', label: 'اختر' },
+                ...(financialPeriods?.map((p) => ({
+                  value: String(p.financialPeriodID),
+                  label: p.nameAr || p.financialPeriodNameAr || p.nameEn,
+                })) || []),
+              ]}
+            />
+          )}
         />
 
-        <NormalSelect
-          label="الحالة"
-          {...register('statusId')}
-          options={[
-            { value: '', label: 'اختر' },
-            ...statusOptions.map((status) => ({
-              value: status.value,
-              label: status.label,
-            })),
-          ]}
+        <Controller
+          name="statusId"
+          control={control}
+          render={({ field }) => (
+            <NormalSelect
+              label="الحالة"
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              error={errors.statusId?.message}
+              required
+              options={[
+                { value: '', label: 'اختر' },
+                ...statusOptions.map((status) => ({
+                  value: status.value,
+                  label: status.label,
+                })),
+              ]}
+            />
+          )}
         />
       </div>
 
@@ -438,18 +514,38 @@ const InvoiceForm = ({
 
                     <td className="min-w-[120px] p-2">
                       {renderDetailNumberInput('quantity', index)}
+                      {detailErrors?.quantity?.message ? (
+                        <p className="mt-1 text-xs text-red-500">
+                          {detailErrors.quantity.message}
+                        </p>
+                      ) : null}
                     </td>
 
                     <td className="min-w-[140px] p-2">
                       {renderDetailNumberInput('unitPrice', index)}
+                      {detailErrors?.unitPrice?.message ? (
+                        <p className="mt-1 text-xs text-red-500">
+                          {detailErrors.unitPrice.message}
+                        </p>
+                      ) : null}
                     </td>
 
                     <td className="min-w-[120px] p-2">
                       {renderDetailNumberInput('discountPercentage', index)}
+                      {detailErrors?.discountPercentage?.message ? (
+                        <p className="mt-1 text-xs text-red-500">
+                          {detailErrors.discountPercentage.message}
+                        </p>
+                      ) : null}
                     </td>
 
                     <td className="min-w-[120px] p-2">
                       {renderDetailNumberInput('taxPercentage', index)}
+                      {detailErrors?.taxPercentage?.message ? (
+                        <p className="mt-1 text-xs text-red-500">
+                          {detailErrors.taxPercentage.message}
+                        </p>
+                      ) : null}
                     </td>
 
                     <td className="min-w-[140px] p-3 font-semibold text-gray-700">
