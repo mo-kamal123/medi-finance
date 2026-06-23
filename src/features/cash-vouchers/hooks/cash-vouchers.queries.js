@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import {
   getAllCashVouchers,
   getCashVoucherById,
-  getPaymentModes,
 } from '../api/cash-vouchers.api';
 import { cashVouchersKeys } from './cash-vouchers.keys';
 
@@ -22,9 +21,4 @@ export const useCashVoucher = (id) => {
   });
 };
 
-export const usePaymentModes = () => {
-  return useQuery({
-    queryKey: cashVouchersKeys.paymentModes(),
-    queryFn: getPaymentModes,
-  });
-};
+

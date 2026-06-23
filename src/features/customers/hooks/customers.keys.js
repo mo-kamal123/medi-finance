@@ -1,5 +1,5 @@
 export const customersKeys = {
   all: ['customers'],
-  lists: () => [...customersKeys.all, 'list'],
+  lists: (filters) => [...customersKeys.all, 'list', filters],
   detail: (id) => [...customersKeys.all, id],
 };

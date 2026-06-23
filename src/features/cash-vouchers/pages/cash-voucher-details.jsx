@@ -8,7 +8,7 @@ const CashVoucherDetails = () => {
   const { id } = useParams();
   const { data } = useCashVoucher(id);
 
-  return <CashVoucherForm defaultValues={normalizeItem(data) || {}} mode="view" />;
+  return <CashVoucherForm defaultValues={normalizeItem(data) || {}} mode="edit" />;
 };
 
 export default CashVoucherDetails;

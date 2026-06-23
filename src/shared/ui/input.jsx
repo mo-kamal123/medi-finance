@@ -69,9 +69,11 @@ const FormInput = ({
         ) : (
           <input {...props} type={type} className={baseClasses} />
         )}
+        {error && (
+          <p className="mt-1 text-sm text-red-500">{error}</p>
+        )}
       </div>
 
-      {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
     </div>
   );
 };

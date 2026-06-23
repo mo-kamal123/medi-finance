@@ -1,18 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Eye, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import FormInput from '../../../shared/ui/input';
+import CashVoucherFilters from '../components/cash-voucher-filter';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
-import { matchesSearch, paginateItems } from '../../../shared/utils/list-utils';
 import { formatDate, formatNumber } from '../../../shared/utils/formatters';
 import { useCashVouchers } from '../hooks/cash-vouchers.queries';
-
-const normalizeCollection = (value) => {
-  if (Array.isArray(value)) return value;
-  if (Array.isArray(value?.data)) return value.data;
-  return [];
-};
+import { buildCashVoucherQueryParams } from '../utils/cash-voucher-filters.utils';
 
 const getPartyName = (row) =>
   row.name ||
@@ -26,44 +20,23 @@ const getVoucherNumber = (row) =>
 
 const CashVouchersPage = () => {
   const navigate = useNavigate();
-  const [search, setSearch] = useState('');
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const { data: response = [], isLoading } = useCashVouchers({
-    pageNumber,
-    pageSize,
+  const [filters, setFilters] = useState({
+    searchTerm: '',
+    isReceipt: '',
+    isCleared: '',
+    isVoid: '',
+    fromDate: '',
+    toDate: '',
+    pageNumber: 1,
+    pageSize: 10,
   });
 
-  const vouchers = useMemo(() => normalizeCollection(response), [response]);
-
-  const filteredVouchers = useMemo(
-    () =>
-      vouchers.filter((voucher) =>
-        matchesSearch(
-          {
-            ...voucher,
-            partyName: getPartyName(voucher),
-            voucherNumber: getVoucherNumber(voucher),
-          },
-          [
-            'voucherNumber',
-            'referenceNumber',
-            'invoiceNumber',
-            'name',
-            'partyName',
-            'bankName',
-            'checkNumber',
-          ],
-          search
-        )
-      ),
-    [search, vouchers]
+  const { data: response, isLoading } = useCashVouchers(
+    buildCashVoucherQueryParams(filters)
   );
 
-  const pagination = useMemo(
-    () => paginateItems(filteredVouchers, pageNumber, pageSize),
-    [filteredVouchers, pageNumber, pageSize]
-  );
+  const { items: vouchers = [], totalPages = 1, pageNumber: currentPage = 1 } =
+    response || {};
 
   const columns = useMemo(
     () => [
@@ -126,6 +99,7 @@ const CashVouchersPage = () => {
                 navigate(`/cash-vouchers/${row.voucherID || row.id}`)
               }
               className="text-blue-600"
+              title="عرض"
             >
               <Eye size={18} />
             </button>
@@ -149,29 +123,20 @@ const CashVouchersPage = () => {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <FormInput
-          label="بحث"
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            setPageNumber(1);
-          }}
-          placeholder="ابحث برقم السند أو الفاتورة أو الطرف"
-        />
-      </div>
+      <CashVoucherFilters filters={filters} setFilters={setFilters} />
 
-      <Table columns={columns} data={pagination.items} loading={isLoading} />
+      <Table columns={columns} data={vouchers} loading={isLoading} />
 
       <Pagination
-        currentPage={pagination.currentPage}
-        totalPages={pagination.totalPages}
-        pageSize={pagination.pageSize}
-        onPageChange={setPageNumber}
-        onPageSizeChange={(value) => {
-          setPageSize(value);
-          setPageNumber(1);
-        }}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageSize={filters.pageSize}
+        onPageChange={(page) =>
+          setFilters((prev) => ({ ...prev, pageNumber: page }))
+        }
+        onPageSizeChange={(value) =>
+          setFilters((prev) => ({ ...prev, pageSize: value, pageNumber: 1 }))
+        }
       />
     </div>
   );
