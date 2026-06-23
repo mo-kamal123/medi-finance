@@ -5,6 +5,7 @@ import {
   ExternalLink,
   Plus,
   RotateCcw,
+  Trash2,
   X,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -1032,9 +1033,9 @@ const JournalEntryForm = ({
                           <button
                             type="button"
                             onClick={() => remove(index)}
-                            className="text-white bg-red-400 mt-1 rounded-xl"
+                            className="text-red-400 mt-1 rounded-xl"
                           >
-                            <X />
+                            <Trash2 />
                           </button>
                         ) : null}
                       </td>
@@ -1058,28 +1059,26 @@ const JournalEntryForm = ({
         </div>
 
         {/* Actions */}
-        {!viewOnly ? (
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <button
-              type="button"
-              onClick={() => navigate('/entries')}
-              className="rounded-lg border border-gray-300 px-6 py-2 text-gray-700"
-            >
-              رجوع
-            </button>
-            <button
-              type="submit"
-              disabled={
-                !isBalanced ||
-                createMutation.isPending ||
-                updateMutation.isPending
-              }
-              className="rounded-lg bg-primary px-6 py-2 text-white disabled:opacity-50"
-            >
-              {isEditMode ? 'حفظ التعديلات' : 'حفظ القيد'}
-            </button>
-          </div>
-        ) : null}
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={() => navigate('/entries')}
+            className="rounded-lg border border-gray-300 px-6 py-2 text-gray-700"
+          >
+            رجوع
+          </button>
+          <button
+            type="submit"
+            disabled={
+              !isBalanced ||
+              createMutation.isPending ||
+              updateMutation.isPending
+            }
+            className="rounded-lg bg-primary px-6 py-2 text-white disabled:opacity-50"
+          >
+            {isEditMode ? 'حفظ التعديلات' : 'حفظ القيد'}
+          </button>
+        </div>
       </form>
     </div>
   );
