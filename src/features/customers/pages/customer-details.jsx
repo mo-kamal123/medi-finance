@@ -1,11 +1,14 @@
-﻿import { useParams } from 'react-router-dom';
+﻿import { useNavigate, useParams } from 'react-router-dom';
 import PageLoader from '../../../shared/ui/page-loader';
 import CustomerForm from '../components/customer-form';
 import { useCustomer } from '../hooks/customers.queries';
+import { useUpdateCustomer } from '../hooks/customers.mutations';
 
 const CustomerDetails = () => {
   const { id } = useParams();
   const { data, isLoading } = useCustomer(id);
+  const { mutate: updateCustomer } = useUpdateCustomer();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return <PageLoader label="جاري تحميل بيانات العميل..." />;
@@ -22,28 +25,11 @@ const CustomerDetails = () => {
       <CustomerForm
         mode="update"
         defaultValues={data}
-        currencies={[
-          {
-            currencyID: data.currencyID,
-            currencyName: data.currencyNameEn,
-          },
-        ]}
-        accounts={[
-          {
-            accountID: data.accountID,
-            accountCode: data.accountCode,
-            nameAr: data.nameAr,
-          },
-        ]}
-        costCenters={[
-          {
-            costCenterID: data.defaultCostCenterID,
-            ccCode: '',
-            nameAr: 'Default',
-          },
-        ]}
         onSubmit={(formData) => {
-          console.log('Updated Data:', formData);
+          updateCustomer(
+            { id, data: formData },
+            { onSuccess: () => navigate('/customers') }
+          );
         }}
       />
     </div>

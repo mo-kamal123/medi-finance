@@ -1,51 +1,53 @@
-﻿import { useMemo, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import FormInput from '../../../shared/ui/input';
+import SearchableSelect from '../../../shared/ui/searchable-select';
 import PageLoader from '../../../shared/ui/page-loader';
 import Pagination from '../../../shared/ui/pagination';
-import { matchesSearch, paginateItems } from '../../../shared/utils/list-utils';
+import { useDebounce } from '../../../shared/lib/use-debounce';
 import CustomerTable from '../components/customer-table';
 import { useDeleteCustomer } from '../hooks/customers.mutations';
 import { useCustomers } from '../hooks/customers.queries';
 
+const ACTIVE_OPTIONS = [
+  { value: '', label: 'الكل' },
+  { value: 'true', label: 'نشط' },
+  { value: 'false', label: 'غير نشط' },
+];
+
 const CustomersPage = () => {
-  const { data = [], isLoading } = useCustomers();
   const { mutate: deleteCustomer } = useDeleteCustomer();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [isActive, setIsActive] = useState('');
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const filteredCustomers = useMemo(
-    () =>
-      data.filter((customer) =>
-        matchesSearch(
-          customer,
-          [
-            'customerCode',
-            'customerNameAr',
-            'customerNameEn',
-            'phone',
-            'email',
-          ],
-          search
-        )
-      ),
-    [data, search]
-  );
+  const debouncedSearchTerm = useDebounce(search, 500);
+  const isFirstRender = useRef(true);
 
-  const pagination = useMemo(
-    () => paginateItems(filteredCustomers, pageNumber, pageSize),
-    [filteredCustomers, pageNumber, pageSize]
-  );
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setDebouncedSearch(debouncedSearchTerm);
+    setPageNumber(1);
+  }, [debouncedSearchTerm]);
+
+  const { data: response, isLoading } = useCustomers({
+    search: debouncedSearch || undefined,
+    isActive: isActive || undefined,
+    pageNumber,
+    pageSize,
+  });
+
+  const { items: customers = [], totalPages = 1 } = response || {};
 
   if (isLoading) {
     return <PageLoader label="جاري تحميل العملاء..." />;
-  }
-
-  if (!data) {
-    return null;
   }
 
   return (
@@ -65,27 +67,35 @@ const CustomersPage = () => {
         </button>
       </div>
 
-      <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      <div className="grid grid-cols-1 gap-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:grid-cols-2">
         <FormInput
           label="بحث"
           value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="ابحث بالكود أو الاسم أو الهاتف"
+          autoFocus
+        />
+        <SearchableSelect
+          label="الحالة"
+          value={isActive}
           onChange={(event) => {
-            setSearch(event.target.value);
+            setIsActive(event.target.value);
             setPageNumber(1);
           }}
-          placeholder="ابحث بالكود أو الاسم أو الهاتف"
+          placeholder="الكل"
+          options={ACTIVE_OPTIONS}
         />
       </div>
 
       <CustomerTable
-        data={pagination.items}
+        data={customers}
         onDelete={(customerID) => deleteCustomer(customerID)}
       />
 
       <Pagination
-        currentPage={pagination.currentPage}
-        totalPages={pagination.totalPages}
-        pageSize={pagination.pageSize}
+        currentPage={pageNumber}
+        totalPages={totalPages}
+        pageSize={pageSize}
         onPageChange={setPageNumber}
         onPageSizeChange={(value) => {
           setPageSize(value);

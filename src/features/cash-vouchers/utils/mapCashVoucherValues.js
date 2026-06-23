@@ -1,9 +1,3 @@
-export const PAYMENT_MODE_OPTIONS = [
-  { value: '1', label: 'نقدي' },
-  { value: '2', label: 'شيك' },
-  { value: '3', label: 'تحويل بنكي' },
-];
-
 export const toDateInputValue = (value) => {
   if (!value) return '';
   return String(value).split('T')[0];
@@ -14,44 +8,20 @@ export const toApiDateTime = (value) => {
   return dateValue ? `${dateValue}T00:00:00` : null;
 };
 
-const getPaymentModeValue = (mode) =>
-  String(mode?.id ?? mode?.paymentModeId ?? mode?.value ?? '');
-
-const getPaymentModeLabel = (mode) =>
-  mode?.nameAr ?? mode?.name ?? mode?.nameEn ?? mode?.label ?? '';
-
-export const resolvePaymentModeId = (voucher, modes = []) => {
-  if (voucher?.paymentModeId !== undefined && voucher?.paymentModeId !== null) {
-    return String(voucher.paymentModeId);
-  }
-
-  if (modes.length > 0) {
-    return getPaymentModeValue(modes[0]);
-  }
-
-  return '1';
-};
-
 export const buildCashVoucherPayload = (formData) => {
   const firstDetail = formData.details?.[0] || {};
   const partyId = firstDetail.partyID ? Number(firstDetail.partyID) : null;
 
   return {
     isReceipt: formData.isReceipt,
-    paymentModeId: Number(formData.paymentModeId || 1),
+    paymentModeId: 1,
     bankId: formData.bankId ? Number(formData.bankId) : null,
     bankAccountId: formData.bankAccountId ? Number(formData.bankAccountId) : null,
     checkNumber: formData.checkNumber || null,
-    fromBankAccountId: formData.fromBankAccountId
-      ? Number(formData.fromBankAccountId)
-      : null,
-    toBankAccountId: formData.toBankAccountId
-      ? Number(formData.toBankAccountId)
-      : null,
-    description: firstDetail.notes || formData.description || '',
+    description: firstDetail.notes || '',
     date: toApiDateTime(formData.date),
-    name: firstDetail.partyName || formData.name || '',
-    amount: Number(firstDetail.amount || formData.amount) || 0,
+    name: firstDetail.partyName || '',
+    amount: Number(firstDetail.amount) || 0,
     invoiceNumber: formData.invoiceNumber || null,
     customerId: formData.isReceipt ? partyId : null,
     supplierId: formData.isReceipt ? null : partyId,
@@ -59,7 +29,7 @@ export const buildCashVoucherPayload = (formData) => {
   };
 };
 
-export const mapCashVoucherToFormValues = (defaultValues = {}, paymentModes = []) => {
+export const mapCashVoucherToFormValues = (defaultValues = {}) => {
   const initialAmount =
     defaultValues?.amount ??
     defaultValues?.netAmount ??
@@ -91,7 +61,6 @@ export const mapCashVoucherToFormValues = (defaultValues = {}, paymentModes = []
       defaultValues?.voucherId ??
       defaultValues?.id ??
       '',
-    paymentModeId: resolvePaymentModeId(defaultValues, paymentModes),
     bankId:
       defaultValues?.bankId != null
         ? String(defaultValues.bankId)
@@ -110,14 +79,6 @@ export const mapCashVoucherToFormValues = (defaultValues = {}, paymentModes = []
       defaultValues?.accountNumberWithBranch ??
       defaultValues?.accountNumber ??
       '',
-    fromBankAccountId:
-      defaultValues?.fromBankAccountId != null
-        ? String(defaultValues.fromBankAccountId)
-        : '',
-    toBankAccountId:
-      defaultValues?.toBankAccountId != null
-        ? String(defaultValues.toBankAccountId)
-        : '',
     checkNumber: defaultValues?.checkNumber ?? '',
     description: initialNotes,
     date: toDateInputValue(defaultValues?.date || defaultValues?.voucherDate),
@@ -168,11 +129,3 @@ export const mapCashVoucherToFormValues = (defaultValues = {}, paymentModes = []
           ],
   };
 };
-
-export const getPaymentModeOptions = (modes = []) =>
-  modes.length > 0
-    ? modes.map((mode) => ({
-        value: getPaymentModeValue(mode),
-        label: getPaymentModeLabel(mode),
-      }))
-    : PAYMENT_MODE_OPTIONS;

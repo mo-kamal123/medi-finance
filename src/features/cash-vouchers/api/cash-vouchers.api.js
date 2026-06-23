@@ -9,7 +9,13 @@ export const normalizeCashVouchersResponse = (data) => {
 
 export const getAllCashVouchers = async (params = {}) => {
   const { data } = await axiosInstance.get('/cash-vouchers', { params });
-  return normalizeCashVouchersResponse(data);
+  return {
+    items: normalizeCashVouchersResponse(data),
+    totalCount: data.totalCount ?? 0,
+    totalPages: data.totalPages ?? 1,
+    pageNumber: data.pageNumber ?? 1,
+    pageSize: data.pageSize ?? 10,
+  };
 };
 
 export const getCashVoucherById = async (id) => {
@@ -22,14 +28,12 @@ export const createCashVoucher = async (payload) => {
   return data;
 };
 
-export const getPaymentModes = async () => {
-  const { data } = await axiosInstance.get('/cash-vouchers/payment-modes');
-  return Array.isArray(data) ? data : data?.data || [];
+export const updateCashVoucher = async ({ id, ...payload }) => {
+  const { data } = await axiosInstance.put(`/cash-vouchers/${id}`, payload);
+  return data;
 };
 
-export const getInvoiceForCashVoucher = async (invoiceNumber) => {
-  const { data } = await axiosInstance.get('/invoices', {
-    params: { invoiceNumber },
-  });
+export const getInvoiceForCashVoucher = async (id) => {
+  const { data } = await axiosInstance.get(`/invoices/${id}`);
   return data;
 };

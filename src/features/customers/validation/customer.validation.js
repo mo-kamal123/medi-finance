@@ -15,9 +15,6 @@ export const customerSchema = z.object({
   isTaxable: z.boolean(),
   creditLimit: z.coerce.number().optional(),
   paymentTermDays: z.coerce.number().optional(),
-  currencyID: z.coerce.number().optional(),
-  accountID: z.coerce.number().optional(),
-  defaultCostCenterID: z.coerce.number().optional(),
   isActive: z.boolean(),
   user: z.string().optional(),
 });

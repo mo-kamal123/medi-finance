@@ -13,7 +13,7 @@ export const useCreateCustomer = () => {
   return useMutation({
     mutationFn: createCustomer,
     onSuccess: () => {
-      qc.invalidateQueries(customersKeys.lists());
+      qc.invalidateQueries({ queryKey: customersKeys.all });
       toast.success('تم إنشاء العميل بنجاح');
     },
     onError: (error) => {
@@ -28,7 +28,7 @@ export const useUpdateCustomer = () => {
   return useMutation({
     mutationFn: ({ id, data }) => updateCustomer(id, data),
     onSuccess: () => {
-      qc.invalidateQueries(customersKeys.lists());
+      qc.invalidateQueries({ queryKey: customersKeys.all });
       toast.success('تم تحديث العميل بنجاح');
     },
     onError: (error) => {
@@ -43,7 +43,7 @@ export const useDeleteCustomer = () => {
   return useMutation({
     mutationFn: deleteCustomer,
     onSuccess: () => {
-      qc.invalidateQueries(customersKeys.lists());
+      qc.invalidateQueries({ queryKey: customersKeys.all });
       toast.success('تم حذف العميل بنجاح');
     },
     onError: (error) => {

@@ -4,15 +4,20 @@ import { Save } from 'lucide-react';
 import FormInput from '../../../shared/ui/input';
 import SearchableSelect from '../../../shared/ui/searchable-select';
 import { supplierSchema } from '../validation/supplier.validation';
+import { useSupplierTypes } from '../hooks/suppliers.queries';
+
+const cleanNulls = (obj) =>
+  Object.fromEntries(
+    Object.entries(obj).map(([k, v]) => [k, v ?? ''])
+  );
 
 const SupplierForm = ({
   mode = 'create',
   defaultValues = {},
-  currencies = [],
-  accounts = [],
-  costCenters = [],
   onSubmit,
 }) => {
+  const { data: supplierTypes = [] } = useSupplierTypes();
+
   const {
     register,
     handleSubmit,
@@ -26,7 +31,7 @@ const SupplierForm = ({
       isActive: true,
       paymentTermDays: 0,
       user: 'ms',
-      ...defaultValues,
+      ...cleanNulls(defaultValues),
     },
   });
 
@@ -45,9 +50,6 @@ const SupplierForm = ({
       taxNumber: data.taxNumber || '',
       isTaxable: Boolean(data.isTaxable),
       paymentTermDays: Number(data.paymentTermDays) || 0,
-      currencyID: Number(data.currencyID) || 0,
-      accountID: Number(data.accountID) || 0,
-      defaultCostCenterID: Number(data.defaultCostCenterID) || 0,
       isActive: Boolean(data.isActive),
       user: 'ms',
     });
@@ -64,12 +66,14 @@ const SupplierForm = ({
           {...register('supplierCode')}
           error={errors.supplierCode?.message}
           disabled={mode === 'update'}
+          required
         />
 
         <FormInput
           label="الاسم بالعربية"
           {...register('supplierNameAr')}
           error={errors.supplierNameAr?.message}
+          required
         />
       </div>
 
@@ -86,10 +90,10 @@ const SupplierForm = ({
           </label>
           <SearchableSelect
             {...register('supplierType')}
-            options={[
-              { value: 1, label: 'مورد' },
-              { value: 2, label: 'مورد نقدي' },
-            ]}
+            options={supplierTypes.map((t) => ({
+              value: t.supplierTypeID,
+              label: t.nameAr,
+            }))}
           />
         </div>
       </div>
@@ -144,61 +148,17 @@ const SupplierForm = ({
           error={errors.paymentTermDays?.message}
         />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            العملة
+        <div className="grid grid-cols-2 gap-4">
+          <label className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-3">
+            <input type="checkbox" {...register('isTaxable')} />
+            <span>خاضع للضريبة</span>
           </label>
-          <SearchableSelect
-            {...register('currencyID')}
-            placeholder="اختر العملة"
-            options={currencies.map((currency) => ({
-              value: currency.currencyID,
-              label: currency.currencyName,
-            }))}
-          />
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            الحساب
+          <label className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-3">
+            <input type="checkbox" {...register('isActive')} />
+            <span>المورد نشط</span>
           </label>
-          <SearchableSelect
-            {...register('accountID')}
-            placeholder="اختر الحساب"
-            options={accounts.map((acc) => ({
-              value: acc.accountID,
-              label: `${acc.accountCode} - ${acc.nameAr}`,
-            }))}
-          />
         </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            مركز التكلفة
-          </label>
-          <SearchableSelect
-            {...register('defaultCostCenterID')}
-            placeholder="بدون"
-            options={costCenters.map((center) => ({
-              value: center.costCenterID,
-              label: `${center.ccCode} - ${center.nameAr}`,
-            }))}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <label className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-3">
-          <input type="checkbox" {...register('isTaxable')} />
-          <span>خاضع للضريبة</span>
-        </label>
-
-        <label className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-3">
-          <input type="checkbox" {...register('isActive')} />
-          <span>المورد نشط</span>
-        </label>
       </div>
 
       <button
