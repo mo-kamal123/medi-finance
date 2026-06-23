@@ -13,8 +13,10 @@ const NewCustomer = () => {
   };
 
   return (
-    <div>
-      <h1 className="text-xl font-bold mb-4">إضافة عميل</h1>
+    <div className="space-y-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <h1 className="text-xl font-bold">إضافة عميل</h1>
+      </div>
       <CustomerForm onSubmit={submit} />
     </div>
   );

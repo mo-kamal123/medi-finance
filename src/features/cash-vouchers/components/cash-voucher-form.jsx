@@ -1,6 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Eye, Plus, Search, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ArrowLeft, Eye, Search, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import DateInput from '../../../shared/ui/date-input';
 import FormInput from '../../../shared/ui/input';
 import SearchableSelect from '../../../shared/ui/searchable-select';
 import { getErrorMessage, toast } from '../../../shared/lib/toast';
@@ -8,22 +11,15 @@ import { useCustomers, useSuppliers } from '../../invoices/hooks/invoices.querie
 import { useBanks, useBankAccounts } from '../../banks/hooks/banks.queries';
 import useCostTree from '../../tree/cost-tree/hooks/use-cost-tree';
 import { getInvoiceForCashVoucher } from '../api/cash-vouchers.api';
-import { usePaymentModes } from '../hooks/cash-vouchers.queries';
-import { useCreateCashVoucher } from '../hooks/cash-vouchers.mutations';
+import {
+  useCreateCashVoucher,
+  useUpdateCashVoucher,
+} from '../hooks/cash-vouchers.mutations';
 import {
   buildCashVoucherPayload,
-  getPaymentModeOptions,
   mapCashVoucherToFormValues,
 } from '../utils/mapCashVoucherValues';
-
-const emptyDetail = {
-  amount: '',
-  notes: '',
-  partyID: '',
-  partyName: '',
-};
-
-const EMPTY_DEFAULT_VALUES = {};
+import { cashVoucherSchema } from '../validation/cash-voucher.validation';
 
 const getFinalNodes = (nodes = []) => {
   let finalNodes = [];
@@ -47,48 +43,81 @@ const normalizeCollection = (value) => {
   return [];
 };
 
-const getVoucherTypeLabel = (isReceipt) => (isReceipt ? 'سند قبض' : 'سند دفع');
+const getDefaultFormValues = (defaultValues) => {
+  const mapped = mapCashVoucherToFormValues(defaultValues || {});
+
+  return {
+    isReceipt: mapped.isReceipt,
+    date: mapped.date || '',
+    bankId: mapped.bankId || '',
+    bankAccountId: mapped.bankAccountId || '',
+    checkNumber: mapped.checkNumber || '',
+    costCenterId: mapped.costCenterId || '',
+    invoiceNumber: mapped.invoiceNumber || '',
+    details:
+      mapped.details?.length > 0
+        ? mapped.details
+        : [{ partyID: '', partyName: '', amount: '', notes: '' }],
+  };
+};
 
 const voucherTypeOptions = [
   { value: 'receipt', label: 'سند قبض' },
   { value: 'payment', label: 'سند صرف' },
 ];
 
-const TRANSFER_PAYMENT_MODE_ID = '3';
-
 const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
   const navigate = useNavigate();
   const createMutation = useCreateCashVoucher();
-  const safeDefaultValues = defaultValues ?? EMPTY_DEFAULT_VALUES;
+  const updateMutation = useUpdateCashVoucher();
+  const isViewMode = mode === 'view';
+  const isEditMode = mode === 'edit';
+
   const { data: banksResponse = [] } = useBanks();
-  const { data: paymentModesResponse = [] } = usePaymentModes();
   const { data: customers = [] } = useCustomers();
   const { data: suppliers = [] } = useSuppliers();
   const { data: costTree = [] } = useCostTree();
-  const paymentModes = useMemo(
-    () => normalizeCollection(paymentModesResponse),
-    [paymentModesResponse]
-  );
-  const paymentModeOptions = useMemo(
-    () => getPaymentModeOptions(paymentModes),
-    [paymentModes]
-  );
-  const isViewMode = mode === 'view';
-  const [formData, setFormData] = useState(() =>
-    mapCashVoucherToFormValues(safeDefaultValues, paymentModes)
-  );
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm({
+    defaultValues: getDefaultFormValues(defaultValues),
+    resolver: zodResolver(cashVoucherSchema),
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'details',
+  });
+
+  const watchedIsReceipt = useWatch({ control, name: 'isReceipt' });
+  const watchedDetails = useWatch({ control, name: 'details' });
+  const watchedBankId = useWatch({ control, name: 'bankId' });
+  const watchedBankAccountId = useWatch({ control, name: 'bankAccountId' });
+  const watchedInvoiceNumber = useWatch({ control, name: 'invoiceNumber' });
+
   const [invoicePreview, setInvoicePreview] = useState(null);
   const [isLoadingInvoice, setIsLoadingInvoice] = useState(false);
-  const { data: bankAccountsResponse = [] } = useBankAccounts(formData.bankId);
 
   useEffect(() => {
-    setFormData(mapCashVoucherToFormValues(safeDefaultValues, paymentModes));
-  }, [safeDefaultValues, paymentModes]);
+    if (defaultValues) {
+      reset(getDefaultFormValues(defaultValues));
+    }
+  }, [defaultValues, reset]);
 
-  const banks = useMemo(() => normalizeCollection(banksResponse), [banksResponse]);
+  const { data: bankAccountsData = [] } = useBankAccounts(watchedBankId);
   const bankAccounts = useMemo(
-    () => normalizeCollection(bankAccountsResponse),
-    [bankAccountsResponse]
+    () => normalizeCollection(bankAccountsData),
+    [bankAccountsData]
+  );
+
+  const banks = useMemo(
+    () => normalizeCollection(banksResponse),
+    [banksResponse]
   );
 
   const costCenterOptions = useMemo(
@@ -124,31 +153,33 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
     [bankAccounts]
   );
 
-  const partyOptions = useMemo(() => {
-    const source = formData.isReceipt ? customers : suppliers;
+  const partySource = watchedIsReceipt !== false ? customers : suppliers;
 
-    return source.map((party) => ({
-      value: String(
-        formData.isReceipt ? party.customerID : party.supplierID
-      ),
-      label:
-        (formData.isReceipt
-          ? party.customerNameAr || party.customerNameEn
-          : party.supplierNameAr || party.supplierNameEn) || '',
-    }));
-  }, [customers, formData.isReceipt, suppliers]);
+  const partyOptions = useMemo(
+    () =>
+      partySource.map((party) => ({
+        value: String(
+          watchedIsReceipt !== false ? party.customerID : party.supplierID
+        ),
+        label:
+          (watchedIsReceipt !== false
+            ? party.customerNameAr || party.customerNameEn
+            : party.supplierNameAr || party.supplierNameEn) || '',
+      })),
+    [partySource, watchedIsReceipt]
+  );
+
+  const watchedFirstDetail = watchedDetails?.[0];
 
   const partyOptionsWithCurrent = useMemo(() => {
-    const currentParty = formData.details[0];
-
-    if (!currentParty?.partyName) {
+    if (!watchedFirstDetail?.partyName) {
       return partyOptions;
     }
 
     const hasMatch = partyOptions.some(
       (option) =>
-        option.value === String(currentParty.partyID || '') ||
-        option.label === currentParty.partyName
+        option.value === String(watchedFirstDetail.partyID || '') ||
+        option.label === watchedFirstDetail.partyName
     );
 
     if (hasMatch) {
@@ -157,163 +188,19 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
 
     return [
       {
-        value: String(currentParty.partyID || currentParty.partyName),
-        label: currentParty.partyName,
+        value: String(
+          watchedFirstDetail.partyID || watchedFirstDetail.partyName
+        ),
+        label: watchedFirstDetail.partyName,
       },
       ...partyOptions,
     ];
-  }, [formData.details, partyOptions]);
+  }, [watchedFirstDetail, partyOptions]);
 
-  const handleFieldChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  const handleInvoiceLookup = useCallback(async () => {
+    const invoiceId = String(watchedInvoiceNumber || '').trim();
 
-  const handleRowChange = (index, field, value) => {
-    setFormData((prev) => {
-      const details = [...prev.details];
-      details[index] = { ...details[index], [field]: value };
-
-      const next = { ...prev, details };
-
-      if (field === 'amount' || field === 'notes' || field === 'partyName') {
-        next.amount = field === 'amount' ? value : details[0]?.amount || '';
-        next.description = field === 'notes' ? value : details[0]?.notes || '';
-        next.name = field === 'partyName' ? value : details[0]?.partyName || '';
-      }
-
-      return next;
-    });
-  };
-
-  const addDetailRow = () => {
-    setFormData((prev) => ({
-      ...prev,
-      details: [...prev.details, { ...emptyDetail }],
-    }));
-  };
-
-  const removeDetailRow = (index) => {
-    setFormData((prev) => {
-      const details = prev.details.filter((_, rowIndex) => rowIndex !== index);
-      const fallbackDetails = details.length > 0 ? details : [{ ...emptyDetail }];
-      return {
-        ...prev,
-        details: fallbackDetails,
-        amount: fallbackDetails[0]?.amount || '',
-        description: fallbackDetails[0]?.notes || '',
-        name: fallbackDetails[0]?.partyName || '',
-      };
-    });
-  };
-
-  const handleBankChange = (event) => {
-    const bankId = event.target.value;
-    const selectedBank = bankOptions.find((option) => option.value === bankId);
-
-    setFormData((prev) => ({
-      ...prev,
-      bankId,
-      bankName: selectedBank?.label || '',
-      bankAccountId: '',
-      bankAccount: '',
-    }));
-  };
-
-  const handleBankAccountChange = (event) => {
-    const bankAccountId = event.target.value;
-    const selectedAccount = bankAccounts.find(
-      (account) => String(account.bankAccountID || account.id) === bankAccountId
-    );
-
-    setFormData((prev) => ({
-      ...prev,
-      bankAccountId,
-      bankAccount:
-        selectedAccount?.accountNumberWithBranch ||
-        selectedAccount?.accountNumber ||
-        selectedAccount?.iban ||
-        selectedAccount?.accountNameAr ||
-        selectedAccount?.accountNameEn ||
-        '',
-    }));
-  };
-
-  const handlePartyChange = (index, event) => {
-    const selectedValue = event.target.value;
-    const selectedOption = partyOptions.find(
-      (option) => option.value === selectedValue
-    );
-
-    setFormData((prev) => {
-      const details = [...prev.details];
-      details[index] = {
-        ...details[index],
-        partyID: selectedValue,
-        partyName: selectedOption?.label || '',
-      };
-
-      return {
-        ...prev,
-        details,
-        name: details[0]?.partyName || '',
-      };
-    });
-  };
-
-  const applyInvoiceToDetails = (invoice) => {
-    setFormData((prev) => {
-      const firstDetail = prev.details[0] || { ...emptyDetail };
-      const firstAmount =
-        invoice.netAmount ??
-        invoice.totalAmount ??
-        firstDetail.amount ??
-        prev.amount;
-      const firstPartyName =
-        invoice.name ||
-        invoice.customerNameAr ||
-        invoice.supplierNameAr ||
-        firstDetail.partyName ||
-        prev.name;
-      const firstNotes = `سداد الفاتورة رقم ${invoice.invoiceNumber || prev.invoiceNumber}`;
-
-      const details = prev.details.map((detail, index) =>
-        index === 0
-          ? {
-              ...detail,
-              amount: firstAmount,
-              notes: firstNotes,
-              partyID: String(
-                invoice.customerID ??
-                  invoice.customerId ??
-                  invoice.supplierID ??
-                  invoice.supplierId ??
-                  detail.partyID ??
-                  ''
-              ),
-              partyName: firstPartyName,
-            }
-          : detail
-      );
-
-      return {
-        ...prev,
-        isReceipt:
-          invoice.partyType
-            ? String(invoice.partyType).toLowerCase() === 'customer'
-            : Boolean(invoice.customerID ?? invoice.customerId ?? prev.isReceipt),
-        name: firstPartyName,
-        amount: firstAmount,
-        description: firstNotes,
-        invoiceNumber: invoice.invoiceNumber || prev.invoiceNumber,
-        details,
-      };
-    });
-  };
-
-  const handleInvoiceLookup = async () => {
-    const invoiceNumber = String(formData.invoiceNumber || '').trim();
-
-    if (!invoiceNumber) {
+    if (!invoiceId) {
       toast.error('أدخل رقم الفاتورة أولاً');
       return;
     }
@@ -321,91 +208,77 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
     setIsLoadingInvoice(true);
 
     try {
-      const response = await getInvoiceForCashVoucher(invoiceNumber);
-      const invoices = normalizeCollection(response);
-      const matchedInvoice =
-        invoices.find(
-          (invoice) =>
-            String(invoice.invoiceNumber || '').trim().toLowerCase() ===
-            invoiceNumber.toLowerCase()
-        ) || invoices[0];
+      const invoice = await getInvoiceForCashVoucher(invoiceId);
 
-      if (!matchedInvoice) {
-        toast.error('لم يتم العثور على الفاتورة');
+      if (!invoice || invoice.error) {
+        toast.error('لا توجد فاتورة بهذا الرقم');
         setInvoicePreview(null);
         return;
       }
 
       const preview = {
-        invoiceId:
-          matchedInvoice.invoiceId || matchedInvoice.invoiceID || matchedInvoice.id,
-        invoiceNumber: matchedInvoice.invoiceNumber || invoiceNumber,
+        invoiceId: invoice.invoiceId || invoice.invoiceID || invoice.id || invoiceId,
+        invoiceNumber: invoice.invoiceNumber || invoiceId,
         netAmount:
-          matchedInvoice.netAmount ??
-          matchedInvoice.totalAmount ??
-          matchedInvoice.totalAfterRevision ??
+          invoice.netAmount ??
+          invoice.totalAmount ??
+          invoice.totalAfterRevision ??
           0,
         name:
-          matchedInvoice.name ||
-          matchedInvoice.customerNameAr ||
-          matchedInvoice.customerNameEn ||
-          matchedInvoice.supplierNameAr ||
-          matchedInvoice.supplierNameEn ||
+          invoice.name ||
+          invoice.customerNameAr ||
+          invoice.customerNameEn ||
+          invoice.supplierNameAr ||
+          invoice.supplierNameEn ||
           '',
         partyType:
-          matchedInvoice.partyType ||
-          (matchedInvoice.customerID || matchedInvoice.customerId
+          invoice.partyType ||
+          (invoice.customerID || invoice.customerId
             ? 'Customer'
-            : matchedInvoice.supplierID || matchedInvoice.supplierId
+            : invoice.supplierID || invoice.supplierId
               ? 'Supplier'
               : ''),
-        customerID: matchedInvoice.customerID ?? matchedInvoice.customerId,
-        supplierID: matchedInvoice.supplierID ?? matchedInvoice.supplierId,
+        customerID: invoice.customerID ?? invoice.customerId,
+        supplierID: invoice.supplierID ?? invoice.supplierId,
       };
 
       setInvoicePreview(preview);
-      applyInvoiceToDetails(preview);
+      setValue('details.0.partyID', String(preview.customerID ?? preview.supplierID ?? ''));
+      setValue('details.0.partyName', preview.name);
+      setValue('details.0.amount', String(preview.netAmount));
+      setValue('details.0.notes', `سداد الفاتورة رقم ${preview.invoiceNumber}`);
+      setValue('isReceipt', preview.partyType === 'Customer');
       toast.success('تم تحميل بيانات الفاتورة');
     } catch (error) {
-      toast.error(getErrorMessage(error, 'تعذر جلب بيانات الفاتورة'));
+      toast.error(getErrorMessage(error, 'لا توجد فاتورة بهذا الرقم'));
+      setInvoicePreview(null);
     } finally {
       setIsLoadingInvoice(false);
     }
-  };
+  }, [watchedInvoiceNumber, setValue]);
 
   const totalAmount = useMemo(
     () =>
-      formData.details.reduce(
+      (watchedDetails || []).reduce(
         (sum, detail) => sum + (Number(detail.amount) || 0),
         0
       ),
-    [formData.details]
+    [watchedDetails]
   );
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  const selectedBank = useMemo(
+    () => bankOptions.find((option) => option.value === watchedBankId),
+    [bankOptions, watchedBankId]
+  );
 
-    if (isViewMode) {
-      navigate('/cash-vouchers');
-      return;
-    }
-
-    if (!formData.date) {
-      toast.error('تاريخ السند مطلوب');
-      return;
-    }
-
-    if (!formData.bankId || !formData.bankAccountId) {
-      toast.error('اختر البنك وحساب البنك');
-      return;
-    }
-
-    createMutation.mutate(buildCashVoucherPayload(formData), {
-      onSuccess: () => navigate('/cash-vouchers'),
-    });
-  };
-
-  const selectedVoucherLabel = getVoucherTypeLabel(formData.isReceipt);
+  const selectedBankAccount = useMemo(
+    () =>
+      bankAccounts.find(
+        (account) =>
+          String(account.bankAccountID || account.id) === watchedBankAccountId
+      ),
+    [bankAccounts, watchedBankAccountId]
+  );
 
   return (
     <div className="min-w-0 w-full max-w-full space-y-4 md:space-y-6">
@@ -429,158 +302,165 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
       </div>
 
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit((data) => {
+          const payload = buildCashVoucherPayload(data);
+
+          if (isEditMode) {
+            const id = defaultValues?.voucherID || defaultValues?.id;
+            updateMutation.mutate({ id, ...payload }, {
+              onSuccess: () => navigate('/cash-vouchers'),
+            });
+          } else {
+            createMutation.mutate(payload, {
+              onSuccess: () => navigate('/cash-vouchers'),
+            });
+          }
+        })}
         className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:space-y-6 md:p-6"
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <FormInput
-            as="select"
-            label="نوع السند"
-            value={formData.isReceipt ? 'receipt' : 'payment'}
-            onChange={(event) =>
-              handleFieldChange('isReceipt', event.target.value === 'receipt')
-            }
-            disabled={isViewMode}
-          >
-            {voucherTypeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </FormInput>
-
-          <FormInput
-            as="select"
-            label="طريقة الدفع"
-            value={formData.paymentModeId}
-            onChange={(event) =>
-              handleFieldChange('paymentModeId', event.target.value)
-            }
-            disabled={isViewMode}
-          >
-            <option value="">اختر طريقة الدفع</option>
-            {paymentModeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </FormInput>
-
-          <FormInput
-            type="date"
-            label="تاريخ السند"
-            value={formData.date}
-            onChange={(event) => handleFieldChange('date', event.target.value)}
-            readOnly={isViewMode}
-          />
-
-          <FormInput
-            as="select"
-            label="البنك"
-            value={formData.bankId}
-            onChange={handleBankChange}
-            disabled={isViewMode}
-          >
-            <option value="">اختر البنك</option>
-            {bankOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </FormInput>
-
-          <FormInput
-            as="select"
-            label="حساب البنك"
-            value={formData.bankAccountId}
-            onChange={handleBankAccountChange}
-            disabled={isViewMode || !formData.bankId}
-          >
-            <option value="">اختر حساب البنك</option>
-            {bankAccountOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </FormInput>
-
-          <FormInput
-            label="رقم الشيك"
-            value={formData.checkNumber}
-            onChange={(event) =>
-              handleFieldChange('checkNumber', event.target.value)
-            }
-            readOnly={isViewMode}
-          />
-
-          <FormInput
-            as="select"
-            label="مركز التكلفة"
-            value={formData.costCenterId}
-            onChange={(event) =>
-              handleFieldChange('costCenterId', event.target.value)
-            }
-            disabled={isViewMode}
-          >
-            <option value="">اختر مركز التكلفة</option>
-            {costCenterOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </FormInput>
-
-          {String(formData.paymentModeId) === TRANSFER_PAYMENT_MODE_ID ? (
-            <>
+          <Controller
+            name="isReceipt"
+            control={control}
+            render={({ field }) => (
               <FormInput
                 as="select"
-                label="من حساب بنكي"
-                value={formData.fromBankAccountId}
+                label="نوع السند"
+                value={field.value ? 'receipt' : 'payment'}
                 onChange={(event) =>
-                  handleFieldChange('fromBankAccountId', event.target.value)
+                  field.onChange(event.target.value === 'receipt')
                 }
                 disabled={isViewMode}
+                required
               >
-                <option value="">اختر الحساب</option>
+                {voucherTypeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </FormInput>
+            )}
+          />
+
+          <Controller
+            name="date"
+            control={control}
+            render={({ field }) => (
+              <DateInput
+                label="تاريخ السند"
+                value={field.value ?? ''}
+                onChange={(event) => {
+                  field.onChange(event);
+                }}
+                error={errors.date?.message}
+                required
+                readOnly={isViewMode}
+              />
+            )}
+          />
+
+          <Controller
+            name="bankId"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                as="select"
+                label="البنك"
+                value={field.value ?? ''}
+                onChange={(event) => {
+                  field.onChange(event.target.value);
+                  setValue('bankAccountId', '');
+                }}
+                disabled={isViewMode}
+                error={errors.bankId?.message}
+                required
+              >
+                <option value="">اختر البنك</option>
+                {bankOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </FormInput>
+            )}
+          />
+
+          <Controller
+            name="bankAccountId"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                as="select"
+                label="حساب البنك"
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                disabled={isViewMode || !watchedBankId}
+                error={errors.bankAccountId?.message}
+                required
+              >
+                <option value="">اختر حساب البنك</option>
                 {bankAccountOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
               </FormInput>
+            )}
+          />
 
+          <Controller
+            name="checkNumber"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="رقم الشيك"
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                readOnly={isViewMode}
+                error={errors.checkNumber?.message}
+                required
+              />
+            )}
+          />
+
+          {/* <Controller
+            name="costCenterId"
+            control={control}
+            render={({ field }) => (
               <FormInput
                 as="select"
-                label="إلى حساب بنكي"
-                value={formData.toBankAccountId}
-                onChange={(event) =>
-                  handleFieldChange('toBankAccountId', event.target.value)
-                }
+                label="مركز التكلفة"
+                value={field.value ?? ''}
+                onChange={field.onChange}
                 disabled={isViewMode}
               >
-                <option value="">اختر الحساب</option>
-                {bankAccountOptions.map((option) => (
+                <option value="">اختر مركز التكلفة</option>
+                {costCenterOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
               </FormInput>
-            </>
-          ) : null}
+            )}
+          /> */}
 
-          <div className="space-y-2 md:col-span-2">
+          <div className="">
             <label className="text-sm font-medium text-gray-700">
               رقم الفاتورة
             </label>
             <div className="flex gap-2">
-              <input
-                type="text"
-                value={formData.invoiceNumber}
-                onChange={(event) =>
-                  handleFieldChange('invoiceNumber', event.target.value)
-                }
-                readOnly={isViewMode}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2"
+              <Controller
+                name="invoiceNumber"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    type="text"
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    readOnly={isViewMode}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                  />
+                )}
               />
               {!isViewMode ? (
                 <button
@@ -590,41 +470,28 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
                   className="flex shrink-0 items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary/90 disabled:opacity-50"
                 >
                   <Search size={16} />
-                  {isLoadingInvoice ? 'جاري الجلب' : 'جلب الفاتورة'}
+                  {isLoadingInvoice ? 'جاري' : 'جلب'}
                 </button>
               ) : null}
             </div>
           </div>
-
-          {/* <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">الحالة</label>
-            <div className="flex h-11 items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700">
-              {selectedVoucherLabel}
-            </div>
-          </div> */}
         </div>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">تفاصيل السند</h2>
-            {/* {!isViewMode ? (
-              <button
-                type="button"
-                onClick={addDetailRow}
-                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary/90"
-              >
-                <Plus size={16} />
-                إضافة سطر
-              </button>
-            ) : null} */}
           </div>
+
+          {errors.details && !Array.isArray(errors.details) && errors.details.message ? (
+            <p className="text-sm text-red-500">{errors.details.message}</p>
+          ) : null}
 
           <div className="hidden w-full max-w-full overflow-x-auto lg:block">
             <table className="w-full min-w-full overflow-hidden rounded-lg border border-gray-200 text-sm">
               <thead className="bg-primary/90 text-white">
                 <tr>
                   <th className="p-3 text-right">
-                    {formData.isReceipt ? 'العميل' : 'المورد'}
+                    {watchedIsReceipt !== false ? 'العميل' : 'المورد'}
                   </th>
                   <th className="p-3 text-right">المبلغ</th>
                   <th className="p-3 text-right">ملاحظات</th>
@@ -632,126 +499,192 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
                 </tr>
               </thead>
               <tbody>
-                {formData.details.map((detail, index) => (
-                  <tr key={index} className="align-top border border-gray-200">
-                    <td className="min-w-[220px] p-2">
-                      <SearchableSelect
-                        value={
-                          detail.partyID ||
-                          partyOptionsWithCurrent.find(
-                            (option) => option.label === detail.partyName
-                          )?.value || ''
-                        }
-                        onChange={(event) => handlePartyChange(index, event)}
-                        options={partyOptionsWithCurrent}
-                        placeholder={formData.isReceipt ? 'اختر العميل' : 'اختر المورد'}
-                        disabled={isViewMode}
-                      />
-                    </td>
-                    <td className="min-w-[140px] p-2">
-                      <input
-                        type="number"
-                        value={detail.amount}
-                        onChange={(event) =>
-                          handleRowChange(index, 'amount', event.target.value)
-                        }
-                        readOnly={isViewMode}
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                      />
-                    </td>
-                    <td className="min-w-[260px] p-2">
-                      <input
-                        type="text"
-                        value={detail.notes}
-                        onChange={(event) =>
-                          handleRowChange(index, 'notes', event.target.value)
-                        }
-                        readOnly={isViewMode}
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                      />
-                    </td>
-                    {!isViewMode ? (
-                      <td className="p-2 text-center">
-                        <button
-                          type="button"
-                          onClick={() => removeDetailRow(index)}
-                          className="text-red-600"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                {fields.map((field, index) => {
+                  const detailErrors = errors?.details?.[index] || {};
+
+                  return (
+                    <tr key={field.id} className="align-top border border-gray-200">
+                      <td className="min-w-[220px] p-2">
+                        <Controller
+                          name={`details.${index}.partyID`}
+                          control={control}
+                          render={({ field: partyField }) => (
+                            <SearchableSelect
+                              value={partyField.value ?? ''}
+                              onChange={(event) => {
+                                partyField.onChange(event.target.value);
+                                const selectedOption = partyOptionsWithCurrent.find(
+                                  (option) => option.value === event.target.value
+                                );
+                                setValue(
+                                  `details.${index}.partyName`,
+                                  selectedOption?.label || ''
+                                );
+                              }}
+                              options={partyOptionsWithCurrent}
+                              placeholder={
+                                watchedIsReceipt !== false
+                                  ? 'اختر العميل'
+                                  : 'اختر المورد'
+                              }
+                              disabled={isViewMode}
+                              error={detailErrors?.partyID?.message}
+                            />
+                          )}
+                        />
                       </td>
-                    ) : null}
-                  </tr>
-                ))}
+                      <td className="min-w-[140px] p-2">
+                        <Controller
+                          name={`details.${index}.amount`}
+                          control={control}
+                          render={({ field: amountField }) => (
+                            <input
+                              type="number"
+                              value={amountField.value ?? ''}
+                              onChange={amountField.onChange}
+                              readOnly={isViewMode}
+                              className={`w-full rounded-lg border px-3 py-2 ${
+                                detailErrors?.amount?.message
+                                  ? 'border-red-400'
+                                  : 'border-gray-200'
+                              }`}
+                            />
+                          )}
+                        />
+                        {detailErrors?.amount?.message ? (
+                          <p className="mt-1 text-xs text-red-500">
+                            {detailErrors.amount.message}
+                          </p>
+                        ) : null}
+                      </td>
+                      <td className="min-w-[260px] p-2">
+                        <Controller
+                          name={`details.${index}.notes`}
+                          control={control}
+                          render={({ field: notesField }) => (
+                            <input
+                              type="text"
+                              value={notesField.value ?? ''}
+                              onChange={notesField.onChange}
+                              readOnly={isViewMode}
+                              className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                            />
+                          )}
+                        />
+                      </td>
+                      {!isViewMode ? (
+                        <td className="p-2 text-center">
+                          <button
+                            type="button"
+                            onClick={() => remove(index)}
+                            className="text-red-600"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      ) : null}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
           <div className="space-y-4 lg:hidden">
-            {formData.details.map((detail, index) => (
-              <div
-                key={index}
-                className="space-y-4 rounded-xl border border-gray-200 bg-gray-50 p-4"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-gray-700">
-                    {`السطر ${index + 1}`}
-                  </span>
-                  {!isViewMode ? (
-                    <button
-                      type="button"
-                      onClick={() => removeDetailRow(index)}
-                      className="text-red-600"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  ) : null}
+            {fields.map((field, index) => {
+              const detailErrors = errors?.details?.[index] || {};
+
+              return (
+                <div
+                  key={field.id}
+                  className="space-y-4 rounded-xl border border-gray-200 bg-gray-50 p-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-gray-700">
+                      {`السطر ${index + 1}`}
+                    </span>
+                    {!isViewMode ? (
+                      <button
+                        type="button"
+                        onClick={() => remove(index)}
+                        className="text-red-600"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Controller
+                      name={`details.${index}.partyID`}
+                      control={control}
+                      render={({ field: partyField }) => (
+                        <FormInput
+                          as="select"
+                          label={
+                            watchedIsReceipt !== false ? 'العميل' : 'المورد'
+                          }
+                          value={partyField.value ?? ''}
+                          onChange={(event) => {
+                            partyField.onChange(event.target.value);
+                            const selectedOption = partyOptionsWithCurrent.find(
+                              (option) => option.value === event.target.value
+                            );
+                            setValue(
+                              `details.${index}.partyName`,
+                              selectedOption?.label || ''
+                            );
+                          }}
+                          disabled={isViewMode}
+                          error={detailErrors?.partyID?.message}
+                          required
+                        >
+                          <option value="">
+                            {watchedIsReceipt !== false
+                              ? 'اختر العميل'
+                              : 'اختر المورد'}
+                          </option>
+                          {partyOptionsWithCurrent.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </FormInput>
+                      )}
+                    />
+
+                    <Controller
+                      name={`details.${index}.amount`}
+                      control={control}
+                      render={({ field: amountField }) => (
+                        <FormInput
+                          type="number"
+                          label="المبلغ"
+                          value={amountField.value ?? ''}
+                          onChange={amountField.onChange}
+                          readOnly={isViewMode}
+                          error={detailErrors?.amount?.message}
+                          required
+                        />
+                      )}
+                    />
+
+                    <Controller
+                      name={`details.${index}.notes`}
+                      control={control}
+                      render={({ field: notesField }) => (
+                        <FormInput
+                          label="ملاحظات"
+                          value={notesField.value ?? ''}
+                          onChange={notesField.onChange}
+                          readOnly={isViewMode}
+                        />
+                      )}
+                    />
+                  </div>
                 </div>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <FormInput
-                    as="select"
-                    label={formData.isReceipt ? 'العميل' : 'المورد'}
-                    value={
-                      detail.partyID ||
-                      partyOptionsWithCurrent.find(
-                        (option) => option.label === detail.partyName
-                      )?.value || ''
-                    }
-                    onChange={(event) => handlePartyChange(index, event)}
-                    disabled={isViewMode}
-                  >
-                    <option value="">
-                      {formData.isReceipt ? 'اختر العميل' : 'اختر المورد'}
-                    </option>
-                    {partyOptionsWithCurrent.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </FormInput>
-
-                  <FormInput
-                    type="number"
-                    label="المبلغ"
-                    value={detail.amount}
-                    onChange={(event) =>
-                      handleRowChange(index, 'amount', event.target.value)
-                    }
-                    readOnly={isViewMode}
-                  />
-
-                  <FormInput
-                    label="ملاحظات"
-                    value={detail.notes}
-                    onChange={(event) =>
-                      handleRowChange(index, 'notes', event.target.value)
-                    }
-                    readOnly={isViewMode}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -788,13 +721,7 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
           </div>
         ) : null}
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-          {/* <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <div className="text-sm text-gray-500">رقم السند</div>
-            <div className="mt-2 font-semibold text-gray-900">
-              {formData.voucherID || '-'}
-            </div>
-          </div> */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
             <div className="text-sm text-gray-500">إجمالي المبلغ</div>
             <div className="mt-2 text-2xl font-bold text-primary">
@@ -804,24 +731,20 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
             <div className="text-sm text-gray-500">اسم البنك</div>
             <div className="mt-2 font-semibold text-gray-900">
-              {formData.bankName || '-'}
+              {selectedBank?.label || '-'}
             </div>
           </div>
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
             <div className="text-sm text-gray-500">حساب البنك</div>
             <div className="mt-2 font-semibold text-gray-900">
-              {formData.bankAccount || '-'}
+              {selectedBankAccount?.accountNumberWithBranch ||
+                selectedBankAccount?.accountNumber ||
+                '-'}
             </div>
           </div>
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
             <div className="text-sm text-gray-500">حالة السند</div>
-            <div className="mt-2 font-semibold text-gray-900">
-              {formData.isVoid
-                ? 'ملغي'
-                : formData.isCleared
-                  ? 'تمت المقاصة'
-                  : 'نشط'}
-            </div>
+            <div className="mt-2 font-semibold text-gray-900">نشط</div>
           </div>
         </div>
 
@@ -836,10 +759,10 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
           {!isViewMode ? (
             <button
               type="submit"
-              disabled={createMutation.isPending}
+              disabled={createMutation.isPending || updateMutation.isPending}
               className="rounded-lg bg-primary px-6 py-2 text-white disabled:opacity-50"
             >
-              حفظ السند
+              {isEditMode ? 'تحديث السند' : 'حفظ السند'}
             </button>
           ) : null}
         </div>

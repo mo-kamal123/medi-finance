@@ -4,15 +4,20 @@ import { Save } from 'lucide-react';
 import FormInput from '../../../shared/ui/input';
 import SearchableSelect from '../../../shared/ui/searchable-select';
 import { customerSchema } from '../validation/customer.validation';
+import { useCustomerTypes } from '../hooks/customers.queries';
+
+const cleanNulls = (obj) =>
+  Object.fromEntries(
+    Object.entries(obj).map(([k, v]) => [k, v ?? ''])
+  );
 
 const CustomerForm = ({
   mode = 'create',
   defaultValues = {},
-  currencies = [],
-  accounts = [],
-  costCenters = [],
   onSubmit,
 }) => {
+  const { data: customerTypes = [] } = useCustomerTypes();
+
   const {
     register,
     handleSubmit,
@@ -27,7 +32,7 @@ const CustomerForm = ({
       creditLimit: 0,
       paymentTermDays: 0,
       user: 'ms',
-      ...defaultValues,
+      ...cleanNulls(defaultValues),
     },
   });
 
@@ -47,9 +52,6 @@ const CustomerForm = ({
       isTaxable: Boolean(data.isTaxable),
       creditLimit: Number(data.creditLimit) || 0,
       paymentTermDays: Number(data.paymentTermDays) || 0,
-      currencyID: Number(data.currencyID) || 0,
-      accountID: Number(data.accountID) || 0,
-      defaultCostCenterID: Number(data.defaultCostCenterID) || 0,
       isActive: Boolean(data.isActive),
       user: 'ms',
     });
@@ -66,12 +68,14 @@ const CustomerForm = ({
           {...register('customerCode')}
           error={errors.customerCode?.message}
           disabled={mode === 'update'}
+          required
         />
 
         <FormInput
           label="الاسم بالعربية"
           {...register('customerNameAr')}
           error={errors.customerNameAr?.message}
+          required
         />
       </div>
 
@@ -88,10 +92,10 @@ const CustomerForm = ({
           </label>
           <SearchableSelect
             {...register('customerType')}
-            options={[
-              { value: 1, label: 'عميل' },
-              { value: 2, label: 'عميل نقدي' },
-            ]}
+            options={customerTypes.map((t) => ({
+              value: t.customerTypeID,
+              label: t.nameAr,
+            }))}
           />
         </div>
       </div>
@@ -154,62 +158,16 @@ const CustomerForm = ({
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <div className="w-full">
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            العملة
-          </label>
-          <SearchableSelect
-            {...register('currencyID')}
-            placeholder="اختر العملة"
-            options={currencies.map((currency) => ({
-              value: currency.currencyID,
-              label: currency.currencyName,
-            }))}
-          />
-        </div>
+      <div className="grid grid-cols-2 gap-4">
+        <label className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-3">
+          <input type="checkbox" {...register('isTaxable')} />
+          <span>خاضع للضريبة</span>
+        </label>
 
-        <div className="w-full">
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            الحساب
-          </label>
-          <SearchableSelect
-            {...register('accountID')}
-            placeholder="اختر الحساب"
-            options={accounts.map((acc) => ({
-              value: acc.accountID,
-              label: `${acc.accountCode} - ${acc.nameAr}`,
-            }))}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <div className="w-full">
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            مركز التكلفة الافتراضي
-          </label>
-          <SearchableSelect
-            {...register('defaultCostCenterID')}
-            placeholder="بدون"
-            options={costCenters.map((center) => ({
-              value: center.costCenterID,
-              label: `${center.ccCode} - ${center.nameAr}`,
-            }))}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <label className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-3">
-            <input type="checkbox" {...register('isTaxable')} />
-            <span>خاضع للضريبة</span>
-          </label>
-
-          <label className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-3">
-            <input type="checkbox" {...register('isActive')} />
-            <span>العميل نشط</span>
-          </label>
-        </div>
+        <label className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-3">
+          <input type="checkbox" {...register('isActive')} />
+          <span>العميل نشط</span>
+        </label>
       </div>
 
       <button
