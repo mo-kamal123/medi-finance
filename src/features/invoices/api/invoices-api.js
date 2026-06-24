@@ -87,6 +87,11 @@ export const updateInvoice = async ({ id, ...body }) => {
   return data;
 };
 
+export const deleteInvoice = async (id) => {
+  const { data } = await axiosInstance.delete(`/invoices/${id}`);
+  return data;
+};
+
 export const getInvoiceTypes = async () => {
   const response = await axiosInstance.get('/invoice-types');
   return normalizeInvoicesResponse(response.data);
