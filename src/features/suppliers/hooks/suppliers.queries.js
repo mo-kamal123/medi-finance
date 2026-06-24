@@ -37,6 +37,21 @@ export const useCreateSupplier = () => {
   });
 };
 
+export const useDeleteSupplier = () => {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: api.deleteSupplier,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['suppliers'] });
+      toast.success('تم حذف المورد بنجاح');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'تعذر حذف المورد'));
+    },
+  });
+};
+
 export const useUpdateSupplier = () => {
   const qc = useQueryClient();
 

@@ -117,23 +117,20 @@ const SearchableSelect = forwardRef(
 
         const rect = wrapperRef.current.getBoundingClientRect();
         const viewportPadding = 16;
+        const dropdownHeight = 300;
+
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        const openUp = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
 
         setDropdownStyle({
           position: 'fixed',
-          top:
-            dropdownPosition === 'top'
-              ? 'auto'
-              : Math.min(rect.bottom + 8, window.innerHeight - viewportPadding),
-
-          bottom:
-            dropdownPosition === 'top'
-              ? Math.max(window.innerHeight - rect.top + 8, viewportPadding)
-              : 'auto',
-
+          top: openUp ? 'auto' : Math.min(rect.bottom + 8, window.innerHeight - viewportPadding),
+          bottom: openUp
+            ? Math.max(window.innerHeight - rect.top + 8, viewportPadding)
+            : 'auto',
           left: Math.max(rect.left, viewportPadding),
-
           width: rect.width,
-
           zIndex: 9999,
         });
       };
@@ -362,9 +359,6 @@ const SearchableSelect = forwardRef(
             )
           : null}
 
-        {error ? (
-          <p className="mt-1 text-sm text-red-500">{error}</p>
-        ) : null}
       </div>
     );
   }

@@ -3,7 +3,7 @@ import SupplierForm from '../components/supplier-form';
 import { useCreateSupplier } from '../hooks/suppliers.queries';
 
 const SupplierCreate = () => {
-  const { mutate: createSupplier } = useCreateSupplier();
+  const { mutate: createSupplier, isPending } = useCreateSupplier();
   const navigate = useNavigate();
 
   const handleSubmit = (data) => {
@@ -17,7 +17,7 @@ const SupplierCreate = () => {
       <div className="bg-white rounded-xl border border-gray-200 p-4">
         <h1 className="text-xl font-bold">إضافة مورد</h1>
       </div>
-      <SupplierForm mode="create" onSubmit={handleSubmit} />
+      <SupplierForm mode="create" onSubmit={handleSubmit} isPending={isPending} />
     </div>
   );
 };

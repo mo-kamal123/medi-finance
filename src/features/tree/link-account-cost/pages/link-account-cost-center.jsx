@@ -5,6 +5,28 @@ import SearchFilter from '../../../../shared/components/search-filter';
 import { buildTree } from '../../utils/buildTree';
 import useLinkAccountCostCenter from '../hooks/use-link';
 
+const flattenTree = (nodes) => {
+  const result = [];
+  const walk = (list) => {
+    list.forEach((node) => {
+      result.push(node);
+      if (node.children?.length) walk(node.children);
+    });
+  };
+  walk(nodes);
+  return result;
+};
+
+const getFinalNodes = (nodes) => {
+  let finalNodes = [];
+  nodes.forEach((node) => {
+    if (node.isFinal) finalNodes.push(node);
+    if (node.children?.length)
+      finalNodes = finalNodes.concat(getFinalNodes(node.children));
+  });
+  return finalNodes;
+};
+
 const LinkAccountCostCenter = () => {
   const [searchAccount, setSearchAccount] = useState('');
   const [searchCost, setSearchCost] = useState('');
@@ -16,17 +38,7 @@ const LinkAccountCostCenter = () => {
 
   const { mutate, isLoading } = useLinkAccountCostCenter();
 
-  // Build trees
-  const accountTreeData = useMemo(
-    () =>
-      buildTree(accountsTree, {
-        idKey: 'accountID',
-        parentKey: 'parentID',
-        sortKey: 'accountCode',
-      }),
-    [accountsTree]
-  );
-
+  // Build cost tree (still flat structure)
   const costTreeData = useMemo(
     () =>
       buildTree(costTree, {
@@ -37,18 +49,12 @@ const LinkAccountCostCenter = () => {
     [costTree]
   );
 
-  const getFinalNodes = (nodes) => {
-    let finalNodes = [];
-    nodes.forEach((node) => {
-      if (node.isFinal) finalNodes.push(node);
-      if (node.children?.length)
-        finalNodes = finalNodes.concat(getFinalNodes(node.children));
-    });
-    return finalNodes;
-  };
+  // Accounts already come nested from API
+  const accountTreeData = useMemo(() => accountsTree, [accountsTree]);
 
   const filteredAccounts = useMemo(() => {
-    return getFinalNodes(accountTreeData).filter((a) =>
+    const allAccounts = flattenTree(accountTreeData);
+    return getFinalNodes(allAccounts).filter((a) =>
       a.nameAr.toLowerCase().includes(searchAccount.toLowerCase())
     );
   }, [accountTreeData, searchAccount]);
@@ -67,7 +73,7 @@ const LinkAccountCostCenter = () => {
     }
 
     const body = {
-      accountID: selectedAccount.accountID,
+      accountID: selectedAccount.id,
       costCenterID: selectedCost.costCenterID,
       percentage: 100,
       isActive: true,
@@ -97,9 +103,9 @@ const LinkAccountCostCenter = () => {
               {filteredAccounts.length > 0 ? (
                 filteredAccounts.map((acc) => (
                   <div
-                    key={acc.accountID}
+                    key={acc.id}
                     onClick={() => setSelectedAccount(acc)}
-                    className={`p-2 rounded-md cursor-pointer hover:bg-primary/10 ${selectedAccount?.accountID === acc.accountID ? 'bg-primary/20' : ''}`}
+                    className={`p-2 rounded-md cursor-pointer hover:bg-primary/10 ${selectedAccount?.id === acc.id ? 'bg-primary/20' : ''}`}
                   >
                     {acc.nameAr} - {acc.accountCode}
                   </div>

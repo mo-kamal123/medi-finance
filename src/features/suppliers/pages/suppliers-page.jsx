@@ -6,8 +6,9 @@ import SearchableSelect from '../../../shared/ui/searchable-select';
 import PageLoader from '../../../shared/ui/page-loader';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
+import ConfirmModal from '../../../shared/ui/modal';
 import { useDebounce } from '../../../shared/lib/use-debounce';
-import { useSuppliers } from '../hooks/suppliers.queries';
+import { useSuppliers, useDeleteSupplier } from '../hooks/suppliers.queries';
 
 const ACTIVE_OPTIONS = [
   { value: '', label: 'الكل' },
@@ -22,6 +23,9 @@ const SuppliersPage = () => {
   const [isActive, setIsActive] = useState('');
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { mutate: deleteSupplier } = useDeleteSupplier();
 
   const debouncedSearchTerm = useDebounce(search, 500);
   const isFirstRender = useRef(true);
@@ -61,7 +65,15 @@ const SuppliersPage = () => {
     },
     {
       header: 'الحالة', key: 'isActive', type: 'custom',
-      render: (row) => (row.isActive ? 'نشط' : 'غير نشط'),
+      render: (row) => (
+        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+          row.isActive
+            ? 'bg-emerald-100 text-emerald-700'
+            : 'bg-red-100 text-red-700'
+        }`}>
+          {row.isActive ? 'نشط' : 'غير نشط'}
+        </span>
+      ),
     },
     {
       header: 'الإجراءات', key: 'actions', type: 'custom',
@@ -70,7 +82,7 @@ const SuppliersPage = () => {
           <Link to={`/suppliers/${row.supplierID}`} className="text-blue-600 transition-colors hover:text-blue-800" title="عرض">
             <Eye size={18} />
           </Link>
-          <button onClick={() => console.log('Delete', row.supplierID)} className="text-red-600 transition-colors hover:text-red-800" title="حذف">
+          <button onClick={() => setDeleteTarget(row)} className="text-red-600 transition-colors hover:text-red-800" title="حذف">
             <Trash2 size={18} />
           </button>
         </div>
@@ -115,6 +127,26 @@ const SuppliersPage = () => {
         pageSize={pageSize}
         onPageChange={setPageNumber}
         onPageSizeChange={(value) => { setPageSize(value); setPageNumber(1); }}
+      />
+
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        onClose={() => !isDeleting && setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) {
+            setIsDeleting(true);
+            deleteSupplier(deleteTarget.supplierID, {
+              onSettled: () => setIsDeleting(false),
+            });
+          }
+          setDeleteTarget(null);
+        }}
+        isLoading={isDeleting}
+        loadingText="جاري الحذف..."
+        title="تأكيد حذف المورد"
+        description={`هل أنت متأكد من حذف المورد "${deleteTarget?.supplierNameAr}"؟`}
+        confirmText="نعم، حذف"
+        cancelText="إلغاء"
       />
     </div>
   );

@@ -1,4 +1,4 @@
-﻿import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import {
   getJournalEntries,
   getJournalEntryById,
@@ -9,7 +9,7 @@ export const useJournalEntries = (filters) => {
   return useQuery({
     queryKey: ['journalEntries', filters],
     queryFn: () => getJournalEntries(filters),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 };
 

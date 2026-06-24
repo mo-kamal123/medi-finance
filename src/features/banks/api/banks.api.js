@@ -22,6 +22,11 @@ export const createBank = async (payload) => {
   return data;
 };
 
+export const updateBank = async ({ id, ...payload }) => {
+  const { data } = await axiosInstance.put(`/Banks/${id}`, payload);
+  return data;
+};
+
 export const getBankAccounts = async (bankId, params = {}) => {
   const { data } = await axiosInstance.get('/BankAccounts', {
     params: {
@@ -40,9 +45,22 @@ export const getBankAccountById = async (id) => {
   return data;
 };
 
-export const saveBankAccount = async (payload) => {
-  const { data } = await axiosInstance.post('/BankAccounts', payload, {
-    headers: { 'Content-Type': 'application/json' },
-  });
+export const deleteBank = async (id) => {
+  const { data } = await axiosInstance.delete(`/Banks/${id}`);
+  return data;
+};
+
+export const createBankAccount = async (payload) => {
+  const { data } = await axiosInstance.post('/BankAccounts', payload);
+  return data;
+};
+
+export const updateBankAccount = async ({ id, ...payload }) => {
+  const { data } = await axiosInstance.put(`/BankAccounts/${id}`, payload);
+  return data;
+};
+
+export const deleteBankAccount = async (id) => {
+  const { data } = await axiosInstance.delete(`/BankAccounts/${id}`);
   return data;
 };

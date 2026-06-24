@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import InvoiceFilters from '../components/invoice-filter';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
-import { paginateItems } from '../../../shared/utils/list-utils';
 import { formatDate } from '../../../shared/utils/formatters';
 import { getStatusStyle } from '../utils/status-style';
 import {
@@ -30,20 +29,12 @@ const BatchInvoicesPage = () => {
     pageSize: 10,
   });
 
-  const { data = [], isLoading } = useInvoices(filters, 'batch');
+  const { data, isLoading } = useInvoices(filters, 'batch');
   const { data: invoiceTypes } = useInvoiceTypes();
   const { data: customers } = useCustomers();
   const { data: suppliers } = useSuppliers();
 
-  const pagination = useMemo(
-    () =>
-      paginateItems(
-        data || [],
-        filters.pageNumber || 1,
-        filters.pageSize || 10
-      ),
-    [data, filters.pageNumber, filters.pageSize]
-  );
+  const { items = [], totalPages = 1, totalCount = 0 } = data || {};
 
   const columns = useMemo(
     () => [
@@ -157,12 +148,12 @@ const BatchInvoicesPage = () => {
         suppliers={suppliers}
       />
 
-      <Table columns={columns} data={pagination.items} loading={isLoading} />
+      <Table columns={columns} data={items} loading={isLoading} />
 
       <Pagination
-        currentPage={pagination.currentPage}
-        totalPages={pagination.totalPages}
-        pageSize={pagination.pageSize}
+        currentPage={filters.pageNumber}
+        totalPages={totalPages}
+        pageSize={filters.pageSize}
         onPageChange={(page) =>
           setFilters((prev) => ({ ...prev, pageNumber: page }))
         }

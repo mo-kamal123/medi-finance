@@ -1,10 +1,22 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Save } from 'lucide-react';
 import { accountSchema } from '../validation/accounts-validation';
 import FormInput from '../../../../shared/ui/input';
 import SearchableSelect from '../../../../shared/ui/searchable-select';
+
+const flattenTree = (nodes) => {
+  const result = [];
+  const walk = (list) => {
+    list.forEach((node) => {
+      result.push(node);
+      if (node.children?.length) walk(node.children);
+    });
+  };
+  walk(nodes);
+  return result;
+};
 
 const AccountForm = ({
   mode = 'create',
@@ -27,6 +39,13 @@ const AccountForm = ({
       reset(defaultValues);
     }
   }, [defaultValues, reset]);
+
+  const parentOptions = useMemo(() => {
+    return flattenTree(parentAccounts).map((account) => ({
+      value: account.id,
+      label: `${account.accountCode} - ${account.nameAr}`,
+    }));
+  }, [parentAccounts]);
 
   return (
     <form
@@ -61,10 +80,7 @@ const AccountForm = ({
         <SearchableSelect
           {...register('parentID')}
           placeholder="بدون"
-          options={parentAccounts.map((account) => ({
-            value: account.accountID,
-            label: `${account.accountCode} - ${account.nameAr}`,
-          }))}
+          options={parentOptions}
         />
       </div>
 
@@ -100,12 +116,6 @@ const AccountForm = ({
           <span>حساب نهائي</span>
         </label>
       </div>
-
-      <FormInput
-        label="المستخدم"
-        {...register('user')}
-        error={errors.user?.message}
-      />
 
       <button
         type="submit"

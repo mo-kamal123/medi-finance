@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import {
   getAllCashVouchers,
   getCashVoucherById,
@@ -9,7 +9,7 @@ export const useCashVouchers = (filters) => {
   return useQuery({
     queryKey: cashVouchersKeys.lists(filters),
     queryFn: () => getAllCashVouchers(filters),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 };
 

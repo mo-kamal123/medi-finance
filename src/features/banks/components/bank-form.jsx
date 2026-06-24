@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { Save } from 'lucide-react';
 import FormInput from '../../../shared/ui/input';
-import { useCreateBank } from '../hooks/banks.mutations';
+import { useCreateBank, useUpdateBank } from '../hooks/banks.mutations';
 import { bankSchema } from '../validation/bank.validation';
 
 const getInitialValues = (defaultValues = {}) => ({
@@ -12,7 +12,6 @@ const getInitialValues = (defaultValues = {}) => ({
   bankNameAr: defaultValues.bankNameAr ?? '',
   bankNameEn: defaultValues.bankNameEn ?? '',
   swiftCode: defaultValues.swiftCode ?? '',
-  countryCode: defaultValues.countryCode ?? '',
   phone: defaultValues.phone ?? '',
   email: defaultValues.email ?? '',
   website: defaultValues.website ?? '',
@@ -24,7 +23,11 @@ const getInitialValues = (defaultValues = {}) => ({
 const BankForm = ({ defaultValues, mode = 'create' }) => {
   const navigate = useNavigate();
   const createMutation = useCreateBank();
+  const updateMutation = useUpdateBank();
+
   const isViewMode = mode === 'view';
+  const isEditMode = mode === 'edit';
+  const isCreateMode = mode === 'create';
 
   const formDefaults = useMemo(
     () => getInitialValues(defaultValues),
@@ -41,25 +44,34 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
     resolver: zodResolver(bankSchema),
   });
 
+  const mutation = isCreateMode ? createMutation : updateMutation;
+
   const onSubmit = (data) => {
     const payload = {
       bankCode: data.bankCode,
       bankNameAr: data.bankNameAr,
       bankNameEn: data.bankNameEn,
       swiftCode: data.swiftCode || '',
-      countryCode: data.countryCode,
       phone: data.phone || '',
       email: data.email || '',
       website: data.website || '',
       addressAr: data.addressAr || '',
       addressEn: data.addressEn || '',
       isActive: data.isActive,
-      createdBy: 'ms',
     };
 
-    createMutation.mutate(payload, {
-      onSuccess: () => navigate('/banks'),
-    });
+    if (isEditMode && defaultValues?.bankID) {
+      updateMutation.mutate(
+        { id: defaultValues.bankID, ...payload },
+        {
+          onSuccess: () => navigate('/banks'),
+        }
+      );
+    } else {
+      createMutation.mutate(payload, {
+        onSuccess: () => navigate('/banks'),
+      });
+    }
   };
 
   return (
@@ -69,10 +81,18 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
     >
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
-          {isViewMode ? 'تفاصيل البنك' : 'إضافة بنك'}
+          {isCreateMode
+            ? 'إضافة بنك'
+            : isEditMode
+              ? 'تعديل البنك'
+              : 'تفاصيل البنك'}
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          {isViewMode ? 'استعراض بيانات البنك' : 'إدخال بيانات بنك جديد'}
+          {isCreateMode
+            ? 'إدخال بيانات بنك جديد'
+            : isEditMode
+              ? 'تعديل بيانات البنك'
+              : 'استعراض بيانات البنك'}
         </p>
       </div>
 
@@ -82,33 +102,29 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
           {...register('bankCode')}
           error={errors.bankCode?.message}
           readOnly={isViewMode}
+          required
         />
 
         <FormInput
-          label="كود السويفت"
-          {...register('swiftCode')}
-          error={errors.swiftCode?.message}
-          readOnly={isViewMode}
-        />
-
-        <FormInput
-          label="اسم البنك"
+          label="اسم البنك بالعربية"
           {...register('bankNameAr')}
           error={errors.bankNameAr?.message}
           readOnly={isViewMode}
+          required
         />
 
-        {/* <FormInput
+        <FormInput
           label="اسم البنك بالإنجليزية"
           {...register('bankNameEn')}
           error={errors.bankNameEn?.message}
           readOnly={isViewMode}
-        /> */}
+          required
+        />
 
         <FormInput
-          label="كود الدولة"
-          {...register('countryCode')}
-          error={errors.countryCode?.message}
+          label="Swift Code"
+          {...register('swiftCode')}
+          error={errors.swiftCode?.message}
           readOnly={isViewMode}
         />
 
@@ -135,28 +151,30 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
         />
 
         <FormInput
-          label="العنوان"
+          label="العنوان بالعربية"
           {...register('addressAr')}
           error={errors.addressAr?.message}
           readOnly={isViewMode}
         />
 
-        {/* <FormInput
+        <FormInput
           label="العنوان بالإنجليزية"
           {...register('addressEn')}
           error={errors.addressEn?.message}
           readOnly={isViewMode}
-        /> */}
-      </div>
-
-      {/* <label className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border border-gray-300 w-fit">
-        <input
-          type="checkbox"
-          {...register('isActive')}
-          disabled={isViewMode}
         />
-        <span>البنك نشط</span>
-      </label> */}
+
+        <div className="flex items-end">
+          <label className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border border-gray-300 w-fit">
+            <input
+              type="checkbox"
+              {...register('isActive')}
+              disabled={isViewMode}
+            />
+            <span>البنك نشط</span>
+          </label>
+        </div>
+      </div>
 
       <div className="flex justify-end gap-3">
         <button
@@ -170,13 +188,15 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
         {!isViewMode && (
           <button
             type="submit"
-            disabled={isSubmitting || createMutation.isPending}
+            disabled={isSubmitting || mutation.isPending}
             className="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 disabled:opacity-60"
           >
             <Save size={18} />
-            {isSubmitting || createMutation.isPending
+            {isSubmitting || mutation.isPending
               ? 'جاري الحفظ...'
-              : 'حفظ البنك'}
+              : isEditMode
+                ? 'تحديث البنك'
+                : 'حفظ البنك'}
           </button>
         )}
       </div>
