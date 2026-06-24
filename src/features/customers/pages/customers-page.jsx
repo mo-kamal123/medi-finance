@@ -5,6 +5,7 @@ import FormInput from '../../../shared/ui/input';
 import SearchableSelect from '../../../shared/ui/searchable-select';
 import PageLoader from '../../../shared/ui/page-loader';
 import Pagination from '../../../shared/ui/pagination';
+import ConfirmModal from '../../../shared/ui/modal';
 import { useDebounce } from '../../../shared/lib/use-debounce';
 import CustomerTable from '../components/customer-table';
 import { useDeleteCustomer } from '../hooks/customers.mutations';
@@ -24,6 +25,8 @@ const CustomersPage = () => {
   const [isActive, setIsActive] = useState('');
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const debouncedSearchTerm = useDebounce(search, 500);
   const isFirstRender = useRef(true);
@@ -89,7 +92,7 @@ const CustomersPage = () => {
 
       <CustomerTable
         data={customers}
-        onDelete={(customerID) => deleteCustomer(customerID)}
+        onDelete={(customerID) => setDeleteTarget(customerID)}
       />
 
       <Pagination
@@ -101,6 +104,26 @@ const CustomersPage = () => {
           setPageSize(value);
           setPageNumber(1);
         }}
+      />
+
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        onClose={() => !isDeleting && setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) {
+            setIsDeleting(true);
+            deleteCustomer(deleteTarget, {
+              onSettled: () => setIsDeleting(false),
+            });
+          }
+          setDeleteTarget(null);
+        }}
+        isLoading={isDeleting}
+        loadingText="جاري الحذف..."
+        title="تأكيد حذف العميل"
+        description="هل أنت متأكد من حذف هذا العميل؟"
+        confirmText="نعم، حذف"
+        cancelText="إلغاء"
       />
     </div>
   );

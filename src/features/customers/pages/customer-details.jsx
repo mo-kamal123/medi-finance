@@ -7,7 +7,7 @@ import { useUpdateCustomer } from '../hooks/customers.mutations';
 const CustomerDetails = () => {
   const { id } = useParams();
   const { data, isLoading } = useCustomer(id);
-  const { mutate: updateCustomer } = useUpdateCustomer();
+  const { mutate: updateCustomer, isPending } = useUpdateCustomer();
   const navigate = useNavigate();
 
   if (isLoading) {
@@ -25,6 +25,7 @@ const CustomerDetails = () => {
       <CustomerForm
         mode="update"
         defaultValues={data}
+        isPending={isPending}
         onSubmit={(formData) => {
           updateCustomer(
             { id, data: formData },

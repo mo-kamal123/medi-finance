@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import {
   getAllBanks,
   getBankAccounts,
@@ -11,7 +11,7 @@ export const useBanks = (filters) => {
   return useQuery({
     queryKey: banksKeys.lists(filters),
     queryFn: () => getAllBanks(filters),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 };
 

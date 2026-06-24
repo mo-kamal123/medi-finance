@@ -12,7 +12,6 @@ export const bankSchema = z.object({
   bankNameAr: z.string().trim().min(1, 'اسم البنك بالعربية مطلوب'),
   bankNameEn: z.string().trim().min(1, 'اسم البنك بالإنجليزية مطلوب'),
   swiftCode: z.string().optional(),
-  countryCode: z.string().trim().min(1, 'كود الدولة مطلوب'),
   phone: z.string().optional(),
   email: optionalEmail,
   website: z.string().optional(),
