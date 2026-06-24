@@ -1,13 +1,23 @@
 import { useMemo, useState } from 'react';
 import { Download, Link, PlusIcon, RefreshCw } from 'lucide-react';
-// import { accountsTree } from '../../utils/constants';
 import TreeNode from '../../components/tree-node';
-import { buildTree } from '../../utils/buildTree';
 import { filterTree } from '../../utils/filterTree';
 import SearchFilter from '../../../../shared/components/search-filter';
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from '../../../../shared/ui/modal';
 import useAccountsTree from '../hooks/use-accounts-tree';
+
+const flattenTree = (nodes) => {
+  const result = [];
+  const walk = (list) => {
+    list.forEach((node) => {
+      result.push(node);
+      if (node.children?.length) walk(node.children);
+    });
+  };
+  walk(nodes);
+  return result;
+};
 
 const AccountsTree = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -16,57 +26,46 @@ const AccountsTree = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
   const { data: accountsTree = [], isPending, isError } = useAccountsTree();
-  console.log(accountsTree.data);
   const navigate = useNavigate();
-  // Build tree structure
-  const treeData = useMemo(() => {
-    return buildTree(accountsTree, {
-      idKey: 'accountID',
-      parentKey: 'parentID',
-      sortKey: 'accountCode',
-    });
-  }, [accountsTree]);
+
+  const allAccounts = useMemo(() => flattenTree(accountsTree), [accountsTree]);
 
   const filteredTree = useMemo(() => {
-    return filterTree(treeData, searchQuery, filterType);
-  }, [treeData, searchQuery, filterType]);
+    return filterTree(accountsTree, searchQuery, filterType);
+  }, [accountsTree, searchQuery, filterType]);
 
   // Get unique account types for filter
   const accountTypes = useMemo(() => {
-    const types = new Set(accountsTree.map((acc) => acc.accountType));
+    const types = new Set(allAccounts.map((acc) => acc.accountType));
     return Array.from(types).sort();
-  }, [accountsTree]);
+  }, [allAccounts]);
 
   // Count statistics
   const stats = useMemo(() => {
-    const total = accountsTree.length;
-    const active = accountsTree.filter((acc) => acc.isActive).length;
+    const total = allAccounts.length;
+    const active = allAccounts.filter((acc) => acc.isActive).length;
     const byType = accountTypes.reduce((acc, type) => {
-      acc[type] = accountsTree.filter((t) => t.accountType === type).length;
+      acc[type] = allAccounts.filter((t) => t.accountType === type).length;
       return acc;
     }, {});
 
     return { total, active, byType };
-  }, [accountsTree, accountTypes]);
+  }, [allAccounts, accountTypes]);
 
   const editAccount = (account) => {
-    navigate(`${account.accountID}`);
-    console.log('تعديل الحساب:', account);
+    navigate(`${account.id}`);
   };
 
   const addSubAccount = (account) => {
-    console.log('إضافة حساب فرعي إلى:', account);
     navigate(`new`);
   };
 
   const disableAccount = (account) => {
-    console.log('تعطيل الحساب:', account);
     setSelectedNode(account);
     setModalOpen(true);
   };
   const handleConfirmDisable = () => {
     console.log('تم تعطيل:');
-    // استدعاء API لتعطيل الحساب أو المركز
   };
 
   return (
@@ -157,6 +156,7 @@ const AccountsTree = () => {
             <div className="space-y-1">
               {filteredTree.map((account) => (
                 <TreeNode
+                  key={account.id}
                   node={account}
                   expandedAll={expandedAll}
                   getLabel={(a) => a.nameAr}

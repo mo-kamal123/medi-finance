@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import {
   getAllInvoices,
   getBatchByNumber,
@@ -17,7 +17,7 @@ export const useInvoices = (filters, type) => {
   return useQuery({
     queryKey: invoicesKeys.list({ ...filters, type }),
     queryFn: () => getAllInvoices(filters, type),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 };
 

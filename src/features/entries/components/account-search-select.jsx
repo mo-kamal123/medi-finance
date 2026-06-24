@@ -6,6 +6,8 @@ import { cn } from '../../../shared/lib/cn';
 import { useDebounce } from '../../../shared/lib/use-debounce';
 import { getAccountById, searchAccounts } from '../../tree/accouts-tree/api/accounts-tree';
 
+const getAccountId = (account) => account.id ?? account.accountID;
+
 const AccountSearchSelect = ({ value, onChange, disabled, error }) => {
   const [searchText, setSearchText] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -22,7 +24,7 @@ const AccountSearchSelect = ({ value, onChange, disabled, error }) => {
   });
 
   const selectedInResults = useMemo(
-    () => searchResults.find((r) => String(r.accountID) === String(value)),
+    () => searchResults.find((r) => String(getAccountId(r)) === String(value)),
     [searchResults, value],
   );
 
@@ -82,7 +84,7 @@ const AccountSearchSelect = ({ value, onChange, disabled, error }) => {
   }, [isOpen]);
 
   const handleSelect = (account) => {
-    onChange({ target: { value: String(account.accountID), name: 'accountID' } });
+    onChange({ target: { value: String(getAccountId(account)), name: 'accountID' } });
     setSearchText(account.accountCode || '');
     setIsOpen(false);
   };
@@ -130,11 +132,11 @@ const AccountSearchSelect = ({ value, onChange, disabled, error }) => {
               ) : (
                 searchResults.map((account) => (
                   <div
-                    key={account.accountID}
+                    key={getAccountId(account)}
                     onMouseDown={() => handleSelect(account)}
                     className={cn(
                       'cursor-pointer border-b border-gray-100 p-3 last:border-b-0 hover:bg-gray-50',
-                      String(account.accountID) === String(value) && 'bg-primary/10',
+                      String(getAccountId(account)) === String(value) && 'bg-primary/10',
                     )}
                   >
                     <div className="text-sm font-medium">{account.accountCode}</div>

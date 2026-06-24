@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import Dropdown from '../../../shared/ui/dropdown';
 
+const getNodeId = (node) => node.id ?? node.accountID ?? node.costCenterID;
+
 const TreeNode = ({
   node,
   level = 0,
@@ -116,7 +118,7 @@ const TreeNode = ({
         <div>
           {children.map((child) => (
             <TreeNode
-              key={child.id}
+              key={getNodeId(child)}
               node={child}
               level={level + 1}
               expandedAll={expandedAll}

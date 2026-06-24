@@ -13,7 +13,15 @@ const CustomerTable = ({ data, onDelete }) => {
       header: 'الحالة',
       key: 'isActive',
       type: 'custom',
-      render: (row) => (row.isActive ? 'نشط' : 'غير نشط'),
+      render: (row) => (
+        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+          row.isActive
+            ? 'bg-emerald-100 text-emerald-700'
+            : 'bg-red-100 text-red-700'
+        }`}>
+          {row.isActive ? 'نشط' : 'غير نشط'}
+        </span>
+      ),
     },
     {
       header: 'الإجراءات',

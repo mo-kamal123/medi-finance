@@ -18,7 +18,7 @@ const BankDetails = () => {
 
   return (
     <div className="space-y-6">
-      <BankForm defaultValues={data} mode="view" />
+      <BankForm defaultValues={data} mode="edit" />
       <BankAccountsPanel bankId={id} />
     </div>
   );

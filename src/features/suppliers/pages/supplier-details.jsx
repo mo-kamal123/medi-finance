@@ -6,7 +6,7 @@ import SupplierForm from '../components/supplier-form';
 const SupplierDetails = () => {
   const { id } = useParams();
   const { data } = useSupplier(id);
-  const { mutate: updateSupplier } = useUpdateSupplier();
+  const { mutate: updateSupplier, isPending } = useUpdateSupplier();
   const navigate = useNavigate();
 
   if (!data) return null;
@@ -15,6 +15,7 @@ const SupplierDetails = () => {
     <SupplierForm
       mode="update"
       defaultValues={data}
+      isPending={isPending}
       onSubmit={(formData) => {
         updateSupplier(
           { id, data: formData },

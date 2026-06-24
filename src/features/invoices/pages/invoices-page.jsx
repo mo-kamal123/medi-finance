@@ -1,11 +1,10 @@
 ﻿import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Eye, Plus } from 'lucide-react';
 
 import InvoiceFilters from '../components/invoice-filter';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
-import { paginateItems } from '../../../shared/utils/list-utils';
 import { formatDate } from '../../../shared/utils/formatters';
 import { getStatusStyle } from '../utils/status-style';
 import {
@@ -30,20 +29,12 @@ const InvoicesPage = () => {
     pageSize: 10,
   });
 
-  const { data = [], isLoading } = useInvoices(filters, pageType);
+  const { data, isLoading } = useInvoices(filters, pageType);
   const { data: invoiceTypes } = useInvoiceTypes();
   const { data: customers } = useCustomers();
   const { data: suppliers } = useSuppliers();
 
-  const pagination = useMemo(
-    () =>
-      paginateItems(
-        data || [],
-        filters.pageNumber || 1,
-        filters.pageSize || 10
-      ),
-    [data, filters.pageNumber, filters.pageSize]
-  );
+  const { items = [], totalPages = 1, totalCount = 0 } = data || {};
 
   const columns = useMemo(
     () => [
@@ -108,22 +99,6 @@ const InvoicesPage = () => {
             >
               <Eye size={18} />
             </button>
-
-            {/* <button
-              onClick={() => navigate(`/invoices/edit/${row.invoiceID}`)}
-              className="text-green-600 hover:text-green-800"
-              title="تعديل"
-            >
-              <Pencil size={18} />
-            </button>
-
-            <button
-              onClick={() => console.log('delete invoice', row.invoiceID)}
-              className="text-red-600 hover:text-red-800"
-              title="حذف"
-            >
-              <Trash2 size={18} />
-            </button> */}
           </div>
         ),
       },
@@ -166,12 +141,12 @@ const InvoicesPage = () => {
         suppliers={suppliers}
       />
 
-      <Table columns={columns} data={pagination.items} loading={isLoading} />
+      <Table columns={columns} data={items} loading={isLoading} />
 
       <Pagination
-        currentPage={pagination.currentPage}
-        totalPages={pagination.totalPages}
-        pageSize={pagination.pageSize}
+        currentPage={filters.pageNumber}
+        totalPages={totalPages}
+        pageSize={filters.pageSize}
         onPageChange={(page) =>
           setFilters((prev) => ({ ...prev, pageNumber: page }))
         }

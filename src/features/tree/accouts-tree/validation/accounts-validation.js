@@ -1,7 +1,7 @@
 import z from 'zod';
 
 export const accountSchema = z.object({
-  accountID: z.coerce.number().optional(),
+  id: z.coerce.number().optional(),
 
   accountCode: z.string().min(1, 'رقم الحساب مطلوب'),
 
@@ -18,9 +18,13 @@ export const accountSchema = z.object({
     }),
   accountType: z.string().min(1, 'نوع الحساب مطلوب'),
 
+  accountNature: z.string().optional(),
+
+  accountCategory: z.string().nullable().optional(),
+
   isActive: z.boolean(),
 
   isFinal: z.boolean(),
 
-  user: z.string().min(1, 'اسم المستخدم مطلوب'),
+  allowPosting: z.boolean().optional(),
 });

@@ -1,4 +1,4 @@
-﻿import { useForm } from 'react-hook-form';
+﻿import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Save } from 'lucide-react';
 import FormInput from '../../../shared/ui/input';
@@ -15,12 +15,14 @@ const SupplierForm = ({
   mode = 'create',
   defaultValues = {},
   onSubmit,
+  isPending = false,
 }) => {
   const { data: supplierTypes = [] } = useSupplierTypes();
 
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(supplierSchema),
@@ -84,18 +86,25 @@ const SupplierForm = ({
           error={errors.supplierNameEn?.message}
         />
 
-        <div className="w-full">
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            نوع المورد
-          </label>
-          <SearchableSelect
-            {...register('supplierType')}
-            options={supplierTypes.map((t) => ({
-              value: t.supplierTypeID,
-              label: t.nameAr,
-            }))}
-          />
-        </div>
+        <Controller
+          name="supplierType"
+          control={control}
+          render={({ field }) => (
+            <div className="w-full">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                نوع المورد
+              </label>
+              <SearchableSelect
+                value={field.value}
+                onChange={field.onChange}
+                options={supplierTypes.map((t) => ({
+                  value: t.supplierTypeID,
+                  label: t.nameAr,
+                }))}
+              />
+            </div>
+          )}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -163,11 +172,11 @@ const SupplierForm = ({
 
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || isPending}
         className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 text-white transition hover:opacity-90 disabled:opacity-60"
       >
         <Save size={18} />
-        {isSubmitting
+        {isSubmitting || isPending
           ? 'جاري الحفظ...'
           : mode === 'create'
             ? 'إنشاء المورد'

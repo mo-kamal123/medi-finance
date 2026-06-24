@@ -174,7 +174,7 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
   const accountOptions = useMemo(
     () =>
       getFinalNodes(accountsTree).map((account) => ({
-        value: String(account.accountID),
+        value: String(account.id ?? account.accountID),
         label: `${account.accountCode} - ${account.nameAr}`,
       })),
     [accountsTree]

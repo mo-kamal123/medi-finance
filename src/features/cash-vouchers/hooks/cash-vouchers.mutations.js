@@ -13,7 +13,7 @@ export const useCreateCashVoucher = () => {
     mutationFn: createCashVoucher,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: cashVouchersKeys.lists(),
+        queryKey: cashVouchersKeys.all,
       });
       toast.success('تم إنشاء سند الصرف أو القبض بنجاح');
     },
@@ -30,7 +30,7 @@ export const useUpdateCashVoucher = () => {
     mutationFn: updateCashVoucher,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: cashVouchersKeys.lists(),
+        queryKey: cashVouchersKeys.all,
       });
       toast.success('تم تحديث السند بنجاح');
     },

@@ -7,6 +7,17 @@ export const normalizeInvoicesResponse = (data) => {
   return [];
 };
 
+export const normalizePaginatedResponse = (response) => {
+  const items = normalizeInvoicesResponse(response);
+  return {
+    items,
+    totalCount: response?.totalCount ?? items.length,
+    totalPages: response?.totalPages ?? Math.max(1, Math.ceil((response?.totalCount ?? items.length) / (response?.pageSize || 10))),
+    pageNumber: response?.pageNumber ?? 1,
+    pageSize: response?.pageSize ?? 10,
+  };
+};
+
 export const getAllInvoices = async (params = {}, type) => {
   const requestParams = {
     ...params,
@@ -32,7 +43,7 @@ export const getAllInvoices = async (params = {}, type) => {
     params: requestParams,
   });
 
-  return normalizeInvoicesResponse(data);
+  return normalizePaginatedResponse(data);
 };
 
 export const getInvoiceById = async (id) => {
