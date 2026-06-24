@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createBatchInvoice, createInvoice, updateInvoice } from '../api/invoices-api';
+import { createBatchInvoice, createInvoice, deleteInvoice, updateInvoice } from '../api/invoices-api';
 import { invoicesKeys } from './invoices.keys';
 import { getErrorMessage, toast } from '../../../shared/lib/toast';
 
@@ -43,6 +43,23 @@ export const useUpdateInvoice = () => {
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'تعذر تحديث الفاتورة'));
+    },
+  });
+};
+
+export const useDeleteInvoice = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteInvoice,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: invoicesKeys.lists(),
+      });
+      toast.success('تم حذف الفاتورة بنجاح');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'تعذر حذف الفاتورة'));
     },
   });
 };

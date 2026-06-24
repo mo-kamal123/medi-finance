@@ -1,10 +1,11 @@
-﻿import { useMemo, useState } from 'react';
+﻿import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Eye, Plus } from 'lucide-react';
+import { Eye, Plus, Trash2 } from 'lucide-react';
 
 import InvoiceFilters from '../components/invoice-filter';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
+import ConfirmModal from '../../../shared/ui/modal';
 import { formatDate } from '../../../shared/utils/formatters';
 import { getStatusStyle } from '../utils/status-style';
 import {
@@ -13,6 +14,7 @@ import {
   useInvoiceTypes,
   useSuppliers,
 } from '../hooks/invoices.queries';
+import { useDeleteInvoice } from '../hooks/invoices.mutations';
 import { formatCurrency } from '../utils/format-currency';
 
 const InvoicesPage = () => {
@@ -28,83 +30,89 @@ const InvoicesPage = () => {
     pageNumber: 1,
     pageSize: 10,
   });
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const { data, isLoading } = useInvoices(filters, pageType);
   const { data: invoiceTypes } = useInvoiceTypes();
   const { data: customers } = useCustomers();
   const { data: suppliers } = useSuppliers();
+  const { mutate: deleteInvoice, isPending: isDeleting } = useDeleteInvoice();
 
   const { items = [], totalPages = 1, totalCount = 0 } = data || {};
 
-  const columns = useMemo(
-    () => [
-      {
-        header: 'رقم الفاتورة',
-        key: 'invoiceNumber',
-      },
-      {
-        header: 'العميل / الشركة',
-        key: 'customerNameAr',
-      },
-      {
-        header: 'نوع الفاتورة',
-        key: 'invoiceTypeNameAr',
-      },
-      {
-        header: 'تاريخ الفاتورة',
-        key: 'invoiceDate',
-        type: 'custom',
-        render: (row) => formatDate(row.invoiceDate),
-      },
-      {
-        header: 'الإجمالي',
-        key: 'totalAmount',
-        type: 'custom',
-        render: (row) => formatCurrency(row.totalAmount),
-      },
-      {
-        header: 'الصافي',
-        key: 'netAmount',
-        type: 'custom',
-        render: (row) => (
-          <span className="font-semibold text-primary">
-            {formatCurrency(row.netAmount)}
-          </span>
-        ),
-      },
-      {
-        header: 'الحالة',
-        key: 'status',
-        type: 'custom',
-        render: (row) => (
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(
-              row.status
-            )}`}
+  const columns = [
+    {
+      header: 'رقم الفاتورة',
+      key: 'invoiceNumber',
+    },
+    {
+      header: 'العميل / الشركة',
+      key: 'customerNameAr',
+    },
+    {
+      header: 'نوع الفاتورة',
+      key: 'invoiceTypeNameAr',
+    },
+    {
+      header: 'تاريخ الفاتورة',
+      key: 'invoiceDate',
+      type: 'custom',
+      render: (row) => formatDate(row.invoiceDate),
+    },
+    {
+      header: 'الإجمالي',
+      key: 'totalAmount',
+      type: 'custom',
+      render: (row) => formatCurrency(row.totalAmount),
+    },
+    {
+      header: 'الصافي',
+      key: 'netAmount',
+      type: 'custom',
+      render: (row) => (
+        <span className="font-semibold text-primary">
+          {formatCurrency(row.netAmount)}
+        </span>
+      ),
+    },
+    {
+      header: 'الحالة',
+      key: 'status',
+      type: 'custom',
+      render: (row) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(
+            row.status
+          )}`}
+        >
+          {row.status}
+        </span>
+      ),
+    },
+    {
+      header: 'الإجراءات',
+      key: 'actions',
+      type: 'custom',
+      render: (row) => (
+        <div className="flex items-center gap-3 justify-center">
+          <button
+            onClick={() => navigate(`/invoices/${row.invoiceID}`)}
+            className="text-blue-600 hover:text-blue-800"
+            title="عرض"
           >
-            {row.status}
-          </span>
-        ),
-      },
-      {
-        header: 'الإجراءات',
-        key: 'actions',
-        type: 'custom',
-        render: (row) => (
-          <div className="flex items-center gap-3 justify-center">
-            <button
-              onClick={() => navigate(`/invoices/${row.invoiceID}`)}
-              className="text-blue-600 hover:text-blue-800"
-              title="عرض"
-            >
-              <Eye size={18} />
-            </button>
-          </div>
-        ),
-      },
-    ],
-    [navigate]
-  );
+            <Eye size={18} />
+          </button>
+          <button
+            onClick={() => setDeleteTarget(row)}
+            className="text-red-600 hover:text-red-800"
+            title="حذف"
+          >
+            <Trash2 size={18} />
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   const onAddInvoice = () => {
     navigate(`/invoices/new?type=${newInvoiceType}`);
@@ -154,9 +162,26 @@ const InvoicesPage = () => {
           setFilters((prev) => ({ ...prev, pageSize: value, pageNumber: 1 }))
         }
       />
+
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        onClose={() => !isDeleting && setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteInvoice(deleteTarget.invoiceID, {
+              onSettled: () => setDeleteTarget(null),
+            });
+          }
+        }}
+        isLoading={isDeleting}
+        loadingText="جاري الحذف..."
+        title="تأكيد حذف الفاتورة"
+        description={`هل أنت متأكد من حذف الفاتورة "${deleteTarget?.invoiceNumber}"؟`}
+        confirmText="نعم، حذف"
+        cancelText="إلغاء"
+      />
     </div>
   );
 };
-
 
 export default InvoicesPage;

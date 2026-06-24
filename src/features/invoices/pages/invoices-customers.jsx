@@ -1,10 +1,11 @@
-﻿import { useMemo, useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 
 import InvoiceFilters from '../components/invoice-filter';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
+import ConfirmModal from '../../../shared/ui/modal';
 import { formatCurrency, formatDate } from '../../../shared/utils/formatters';
 import { getStatusStyle } from '../utils/status-style';
 import {
@@ -13,6 +14,7 @@ import {
   useInvoiceTypes,
   useSuppliers,
 } from '../hooks/invoices.queries';
+import { useDeleteInvoice } from '../hooks/invoices.mutations';
 
 const InvoicesPage = () => {
   const navigate = useNavigate();
@@ -21,109 +23,108 @@ const InvoicesPage = () => {
     pageNumber: 1,
     pageSize: 10,
   });
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const { data, isLoading } = useInvoices(filters);
   const { data: invoiceTypes } = useInvoiceTypes();
   const { data: customers } = useCustomers();
   const { data: suppliers } = useSuppliers();
+  const { mutate: deleteInvoice, isPending: isDeleting } = useDeleteInvoice();
 
   const { items = [], totalPages = 1, totalCount = 0 } = data || {};
 
-  const columns = useMemo(
-    () => [
-      {
-        header: 'Invoice Number',
-        key: 'invoiceNumber',
-      },
-      {
-        header: 'Customer / Company',
-        key: 'customerNameAr',
-      },
-      {
-        header: 'Invoice Type',
-        key: 'invoiceTypeNameAr',
-      },
-      {
-        header: 'Invoice Date',
-        key: 'invoiceDate',
-        type: 'custom',
-        render: (row) => formatDate(row.invoiceDate),
-      },
-      {
-        header: 'Total',
-        key: 'totalAmount',
-        type: 'custom',
-        render: (row) => formatCurrency(row.totalAmount),
-      },
-      {
-        header: 'Discount',
-        key: 'discount',
-        type: 'custom',
-        render: (row) => (
-          <span className="text-red-500">
-            {formatCurrency(row.totalAmount - row.netAmount)}
-          </span>
-        ),
-      },
-      {
-        header: 'Net',
-        key: 'netAmount',
-        type: 'custom',
-        render: (row) => (
-          <span className="font-semibold text-primary">
-            {formatCurrency(row.netAmount)}
-          </span>
-        ),
-      },
-      {
-        header: 'Status',
-        key: 'status',
-        type: 'custom',
-        render: (row) => (
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(
-              row.status
-            )}`}
+  const columns = [
+    {
+      header: 'Invoice Number',
+      key: 'invoiceNumber',
+    },
+    {
+      header: 'Customer / Company',
+      key: 'customerNameAr',
+    },
+    {
+      header: 'Invoice Type',
+      key: 'invoiceTypeNameAr',
+    },
+    {
+      header: 'Invoice Date',
+      key: 'invoiceDate',
+      type: 'custom',
+      render: (row) => formatDate(row.invoiceDate),
+    },
+    {
+      header: 'Total',
+      key: 'totalAmount',
+      type: 'custom',
+      render: (row) => formatCurrency(row.totalAmount),
+    },
+    {
+      header: 'Discount',
+      key: 'discount',
+      type: 'custom',
+      render: (row) => (
+        <span className="text-red-500">
+          {formatCurrency(row.totalAmount - row.netAmount)}
+        </span>
+      ),
+    },
+    {
+      header: 'Net',
+      key: 'netAmount',
+      type: 'custom',
+      render: (row) => (
+        <span className="font-semibold text-primary">
+          {formatCurrency(row.netAmount)}
+        </span>
+      ),
+    },
+    {
+      header: 'Status',
+      key: 'status',
+      type: 'custom',
+      render: (row) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(
+            row.status
+          )}`}
+        >
+          {row.status}
+        </span>
+      ),
+    },
+    {
+      header: 'Actions',
+      key: 'actions',
+      type: 'custom',
+      render: (row) => (
+        <div className="flex items-center gap-3 justify-center">
+          <button
+            onClick={() => navigate(`/invoices/${row.invoiceID}`)}
+            className="text-blue-600 hover:text-blue-800"
+            title="View"
           >
-            {row.status}
-          </span>
-        ),
-      },
-      {
-        header: 'Actions',
-        key: 'actions',
-        type: 'custom',
-        render: (row) => (
-          <div className="flex items-center gap-3 justify-center">
-            <button
-              onClick={() => navigate(`/invoices/${row.invoiceID}`)}
-              className="text-blue-600 hover:text-blue-800"
-              title="View"
-            >
-              <Eye size={18} />
-            </button>
+            <Eye size={18} />
+          </button>
 
-            <button
-              onClick={() => navigate(`/invoices/edit/${row.invoiceID}`)}
-              className="text-green-600 hover:text-green-800"
-              title="Edit"
-            >
-              <Pencil size={18} />
-            </button>
+          <button
+            onClick={() => navigate(`/invoices/edit/${row.invoiceID}`)}
+            className="text-green-600 hover:text-green-800"
+            title="Edit"
+          >
+            <Pencil size={18} />
+          </button>
 
-            <button
-              onClick={() => console.log('delete invoice', row.invoiceID)}
-              className="text-red-600 hover:text-red-800"
-              title="Delete"
-            >
-              <Trash2 size={18} />
-            </button>
-          </div>
-        ),
-      },
-    ],
-    [navigate]
-  );
+          <button
+            onClick={() => setDeleteTarget(row)}
+            className="text-red-600 hover:text-red-800"
+            title="Delete"
+          >
+            <Trash2 size={18} />
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   const onAddInvoice = () => {
     navigate('/invoices/new?type=customer');
@@ -168,6 +169,24 @@ const InvoicesPage = () => {
         onPageSizeChange={(value) =>
           setFilters((prev) => ({ ...prev, pageSize: value, pageNumber: 1 }))
         }
+      />
+
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        onClose={() => !isDeleting && setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteInvoice(deleteTarget.invoiceID, {
+              onSettled: () => setDeleteTarget(null),
+            });
+          }
+        }}
+        isLoading={isDeleting}
+        loadingText="جاري الحذف..."
+        title="تأكيد حذف الفاتورة"
+        description={`هل أنت متأكد من حذف الفاتورة "${deleteTarget?.invoiceNumber}"؟`}
+        confirmText="نعم، حذف"
+        cancelText="إلغاء"
       />
     </div>
   );
