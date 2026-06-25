@@ -33,7 +33,9 @@ export const updateCashVoucher = async ({ id, ...payload }) => {
   return data;
 };
 
-export const getInvoiceForCashVoucher = async (id) => {
-  const { data } = await axiosInstance.get(`/invoices/${id}`);
+export const getInvoiceForCashVoucher = async (invoiceNumber) => {
+  const { data } = await axiosInstance.get(
+    `/cash-vouchers/invoice-details/${invoiceNumber}`
+  );
   return data;
 };

@@ -27,8 +27,9 @@ export const useUpdateCustomer = () => {
 
   return useMutation({
     mutationFn: ({ id, data }) => updateCustomer(id, data),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: customersKeys.all });
+      qc.invalidateQueries({ queryKey: customersKeys.detail(variables.id) });
       toast.success('تم تحديث العميل بنجاح');
     },
     onError: (error) => {

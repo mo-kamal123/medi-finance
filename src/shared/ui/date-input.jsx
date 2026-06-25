@@ -91,7 +91,7 @@ const getMonthLabel = (value) =>
     year: 'numeric',
   });
 
-const DateInput = ({ label, value, onChange, error, required, ...props }) => {
+const DateInput = ({ label, value, onChange, error, required, readOnly, ...props }) => {
   const wrapperRef = useRef(null);
   const [displayValue, setDisplayValue] = useState(() =>
     formatDateInputDisplay(value)
@@ -131,11 +131,20 @@ const DateInput = ({ label, value, onChange, error, required, ...props }) => {
   }, [isOpen]);
 
   const handleChange = (event) => {
-    const nextDisplayValue = event.target.value;
-    const parsedValue = parseDateInputDisplay(nextDisplayValue);
+    const raw = event.target.value;
+    const digits = raw.replace(/\D/g, '').slice(0, 8);
 
-    setDisplayValue(nextDisplayValue);
-    emitChange(nextDisplayValue.trim() ? parsedValue : '');
+    let formatted = '';
+    if (digits.length > 4) {
+      formatted = digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4);
+    } else if (digits.length > 2) {
+      formatted = digits.slice(0, 2) + '/' + digits.slice(2);
+    } else {
+      formatted = digits;
+    }
+
+    setDisplayValue(formatted);
+    emitChange(formatted ? parseDateInputDisplay(formatted) : '');
   };
 
   const getTodayValue = () => {
@@ -187,21 +196,26 @@ const DateInput = ({ label, value, onChange, error, required, ...props }) => {
           placeholder="dd/mm/yyyy"
           value={displayValue}
           onChange={handleChange}
-          className={`w-full rounded-lg border px-4 py-2 pl-11 transition focus:outline-none focus:ring-2 ${
+          readOnly={readOnly}
+          className={`w-full rounded-lg border px-4 py-2 transition focus:outline-none focus:ring-2 ${
+            readOnly ? 'pl-4 bg-gray-50 text-gray-600 cursor-default' : 'pl-11'
+          } ${
             error
               ? 'border-red-400 focus:ring-red-200'
               : 'border-gray-200 focus:border-primary focus:ring-primary/20'
           } ${props.className || ''}`}
         />
 
-        <button
-          type="button"
-          className="absolute left-2 top-1/2 -translate-y-1/2 rounded-md p-2 text-gray-500 transition hover:bg-gray-100 hover:text-primary"
-          onClick={() => setIsOpen((prev) => !prev)}
-          aria-label="Open calendar"
-        >
-          <Calendar size={18} />
-        </button>
+        {!readOnly && (
+          <button
+            type="button"
+            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-md p-2 text-gray-500 transition hover:bg-gray-100 hover:text-primary"
+            onClick={() => setIsOpen((prev) => !prev)}
+            aria-label="Open calendar"
+          >
+            <Calendar size={18} />
+          </button>
+        )}
       </div>
 
       {isOpen ? (

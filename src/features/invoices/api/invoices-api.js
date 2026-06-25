@@ -51,6 +51,11 @@ export const getInvoiceById = async (id) => {
   return data;
 };
 
+export const getInvoiceByNumber = async (invoiceNumber) => {
+  const { data } = await axiosInstance.get(`/invoices/by-number/${invoiceNumber}`);
+  return data;
+};
+
 export const getInvoiceStatuses = async () => {
   const { data } = await axiosInstance.get('/invoices/statuses');
   return Array.isArray(data) ? data : data?.data || [];

@@ -64,3 +64,10 @@ export const deleteBankAccount = async (id) => {
   const { data } = await axiosInstance.delete(`/BankAccounts/${id}`);
   return data;
 };
+
+export const getAllBankAccounts = async (params = {}) => {
+  const { data } = await axiosInstance.get('/BankAccounts', {
+    params: { pageNumber: 1, pageSize: 100, ...params },
+  });
+  return data;
+};
