@@ -65,16 +65,16 @@ const Sidebar = () => {
       name: 'الأوراق التجارية',
       icon: CreditCard,
       sub: [
-        {
-          name: 'أوراق القبض',
-          link: '/commercial-papers/receivable',
-          icon: FileCheck,
-        },
-        {
-          name: 'أوراق الدفع',
-          link: '/commercial-papers/payable',
-          icon: FileText,
-        },
+        // {
+        //   name: 'أوراق القبض',
+        //   link: '/commercial-papers/receivable',
+        //   icon: FileCheck,
+        // },
+        // {
+        //   name: 'أوراق الدفع',
+        //   link: '/commercial-papers/payable',
+        //   icon: FileText,
+        // },
         { name: 'الشيكات', link: '/cheques', icon: CreditCard },
       ],
     },

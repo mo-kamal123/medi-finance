@@ -29,7 +29,7 @@ import {
   useReverseJournalEntry,
   useUpdateJournalEntry,
 } from '../hooks/entries.mutations';
-import { getBatchSummary } from '../api/entries.api';
+import { getInvoiceForCashVoucher } from '../../cash-vouchers/api/cash-vouchers.api';
 import { useJournalEntryStatuses } from '../hooks/entries.queries';
 import {
   buildCostCenterOptions,
@@ -54,7 +54,7 @@ const getToday = () => {
 
 const createDetailRow = () => ({
   rowKey: `row-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-  batchNumber: '',
+  invoiceNumber: '',
   accountID: '',
   costCenterID: '',
   customerID: '',
@@ -74,7 +74,7 @@ const mapEntryToForm = (entry) => {
   const mapDetail = (d) => ({
     rowKey: `detail-${d.journalEntryDetailID || Math.random()}`,
     journalEntryDetailID: d.journalEntryDetailID ?? null,
-    batchNumber: d.batchNumber ?? '',
+    invoiceNumber: d.invoiceNumber ?? d.batchNumber ?? '',
     accountID: d.accountID ? String(d.accountID) : d.id ? String(d.id) : '',
     costCenterID: d.costCenterID != null ? String(d.costCenterID) : '',
     customerID: d.customerID > 0 ? String(d.customerID) : '',
@@ -261,36 +261,48 @@ const JournalEntryForm = ({
     }
   };
 
-  // Load batch summary to auto-fill account & debit
-  const handleLoadBatchSummary = async (index) => {
-    const batchNumber = String(watchedDetails[index]?.batchNumber || '').trim();
-    if (!batchNumber) {
-      toast.error('أدخل رقم الدفعة أولاً');
+  const handleLoadInvoiceDetails = async (index) => {
+    const invoiceNumber = String(watchedDetails[index]?.invoiceNumber || '').trim();
+    if (!invoiceNumber) {
+      toast.error('أدخل رقم الفاتورة أولاً');
       return;
     }
+
     try {
-      const response = await getBatchSummary(batchNumber);
-      const summary = response?.data ?? response;
-      if (!summary) {
-        toast.error('تعذر جلب بيانات الدفعة');
+      const response = await getInvoiceForCashVoucher(invoiceNumber);
+      const invoice = response?.data ?? response;
+      if (!invoice) {
+        toast.error('تعذر جلب بيانات الفاتورة');
         return;
       }
+
       setValue(
         `details.${index}.accountID`,
-        summary.accountID
-          ? String(summary.accountID)
-          : summary.id
-            ? String(summary.id)
-            : ''
+        invoice.accountID ? String(invoice.accountID) : ''
       );
-      setValue(
-        `details.${index}.debitAmount`,
-        summary.totalAmount != null ? String(summary.totalAmount) : ''
-      );
+      setValue(`details.${index}.debitAmount`, String(invoice.amount ?? ''));
       setValue(`details.${index}.creditAmount`, '');
-      toast.success('تم تحميل بيانات الدفعة');
+      setValue(`details.${index}.documentNumber`, invoice.invoiceNumber || invoiceNumber);
+
+      const customerID = invoice.customerID ?? invoice.customerId;
+      const supplierID = invoice.supplierID ?? invoice.supplierId;
+      const partyName = invoice.name || '';
+
+      if (customerID) {
+        setValue(`details.${index}.customerID`, String(customerID));
+        setValue(`details.${index}.customerNameAr`, partyName);
+        setValue(`details.${index}.supplierID`, '');
+        setValue(`details.${index}.supplierNameAr`, '');
+      } else if (supplierID) {
+        setValue(`details.${index}.supplierID`, String(supplierID));
+        setValue(`details.${index}.supplierNameAr`, partyName);
+        setValue(`details.${index}.customerID`, '');
+        setValue(`details.${index}.customerNameAr`, '');
+      }
+
+      toast.success('تم تحميل بيانات الفاتورة');
     } catch (error) {
-      toast.error(error?.response?.data?.message || 'فشل في جلب بيانات الدفعة');
+      toast.error(error?.response?.data?.message || 'فشل في جلب بيانات الفاتورة');
     }
   };
 
@@ -615,16 +627,16 @@ const JournalEntryForm = ({
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <DetailField label="رقم الدفعة">
+                    <DetailField label="رقم الفاتوره">
                       <div className="flex items-center gap-2">
                         <input
                           type="text"
-                          {...register(`details.${index}.batchNumber`)}
+                          {...register(`details.${index}.invoiceNumber`)}
                           className={journalEntryFlexInputClass}
                         />
                         <button
                           type="button"
-                          onClick={() => handleLoadBatchSummary(index)}
+                          onClick={() => handleLoadInvoiceDetails(index)}
                           className="shrink-0 rounded-lg bg-primary px-3 py-2 text-sm text-white hover:bg-primary/90"
                         >
                           جلب
@@ -685,7 +697,9 @@ const JournalEntryForm = ({
                             {withCurrentOption(
                               customerOptions,
                               f.value,
-                              watchedDetails[index]?.customerNameAr
+                              watchedDetails[index]?.customerNameAr ||
+                                customerOptions.find((o) => o.value === f.value)?.label ||
+                                ''
                             ).map((o) => (
                               <option key={o.value} value={o.value}>
                                 {o.label}
@@ -712,7 +726,9 @@ const JournalEntryForm = ({
                             {withCurrentOption(
                               supplierOptions,
                               f.value,
-                              watchedDetails[index]?.supplierNameAr
+                              watchedDetails[index]?.supplierNameAr ||
+                                supplierOptions.find((o) => o.value === f.value)?.label ||
+                                ''
                             ).map((o) => (
                               <option key={o.value} value={o.value}>
                                 {o.label}
@@ -816,7 +832,7 @@ const JournalEntryForm = ({
                   <th className="p-3 text-right">الوصف</th>
                   <th className="p-3 text-right">تاريخ السجل</th>
                   <th className="p-3 text-right">رقم المستند</th>
-                  <th className="p-3 text-right">رقم الدفعة</th>
+                  <th className="p-3 text-right">رقم الفاتوره</th>
                   <th></th>
                 </tr>
               </thead>
@@ -934,7 +950,9 @@ const JournalEntryForm = ({
                               {withCurrentOption(
                                 customerOptions,
                                 f.value,
-                                watchedDetails[index]?.customerNameAr
+                                watchedDetails[index]?.customerNameAr ||
+                                  customerOptions.find((o) => o.value === f.value)?.label ||
+                                  ''
                               ).map((o) => (
                                 <option key={o.value} value={o.value}>
                                   {o.label}
@@ -965,7 +983,9 @@ const JournalEntryForm = ({
                               {withCurrentOption(
                                 supplierOptions,
                                 f.value,
-                                watchedDetails[index]?.supplierNameAr
+                                watchedDetails[index]?.supplierNameAr ||
+                                  supplierOptions.find((o) => o.value === f.value)?.label ||
+                                  ''
                               ).map((o) => (
                                 <option key={o.value} value={o.value}>
                                   {o.label}
@@ -1012,14 +1032,14 @@ const JournalEntryForm = ({
                         <div className="flex items-center gap-2">
                           <input
                             type="text"
-                            {...register(`details.${index}.batchNumber`)}
+                            {...register(`details.${index}.invoiceNumber`)}
                             readOnly={readOnly}
                             className={journalEntryFlexInputClass}
                           />
                           {!readOnly ? (
                             <button
                               type="button"
-                              onClick={() => handleLoadBatchSummary(index)}
+                              onClick={() => handleLoadInvoiceDetails(index)}
                               className="shrink-0 rounded-lg bg-primary px-3 py-2 text-sm text-white hover:bg-primary/90"
                             >
                               جلب

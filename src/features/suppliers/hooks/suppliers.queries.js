@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { getErrorMessage, toast } from '../../../shared/lib/toast';
 import * as api from '../api/suppliers.api';
+import { suppliersKeys } from './suppliers.keys';
 
 export const useSuppliers = (filters) =>
   useQuery({
@@ -17,7 +18,7 @@ export const useSupplierTypes = () =>
 
 export const useSupplier = (id) =>
   useQuery({
-    queryKey: ['supplier', id],
+    queryKey: suppliersKeys.detail(id),
     queryFn: () => api.getSupplier(id).then((res) => res.data),
     enabled: !!id,
   });
@@ -28,7 +29,7 @@ export const useCreateSupplier = () => {
   return useMutation({
     mutationFn: api.createSupplier,
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['suppliers'] });
+      qc.invalidateQueries({ queryKey: suppliersKeys.all });
       toast.success('تم إنشاء المورد بنجاح');
     },
     onError: (error) => {
@@ -43,7 +44,7 @@ export const useDeleteSupplier = () => {
   return useMutation({
     mutationFn: api.deleteSupplier,
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['suppliers'] });
+      qc.invalidateQueries({ queryKey: suppliersKeys.all });
       toast.success('تم حذف المورد بنجاح');
     },
     onError: (error) => {
@@ -57,8 +58,9 @@ export const useUpdateSupplier = () => {
 
   return useMutation({
     mutationFn: ({ id, data }) => api.updateSupplier(id, data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['suppliers'] });
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: suppliersKeys.all });
+      qc.invalidateQueries({ queryKey: suppliersKeys.detail(variables.id) });
       toast.success('تم تحديث المورد بنجاح');
     },
     onError: (error) => {

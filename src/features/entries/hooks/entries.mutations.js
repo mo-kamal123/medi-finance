@@ -8,10 +8,10 @@ import {
 import { getErrorMessage, toast } from '../../../shared/lib/toast';
 
 const invalidateEntryQueries = (queryClient, id) => {
-  queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
+  queryClient.invalidateQueries({ queryKey: ['journalEntries'], refetchType: 'all' });
 
   if (id) {
-    queryClient.invalidateQueries({ queryKey: ['journalEntry', id] });
+    queryClient.invalidateQueries({ queryKey: ['journalEntry', id], refetchType: 'all' });
   }
 };
 
@@ -21,7 +21,7 @@ export const useCreateJournalEntry = () => {
   return useMutation({
     mutationFn: createJournalEntry,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
+      queryClient.invalidateQueries({ queryKey: ['journalEntries'], refetchType: 'all' });
       toast.success('تم حفظ القيد اليومي بنجاح');
     },
     onError: (error) => {

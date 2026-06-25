@@ -11,13 +11,11 @@ export const toApiDateTime = (value) => {
 export const buildCashVoucherPayload = (formData) => {
   const firstDetail = formData.details?.[0] || {};
   const partyId = firstDetail.partyID ? Number(firstDetail.partyID) : null;
+  const paymentModeId = Number(formData.paymentModeId) || 1;
 
-  return {
+  const payload = {
     isReceipt: formData.isReceipt,
-    paymentModeId: 1,
-    bankId: formData.bankId ? Number(formData.bankId) : null,
-    bankAccountId: formData.bankAccountId ? Number(formData.bankAccountId) : null,
-    checkNumber: formData.checkNumber || null,
+    paymentModeId,
     description: firstDetail.notes || '',
     date: toApiDateTime(formData.date),
     name: firstDetail.partyName || '',
@@ -25,8 +23,24 @@ export const buildCashVoucherPayload = (formData) => {
     invoiceNumber: formData.invoiceNumber || null,
     customerId: formData.isReceipt ? partyId : null,
     supplierId: formData.isReceipt ? null : partyId,
-    costCenterId: formData.costCenterId ? Number(formData.costCenterId) : null,
   };
+
+  if (paymentModeId === 1) {
+    payload.bankId = formData.bankId ? Number(formData.bankId) : null;
+    payload.bankAccountId = formData.bankAccountId ? Number(formData.bankAccountId) : null;
+    payload.checkNumber = formData.checkNumber || null;
+  }
+
+  if (paymentModeId === 2) {
+    payload.costCenterId = formData.costCenterId ? Number(formData.costCenterId) : null;
+  }
+
+  if (paymentModeId === 3) {
+    payload.fromBankAccountId = formData.fromBankAccountId ? Number(formData.fromBankAccountId) : null;
+    payload.toBankAccountId = formData.toBankAccountId ? Number(formData.toBankAccountId) : null;
+  }
+
+  return payload;
 };
 
 export const mapCashVoucherToFormValues = (defaultValues = {}) => {
@@ -61,6 +75,10 @@ export const mapCashVoucherToFormValues = (defaultValues = {}) => {
       defaultValues?.voucherId ??
       defaultValues?.id ??
       '',
+    paymentModeId:
+      defaultValues?.paymentModeId != null
+        ? String(defaultValues.paymentModeId)
+        : '1',
     bankId:
       defaultValues?.bankId != null
         ? String(defaultValues.bankId)
@@ -80,6 +98,14 @@ export const mapCashVoucherToFormValues = (defaultValues = {}) => {
       defaultValues?.accountNumber ??
       '',
     checkNumber: defaultValues?.checkNumber ?? '',
+    fromBankAccountId:
+      defaultValues?.fromBankAccountId != null
+        ? String(defaultValues.fromBankAccountId)
+        : '',
+    toBankAccountId:
+      defaultValues?.toBankAccountId != null
+        ? String(defaultValues.toBankAccountId)
+        : '',
     description: initialNotes,
     date: toDateInputValue(defaultValues?.date || defaultValues?.voucherDate),
     name: initialName,

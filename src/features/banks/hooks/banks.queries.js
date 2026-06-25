@@ -2,6 +2,7 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import {
   getAllBanks,
   getBankAccounts,
+  getAllBankAccounts,
   getBankAccountById,
   getBankById,
 } from '../api/banks.api';
@@ -28,6 +29,13 @@ export const useBankAccounts = (bankId) => {
     queryKey: banksKeys.accounts(bankId),
     queryFn: () => getBankAccounts(bankId),
     enabled: !!bankId,
+  });
+};
+
+export const useAllBankAccounts = () => {
+  return useQuery({
+    queryKey: ['all-bank-accounts'],
+    queryFn: getAllBankAccounts,
   });
 };
 

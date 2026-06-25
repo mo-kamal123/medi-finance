@@ -8,7 +8,7 @@ import { z } from 'zod';
 const detailSchema = z.object({
   rowKey: z.string(),
   journalEntryDetailID: z.any().optional(),
-  batchNumber: z.string().optional().default(''),
+  invoiceNumber: z.string().optional().default(''),
   accountID: z.string().min(1, 'الحساب مطلوب'),
   costCenterID: z.string().optional().default(''),
   customerID: z.string().optional().default(''),
