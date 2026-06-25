@@ -33,6 +33,7 @@ const BanksPage = () => {
     { header: 'الاسم بالإنجليزية', key: 'bankNameEn' },
     { header: 'Swift Code', key: 'swiftCode' },
     { header: 'الهاتف', key: 'phone' },
+    { header: 'عدد الحسابات', key: 'accountCount' },
     {
       header: 'الحالة',
       key: 'isActive',

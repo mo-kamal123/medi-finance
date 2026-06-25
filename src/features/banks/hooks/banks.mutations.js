@@ -30,8 +30,9 @@ export const useUpdateBank = () => {
 
   return useMutation({
     mutationFn: updateBank,
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: banksKeys.all });
+      queryClient.invalidateQueries({ queryKey: banksKeys.detail(variables.id) });
       toast.success('تم تحديث البنك بنجاح');
     },
     onError: (error) => {
@@ -62,6 +63,7 @@ export const useCreateBankAccount = (bankId) => {
     mutationFn: createBankAccount,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: banksKeys.accounts(bankId) });
+      queryClient.invalidateQueries({ queryKey: banksKeys.detail(bankId) });
       toast.success('تم حفظ حساب البنك بنجاح');
     },
     onError: (error) => {
@@ -75,8 +77,10 @@ export const useUpdateBankAccount = (bankId) => {
 
   return useMutation({
     mutationFn: updateBankAccount,
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: banksKeys.accounts(bankId) });
+      queryClient.invalidateQueries({ queryKey: banksKeys.accountDetail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: banksKeys.detail(bankId) });
       toast.success('تم تحديث حساب البنك بنجاح');
     },
     onError: (error) => {
@@ -92,6 +96,7 @@ export const useDeleteBankAccount = (bankId) => {
     mutationFn: deleteBankAccount,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: banksKeys.accounts(bankId) });
+      queryClient.invalidateQueries({ queryKey: banksKeys.detail(bankId) });
       toast.success('تم حذف حساب البنك بنجاح');
     },
     onError: (error) => {
