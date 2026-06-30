@@ -54,33 +54,8 @@ export const getPendingCheques = async (params) => {
   return data;
 };
 
-export const postCheque = async ({ id, ...payload }) => {
-  const { data } = await axiosInstance.put(`/cheques/${id}/post`, payload);
-  return data;
-};
-
-export const unpostCheque = async ({ id, ...payload }) => {
-  const { data } = await axiosInstance.put(`/cheques/${id}/unpost`, payload);
-  return data;
-};
-
-export const depositChequeAtBank = async ({ id, ...payload }) => {
-  const { data } = await axiosInstance.put(`/cheques/${id}/deposit-at-bank`, payload);
-  return data;
-};
-
-export const collectCheque = async ({ id, ...payload }) => {
-  const { data } = await axiosInstance.put(`/cheques/${id}/collect`, payload);
-  return data;
-};
-
-export const returnCheque = async ({ id, ...payload }) => {
-  const { data } = await axiosInstance.put(`/cheques/${id}/return`, payload);
-  return data;
-};
-
-export const cashCheque = async ({ id, ...payload }) => {
-  const { data } = await axiosInstance.put(`/cheques/${id}/cash`, payload);
+export const updateChequeStatus = async ({ id, ...payload }) => {
+  const { data } = await axiosInstance.put(`/cheques/${id}/status`, payload);
   return data;
 };
 

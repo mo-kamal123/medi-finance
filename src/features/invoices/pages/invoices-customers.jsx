@@ -79,6 +79,26 @@ const InvoicesPage = () => {
       ),
     },
     {
+      header: 'Paid',
+      key: 'paidAmount',
+      type: 'custom',
+      render: (row) => (
+        <span className="font-semibold text-green-600">
+          {formatCurrency(row.paidAmount ?? 0)}
+        </span>
+      ),
+    },
+    {
+      header: 'Remaining',
+      key: 'remainingAmount',
+      type: 'custom',
+      render: (row) => (
+        <span className="font-semibold text-red-600">
+          {formatCurrency(row.remainingAmount ?? 0)}
+        </span>
+      ),
+    },
+    {
       header: 'Status',
       key: 'status',
       type: 'custom',

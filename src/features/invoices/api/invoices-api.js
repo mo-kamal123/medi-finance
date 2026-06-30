@@ -121,3 +121,10 @@ export const getProductsServices = async () => {
   const response = await axiosInstance.get('/products-services/dropdown');
   return normalizeInvoicesResponse(response.data);
 };
+
+export const payInvoice = async ({ id, ...payload }) => {
+  const { data } = await axiosInstance.post(`/invoices/${id}/pay`, payload, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return data;
+};

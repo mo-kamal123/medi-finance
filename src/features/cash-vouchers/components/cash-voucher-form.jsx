@@ -12,6 +12,9 @@ import { useBanks, useBankAccounts, useAllBankAccounts } from '../../banks/hooks
 import useCostTree from '../../tree/cost-tree/hooks/use-cost-tree';
 import { getInvoiceForCashVoucher } from '../api/cash-vouchers.api';
 import {
+  useCashVoucherStatuses,
+} from '../hooks/cash-vouchers.queries';
+import {
   useCreateCashVoucher,
   useUpdateCashVoucher,
 } from '../hooks/cash-vouchers.mutations';
@@ -23,7 +26,7 @@ import { cashVoucherSchema } from '../validation/cash-voucher.validation';
 
 const PAYMENT_MODE_OPTIONS = [
   { value: '1', label: 'شيك' },
-  { value: '2', label: 'نقدي' },
+  { value: '2', label: 'صندوق' },
   { value: '3', label: 'تحويل بنكي' },
 ];
 
@@ -42,12 +45,13 @@ const normalizeCollection = (value) => {
   return [];
 };
 
-const getDefaultFormValues = (defaultValues) => {
+const getDefaultFormValues = (defaultValues, initialPaymentMode) => {
   const mapped = mapCashVoucherToFormValues(defaultValues || {});
   return {
     isReceipt: mapped.isReceipt,
     date: mapped.date || '',
-    paymentModeId: mapped.paymentModeId || '1',
+    paymentModeId: initialPaymentMode || mapped.paymentModeId || '1',
+    statusId: mapped.statusId || '',
     bankId: mapped.bankId || '',
     bankAccountId: mapped.bankAccountId || '',
     checkNumber: mapped.checkNumber || '',
@@ -67,7 +71,7 @@ const voucherTypeOptions = [
   { value: 'payment', label: 'سند صرف' },
 ];
 
-const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
+const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode }) => {
   const navigate = useNavigate();
   const createMutation = useCreateCashVoucher();
   const updateMutation = useUpdateCashVoucher();
@@ -79,6 +83,7 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
   const { data: customers = [] } = useCustomers();
   const { data: suppliers = [] } = useSuppliers();
   const { data: costTree = [] } = useCostTree();
+  const { data: statuses = [] } = useCashVoucherStatuses();
 
   const {
     control,
@@ -87,7 +92,7 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
     setValue,
     formState: { errors },
   } = useForm({
-    defaultValues: getDefaultFormValues(defaultValues),
+    defaultValues: getDefaultFormValues(defaultValues, initialPaymentMode),
     resolver: zodResolver(cashVoucherSchema),
   });
 
@@ -101,6 +106,7 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
   const watchedBankId = useWatch({ control, name: 'bankId' });
   const watchedBankAccountId = useWatch({ control, name: 'bankAccountId' });
   const watchedPaymentModeId = useWatch({ control, name: 'paymentModeId' });
+  const watchedStatusId = useWatch({ control, name: 'statusId' });
   const watchedInvoiceNumber = useWatch({ control, name: 'invoiceNumber' });
 
   const [invoicePreview, setInvoicePreview] = useState(null);
@@ -108,9 +114,9 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
 
   useEffect(() => {
     if (defaultValues) {
-      reset(getDefaultFormValues(defaultValues));
+      reset(getDefaultFormValues(defaultValues, initialPaymentMode));
     }
-  }, [defaultValues, reset]);
+  }, [defaultValues, reset, initialPaymentMode]);
 
   const { data: bankAccountsData = [] } = useBankAccounts(watchedPaymentModeId === '1' ? watchedBankId : '');
 
@@ -127,6 +133,15 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
   const banks = useMemo(
     () => normalizeCollection(banksResponse),
     [banksResponse]
+  );
+
+  const statusOptions = useMemo(
+    () =>
+      (Array.isArray(statuses) ? statuses : []).map((s) => ({
+        value: String(s.id ?? s.Id ?? s.statusID ?? s.statusId),
+        label: s.name || s.nameAr || s.nameEn || '',
+      })),
+    [statuses]
   );
 
   const costCenterOptions = useMemo(
@@ -291,16 +306,23 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
     [bankAccounts, watchedBankAccountId]
   );
 
+  const selectedStatus = useMemo(
+    () => statusOptions.find((s) => s.value === watchedStatusId),
+    [statusOptions, watchedStatusId]
+  );
+
+  const successPath = initialPaymentMode === '2' ? '/cash-transactions' : '/cash-vouchers';
+
   const onSubmit = (data) => {
     const payload = buildCashVoucherPayload(data);
     if (isEditMode) {
       const id = defaultValues?.voucherID || defaultValues?.id;
       updateMutation.mutate({ id, ...payload }, {
-        onSuccess: () => navigate('/cash-vouchers'),
+        onSuccess: () => navigate(successPath),
       });
     } else {
       createMutation.mutate(payload, {
-        onSuccess: () => navigate('/cash-vouchers'),
+        onSuccess: () => navigate(successPath),
       });
     }
   };
@@ -397,6 +419,31 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
               </FormInput>
             )}
           />
+
+          {isEditMode || isViewMode ? (
+            <Controller
+              name="statusId"
+              control={control}
+              render={({ field }) => (
+                <FormInput
+                  as="select"
+                  label="حالة السند"
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  disabled={isViewMode}
+                >
+                  <option value="">اختر الحالة</option>
+                  {statusOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </FormInput>
+              )}
+            />
+          ) : (
+            <div />
+          )}
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -840,7 +887,9 @@ const CashVoucherForm = ({ defaultValues, mode = 'create' }) => {
           ) : null}
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
             <div className="text-sm text-gray-500">حالة السند</div>
-            <div className="mt-2 font-semibold text-gray-900">نشط</div>
+            <div className="mt-2 font-semibold text-gray-900">
+              {selectedStatus?.label || '-'}
+            </div>
           </div>
         </div>
 
