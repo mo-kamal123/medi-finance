@@ -115,7 +115,7 @@ const BanksPage = () => {
         </FormInput>
       </div>
 
-      <Table columns={columns} data={pagination.items} loading={isLoading} />
+      <Table columns={columns} data={pagination.items} loading={isLoading} onRowClick={(row) => navigate(`/banks/${row.bankID}`)} />
 
       <Pagination
         currentPage={pagination.currentPage}

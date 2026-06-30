@@ -119,7 +119,7 @@ const SuppliersPage = () => {
         />
       </div>
 
-      <Table columns={columns} data={suppliers} loading={isLoading} />
+      <Table columns={columns} data={suppliers} loading={isLoading} onRowClick={(row) => navigate(`/suppliers/${row.supplierID}`)} />
 
       <Pagination
         currentPage={pageNumber}

@@ -1,8 +1,9 @@
-﻿import { Link } from 'react-router-dom';
+﻿import { Link, useNavigate } from 'react-router-dom';
 import Table from '../../../shared/ui/table';
 import { Eye, Trash2 } from 'lucide-react';
 
 const CustomerTable = ({ data, onDelete }) => {
+  const navigate = useNavigate();
   const columns = [
     { header: 'الكود', key: 'customerCode' },
     { header: 'الاسم العربي', key: 'customerNameAr' },
@@ -48,7 +49,7 @@ const CustomerTable = ({ data, onDelete }) => {
     },
   ];
 
-  return <Table columns={columns} data={data} />;
+  return <Table columns={columns} data={data} onRowClick={(row) => navigate(`/customers/${row.customerID}`)} />;
 };
 
 export default CustomerTable;

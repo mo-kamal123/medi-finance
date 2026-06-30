@@ -168,7 +168,7 @@ const BatchInvoicesPage = () => {
         suppliers={suppliers}
       />
 
-      <Table columns={columns} data={items} loading={isLoading} />
+      <Table columns={columns} data={items} loading={isLoading} onRowClick={(row) => navigate(`/invoices/${row.invoiceID}`)} />
 
       <Pagination
         currentPage={filters.pageNumber}

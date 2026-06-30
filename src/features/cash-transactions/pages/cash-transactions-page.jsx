@@ -103,7 +103,7 @@ const CashTransactionsPage = () => {
         </FormInput>
       </div>
 
-      <Table columns={columns} data={items} loading={isLoading} />
+      <Table columns={columns} data={items} loading={isLoading} onRowClick={(row) => navigate(`/cash-transactions/${row.journalEntryID}`)} />
 
       <Pagination
         currentPage={filters.pageNumber}
