@@ -1,16 +1,20 @@
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { DollarSign } from 'lucide-react';
 import PageLoader from '../../../shared/ui/page-loader';
 import JournalEntryForm from '../../entries/components/journal-entry-form';
 import { useJournalEntry } from '../../entries/hooks/entries.queries';
 import InvoiceForm from '../components/invoice-form';
+import PayInvoiceModal from '../components/pay-invoice-modal';
 import { useUpdateInvoice } from '../hooks/invoices.mutations';
 import { useInvoice } from '../hooks/invoices.queries';
 
 const EditInvoice = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
 
-  const { data: invoice, isLoading: isFetching } = useInvoice(id);
+  const { data: invoice, isLoading: isFetching, refetch } = useInvoice(id);
 
   const journalEntryId =
     invoice?.journalEntryID || invoice?.journalEntry?.journalEntryID || null;
@@ -19,6 +23,10 @@ const EditInvoice = () => {
     useJournalEntry(journalEntryId);
 
   const updateInvoiceMutation = useUpdateInvoice();
+
+  const remainingAmount =
+    invoice?.remainingAmount ??
+    (invoice?.netAmount ?? 0) - (invoice?.paidAmount ?? 0);
 
   const handleUpdate = async (data) => {
     try {
@@ -45,12 +53,28 @@ const EditInvoice = () => {
 
   return (
     <div className="min-h-screen space-y-8 bg-gray-50 p-6 md:p-10">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">تعديل الفاتورة</h1>
-        <p className="mt-1 text-gray-500">
-          قم بتحديث بيانات الفاتورة ثم احفظ التغييرات.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">تعديل الفاتورة</h1>
+          <p className="mt-1 text-gray-500">
+            قم بتحديث بيانات الفاتورة ثم احفظ التغييرات.
+          </p>
+        </div>
+        <button
+          onClick={() => setIsPayModalOpen(true)}
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white"
+        >
+          <DollarSign size={18} /> دفع الفاتورة
+        </button>
       </div>
+
+      <PayInvoiceModal
+        invoiceId={id}
+        remainingAmount={remainingAmount}
+        isOpen={isPayModalOpen}
+        onClose={() => setIsPayModalOpen(false)}
+        onSuccess={refetch}
+      />
 
       <InvoiceForm
         initialData={invoice}
