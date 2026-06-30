@@ -17,6 +17,7 @@ export const chequeSchema = z
     collectionAccountID: z.string().optional().default(''),
     counterAccountID: z.string().optional().default(''),
     invoiceID: z.string().optional().default(''),
+    statusID: z.string().optional().default(''),
     isNonCashable: z.boolean().optional().default(false),
     isBearerOnly: z.boolean().optional().default(false),
     hasAttachmentPage: z.boolean().optional().default(false),

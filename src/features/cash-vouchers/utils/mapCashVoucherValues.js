@@ -16,6 +16,7 @@ export const buildCashVoucherPayload = (formData) => {
   const payload = {
     isReceipt: formData.isReceipt,
     paymentModeId,
+    statusId: formData.statusId ? Number(formData.statusId) : null,
     description: firstDetail.notes || '',
     date: toApiDateTime(formData.date),
     name: firstDetail.partyName || '',
@@ -75,10 +76,24 @@ export const mapCashVoucherToFormValues = (defaultValues = {}) => {
       defaultValues?.voucherId ??
       defaultValues?.id ??
       '',
-    paymentModeId:
-      defaultValues?.paymentModeId != null
-        ? String(defaultValues.paymentModeId)
-        : '1',
+    statusId:
+      defaultValues?.statusId != null
+        ? String(defaultValues.statusId)
+        : defaultValues?.status != null
+          ? String(defaultValues.status)
+          : '',
+    paymentModeId: (() => {
+      if (defaultValues?.paymentModeId != null) return String(defaultValues.paymentModeId);
+      if (defaultValues?.paymentMode != null) {
+        const modeMap = {
+          Check: '1',
+          Cash: '2',
+          BankTransfer: '3',
+        };
+        return modeMap[defaultValues.paymentMode] || '1';
+      }
+      return '1';
+    })(),
     bankId:
       defaultValues?.bankId != null
         ? String(defaultValues.bankId)

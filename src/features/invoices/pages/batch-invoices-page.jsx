@@ -88,6 +88,26 @@ const BatchInvoicesPage = () => {
         ),
       },
       {
+        header: 'المدفوع',
+        key: 'paidAmount',
+        type: 'custom',
+        render: (row) => (
+          <span className="font-semibold text-green-600">
+            {formatCurrency(row.paidAmount ?? 0)}
+          </span>
+        ),
+      },
+      {
+        header: 'المتبقي',
+        key: 'remainingAmount',
+        type: 'custom',
+        render: (row) => (
+          <span className="font-semibold text-red-600">
+            {formatCurrency(row.remainingAmount ?? 0)}
+          </span>
+        ),
+      },
+      {
         header: 'الحالة',
         key: 'status',
         type: 'custom',

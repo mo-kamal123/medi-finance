@@ -14,6 +14,7 @@ import {
   useChequeCustomers,
   useChequeSuppliers,
   useChequeCurrencies,
+  useChequeStatuses,
 } from '../hooks/cheques.queries';
 import { chequeSchema } from '../validation/cheque.validation';
 
@@ -49,6 +50,7 @@ const getInitialValues = (defaultValues) => ({
   isBearerOnly: defaultValues?.isBearerOnly ?? false,
   hasAttachmentPage: defaultValues?.hasAttachmentPage ?? false,
   beneficiaryName: defaultValues?.beneficiaryName ?? '',
+  statusID: defaultValues?.statusID ? String(defaultValues.statusID) : '',
   branchName: defaultValues?.branchName ?? '',
   bankBranchName: defaultValues?.bankBranchName ?? '',
   cardNumber: defaultValues?.cardNumber ?? '',
@@ -151,7 +153,7 @@ const getInvoiceParty = (invoice) => {
   return null;
 };
 
-const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending }) => {
+const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, onStatusChange, isStatusUpdating }) => {
   const navigate = useNavigate();
   const createMutation = useCreateCheque();
   const [invoiceParty, setInvoiceParty] = useState(null);
@@ -159,6 +161,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending }) => 
   const { data: suppliers = [] } = useChequeSuppliers();
   const { data: banks = [] } = useChequeBanks();
   const { data: currencies = [] } = useChequeCurrencies();
+  const { data: statuses = [] } = useChequeStatuses();
   const isViewMode = mode === 'view';
 
   const formDefaults = useMemo(
@@ -191,6 +194,14 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending }) => 
   );
   const bankOptions = toOptions(banks, 'bankID', 'bankNameAr');
   const currencyOptions = toOptions(currencies, 'currencyID', 'currencyNameAr');
+  const statusOptions = useMemo(
+    () =>
+      (Array.isArray(statuses) ? statuses : []).map((s) => ({
+        value: String(s.id ?? s.Id ?? s.statusID ?? s.statusId),
+        label: s.NameAr || s.nameAr || s.Name || s.name || '',
+      })),
+    [statuses]
+  );
 
   const handleFormSubmit = (data) => {
     const payload = buildPayload(data);
@@ -287,6 +298,14 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending }) => 
           {renderDate('dueDate', 'تاريخ الاستحقاق')}
 
           {renderDate('voucherDate', 'تاريخ القيد')}
+
+          {renderSelect('statusID', 'الحالة', [
+            { value: '', label: 'اختر الحالة' },
+            ...statusOptions,
+          ], {
+            onChange: (val) => onStatusChange?.(val),
+            disabled: isStatusUpdating,
+          })}
         </div>
 
         <SectionHeader title="بيانات العميل والبنك والعملة" />

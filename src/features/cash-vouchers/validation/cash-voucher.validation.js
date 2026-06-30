@@ -22,6 +22,7 @@ export const cashVoucherSchema = z
     isReceipt: z.boolean(),
     date: z.string().min(1, 'تاريخ السند مطلوب'),
     paymentModeId: z.coerce.number(),
+    statusId: z.string().optional().default(''),
     bankId: z.string().optional().default(''),
     bankAccountId: z.string().optional().default(''),
     checkNumber: z.string().optional().default(''),

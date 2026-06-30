@@ -33,6 +33,11 @@ export const updateCashVoucher = async ({ id, ...payload }) => {
   return data;
 };
 
+export const getCashVoucherStatuses = async () => {
+  const { data } = await axiosInstance.get('/cash-vouchers/statuses');
+  return Array.isArray(data) ? data : data?.data || [];
+};
+
 export const getInvoiceForCashVoucher = async (invoiceNumber) => {
   const { data } = await axiosInstance.get(
     `/cash-vouchers/invoice-details/${invoiceNumber}`

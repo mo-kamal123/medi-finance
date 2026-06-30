@@ -7,7 +7,7 @@ import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
 import { matchesSearch, paginateItems } from '../../../shared/utils/list-utils';
 import { formatDate } from '../../../shared/utils/formatters';
-import { useCheques, useChequeStatuses } from '../hooks/cheques.queries';
+import { usePendingCheques, useChequeStatuses } from '../hooks/cheques.queries';
 import { useDeleteCheque } from '../hooks/cheques.mutations';
 
 const transactionTypeOptions = [
@@ -23,7 +23,7 @@ const ChequesPage = () => {
   const [search, setSearch] = useState('');
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const { data = [], isLoading } = useCheques(
+  const { data = [], isLoading } = usePendingCheques(
     Object.assign(
       {},
       status ? { status } : {},
