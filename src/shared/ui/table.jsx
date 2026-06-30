@@ -10,6 +10,7 @@ const Table = ({
   onChange,
   onDelete,
   footer,
+  onRowClick,
   emptyMessage = 'لا توجد بيانات',
 }) => {
   const colSpan = columns.length + (onDelete ? 1 : 0);
@@ -42,7 +43,8 @@ const Table = ({
             data.map((row, rowIndex) => (
               <tr
                 key={rowIndex}
-                className="even:bg-gray-50/40 transition-colors hover:bg-gray-50"
+                onClick={() => onRowClick?.(row)}
+                className={`even:bg-gray-50/40 transition-colors hover:bg-gray-50 ${onRowClick ? 'cursor-pointer' : ''}`}
               >
                 {columns.map((col, colIndex) => (
                   <td

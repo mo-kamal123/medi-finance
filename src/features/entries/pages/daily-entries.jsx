@@ -207,7 +207,7 @@ const DailyEntriesPage = () => {
       <JournalEntryFilters filters={filters} setFilters={setFilters} />
 
       <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-        <Table columns={columns} data={entries} loading={isLoading} />
+        <Table columns={columns} data={entries} loading={isLoading} onRowClick={(row) => navigate(`/entries/${row.journalEntryID}`)} />
       </div>
 
       <Pagination
