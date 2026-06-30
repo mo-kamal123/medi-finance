@@ -18,6 +18,7 @@ import {
 import SidebarItem from '../ui/sidebar-item';
 import { useSelector } from 'react-redux';
 import logo from '../../app/assets/logo.png';
+import khusum from '../../app/assets/Khusm Logo (1).png';
 
 const Sidebar = () => {
   const [active, setActive] = useState(null);
@@ -65,16 +66,6 @@ const Sidebar = () => {
       name: 'الأوراق التجارية',
       icon: CreditCard,
       sub: [
-        // {
-        //   name: 'أوراق القبض',
-        //   link: '/commercial-papers/receivable',
-        //   icon: FileCheck,
-        // },
-        // {
-        //   name: 'أوراق الدفع',
-        //   link: '/commercial-papers/payable',
-        //   icon: FileText,
-        // },
         { name: 'الشيكات', link: '/cheques', icon: CreditCard },
       ],
     },
@@ -108,19 +99,19 @@ const Sidebar = () => {
   return (
     <aside
       className={`
-    bg-primary h-screen shrink-0 text-white
-    transition-all duration-300 ease-in-out overflow-hidden
-    ${openSidebar ? 'w-72 p-4 shadow-2xl' : 'w-0 p-0'}
-  `}
+        bg-primary h-screen shrink-0 text-white flex flex-col
+        transition-all duration-300 ease-in-out overflow-hidden
+        ${openSidebar ? 'w-72 p-4 shadow-2xl' : 'w-0 p-0'}
+      `}
     >
       <div
-        className={`${openSidebar ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+        className={`${openSidebar ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300 flex flex-col flex-1`}
       >
         <div className="mb-6 flex items-center justify-start gap-2 px-2">
           <img src={logo} alt="logo" className="w-100" />
         </div>
 
-        <ul className="space-y-1">
+        <ul className="space-y-1 flex-1">
           {links.map((link) => (
             <SidebarItem
               key={link.name}
@@ -132,6 +123,11 @@ const Sidebar = () => {
             />
           ))}
         </ul>
+
+        <div className="pt-4 flex flex-col items-end justify-center gap-2 px-2">
+          <p className="text-2xl text-white font-bold">powered by</p>
+          <img src={khusum} alt="logo" className="w-100" />
+        </div>
       </div>
     </aside>
   );
