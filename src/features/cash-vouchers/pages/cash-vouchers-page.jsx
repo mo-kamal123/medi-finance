@@ -125,7 +125,7 @@ const CashVouchersPage = () => {
 
       <CashVoucherFilters filters={filters} setFilters={setFilters} />
 
-      <Table columns={columns} data={vouchers} loading={isLoading} />
+      <Table columns={columns} data={vouchers} loading={isLoading} onRowClick={(row) => navigate(`/cash-vouchers/${row.voucherID || row.id}`)} />
 
       <Pagination
         currentPage={currentPage}

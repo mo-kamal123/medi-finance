@@ -166,7 +166,7 @@ const ChequesPage = () => {
         />
       </div>
 
-      <Table columns={columns} data={pagination.items} loading={isLoading} />
+      <Table columns={columns} data={pagination.items} loading={isLoading} onRowClick={(row) => navigate(`/cheques/${row.chequeID}`)} />
 
       <Pagination
         currentPage={pagination.currentPage}
