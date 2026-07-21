@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react';
-import { Download, Link, PlusIcon, RefreshCw } from 'lucide-react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Download, Link, PlusIcon, RefreshCw, Search } from 'lucide-react';
 import TreeNode from '../../components/tree-node';
 import { filterTree } from '../../utils/filterTree';
 import SearchFilter from '../../../../shared/components/search-filter';
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from '../../../../shared/ui/modal';
-import useAccountsTree from '../hooks/use-accounts-tree';
+import useAccountRoots from '../hooks/use-account-roots';
+import { getAccountChildren } from '../api/accounts-tree';
 
 const flattenTree = (nodes) => {
   const result = [];
@@ -22,25 +23,40 @@ const flattenTree = (nodes) => {
 const AccountsTree = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
-  const [expandedAll, setExpandedAll] = useState(false);
+  const [expandedAll, setExpandedAll] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
-  const { data: accountsTree = [], isPending, isError } = useAccountsTree();
+  const [childrenCache, setChildrenCache] = useState({});
+  const [loadingNodes, setLoadingNodes] = useState({});
+  const pendingRef = useRef({});
+
+  const { data: roots = [], isLoading: rootsLoading } = useAccountRoots({ isActive: true });
   const navigate = useNavigate();
 
-  const allAccounts = useMemo(() => flattenTree(accountsTree), [accountsTree]);
+  const attachChildren = (nodes, cache) =>
+    nodes.map((node) => ({
+      ...node,
+      children: node.hasChildren && cache[node.accountID]
+        ? attachChildren(cache[node.accountID], cache)
+        : (node.children ?? []),
+    }));
+
+  const treeWithChildren = useMemo(
+    () => attachChildren(roots, childrenCache),
+    [roots, childrenCache]
+  );
+
+  const allAccounts = useMemo(() => flattenTree(treeWithChildren), [treeWithChildren]);
 
   const filteredTree = useMemo(() => {
-    return filterTree(accountsTree, searchQuery, filterType);
-  }, [accountsTree, searchQuery, filterType]);
+    return filterTree(treeWithChildren, searchQuery, filterType);
+  }, [treeWithChildren, searchQuery, filterType]);
 
-  // Get unique account types for filter
   const accountTypes = useMemo(() => {
     const types = new Set(allAccounts.map((acc) => acc.accountType));
     return Array.from(types).sort();
   }, [allAccounts]);
 
-  // Count statistics
   const stats = useMemo(() => {
     const total = allAccounts.length;
     const active = allAccounts.filter((acc) => acc.isActive).length;
@@ -48,9 +64,26 @@ const AccountsTree = () => {
       acc[type] = allAccounts.filter((t) => t.accountType === type).length;
       return acc;
     }, {});
-
     return { total, active, byType };
   }, [allAccounts, accountTypes]);
+
+  const handleExpand = useCallback(async (node) => {
+    const id = node.accountID;
+    if (!node.hasChildren) return;
+    if (pendingRef.current[id]) return;
+
+    pendingRef.current[id] = true;
+    setLoadingNodes((prev) => ({ ...prev, [id]: true }));
+    try {
+      const data = await getAccountChildren(id);
+      setChildrenCache((prev) => ({ ...prev, [id]: data }));
+    } finally {
+      setLoadingNodes((prev) => ({ ...prev, [id]: false }));
+      delete pendingRef.current[id];
+    }
+  }, []);
+
+  const isLoading = useCallback((node) => !!loadingNodes[node.accountID], [loadingNodes]);
 
   const editAccount = (account) => {
     navigate(`${account.id}`);
@@ -64,8 +97,10 @@ const AccountsTree = () => {
     setSelectedNode(account);
     setModalOpen(true);
   };
+
   const handleConfirmDisable = () => {
-    console.log('تم تعطيل:');
+    console.log('تم تعطيل:', selectedNode);
+    setModalOpen(false);
   };
 
   return (
@@ -143,7 +178,7 @@ const AccountsTree = () => {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">عرض الشجرة</h2>
             <button
-              onClick={() => setExpandedAll(!expandedAll)}
+              onClick={() => setExpandedAll((prev) => !prev)}
               className="text-sm text-primary hover:text-primary/80 font-medium"
             >
               {expandedAll ? 'طي الكل' : 'توسيع الكل'}
@@ -152,17 +187,24 @@ const AccountsTree = () => {
         </div>
 
         <div className="p-4 max-h-150 overflow-y-auto">
-          {filteredTree.length > 0 ? (
+          {rootsLoading ? (
+            <div className="flex items-center justify-center py-12 text-gray-400">
+              <RefreshCw size={24} className="animate-spin ml-2" />
+              جاري تحميل الحسابات...
+            </div>
+          ) : filteredTree.length > 0 ? (
             <div className="space-y-1">
               {filteredTree.map((account) => (
                 <TreeNode
-                  key={account.id}
+                  key={account.accountID}
                   node={account}
                   expandedAll={expandedAll}
                   getLabel={(a) => a.nameAr}
                   getCode={(a) => a.accountCode}
                   getChildren={(a) => a.children}
                   getParentId={(a) => a.parentId}
+                  onExpand={handleExpand}
+                  isLoading={isLoading}
                   actions={[
                     { label: 'تعديل الحساب', onClick: editAccount },
                     { label: 'إضافة حساب فرعي', onClick: addSubAccount },

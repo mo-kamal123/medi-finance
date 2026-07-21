@@ -9,13 +9,6 @@ export const suppliersRoutes = [
     ),
   },
   {
-    path: '/suppliers/new',
-    element: lazyPage(
-      () => import('../pages/supplier-create'),
-      'جاري تحميل نموذج المورد...'
-    ),
-  },
-  {
     path: '/suppliers/:id',
     element: lazyPage(
       () => import('../pages/supplier-details'),

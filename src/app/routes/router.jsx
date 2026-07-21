@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { authRoutes } from '../../features/auth/routes/routes';
 import { agingReportRoutes } from '../../features/aging-report/routes/routes';
 import { balanceSheetRoutes } from '../../features/balance-sheet/routes/routes';
+import { incomeStatementRoutes } from '../../features/income-statement/routes/routes';
 import { banksRoutes } from '../../features/banks/routes/routes';
 import { cashTransactionsRoutes } from '../../features/cash-transactions/routes/routes';
 import chequesRoutes from '../../features/cheques/routes/routes';
@@ -52,6 +53,7 @@ export const router = createBrowserRouter([
       ...generalLedgerRoutes,
       ...trialBalanceRoutes,
       ...balanceSheetRoutes,
+      ...incomeStatementRoutes,
       ...customersRoutes,
       ...suppliersRoutes,
       ...CommercialPapersRoutes,

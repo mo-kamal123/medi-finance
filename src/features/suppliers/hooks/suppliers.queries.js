@@ -1,5 +1,4 @@
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { getErrorMessage, toast } from '../../../shared/lib/toast';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import * as api from '../api/suppliers.api';
 import { suppliersKeys } from './suppliers.keys';
 
@@ -10,61 +9,37 @@ export const useSuppliers = (filters) =>
     placeholderData: keepPreviousData,
   });
 
-export const useSupplierTypes = () =>
-  useQuery({
-    queryKey: ['supplier-types'],
-    queryFn: api.getSupplierTypes,
-  });
-
 export const useSupplier = (id) =>
   useQuery({
     queryKey: suppliersKeys.detail(id),
-    queryFn: () => api.getSupplier(id).then((res) => res.data),
+    queryFn: () => api.getSupplier(id),
     enabled: !!id,
   });
 
-export const useCreateSupplier = () => {
-  const qc = useQueryClient();
-
-  return useMutation({
-    mutationFn: api.createSupplier,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: suppliersKeys.all });
-      toast.success('تم إنشاء المورد بنجاح');
-    },
-    onError: (error) => {
-      toast.error(getErrorMessage(error, 'تعذر إنشاء المورد'));
-    },
+export const useSupplierStatuses = () =>
+  useQuery({
+    queryKey: ['suppliers', 'statuses'],
+    queryFn: api.getSupplierStatuses,
+    staleTime: 5 * 60 * 1000,
   });
-};
 
-export const useDeleteSupplier = () => {
-  const qc = useQueryClient();
-
-  return useMutation({
-    mutationFn: api.deleteSupplier,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: suppliersKeys.all });
-      toast.success('تم حذف المورد بنجاح');
-    },
-    onError: (error) => {
-      toast.error(getErrorMessage(error, 'تعذر حذف المورد'));
-    },
+export const useProviderClasses = () =>
+  useQuery({
+    queryKey: ['suppliers', 'provider-classes'],
+    queryFn: api.getProviderClasses,
+    staleTime: 5 * 60 * 1000,
   });
-};
 
-export const useUpdateSupplier = () => {
-  const qc = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, data }) => api.updateSupplier(id, data),
-    onSuccess: (_, variables) => {
-      qc.invalidateQueries({ queryKey: suppliersKeys.all });
-      qc.invalidateQueries({ queryKey: suppliersKeys.detail(variables.id) });
-      toast.success('تم تحديث المورد بنجاح');
-    },
-    onError: (error) => {
-      toast.error(getErrorMessage(error, 'تعذر تحديث المورد'));
-    },
+export const useImportanceLevels = () =>
+  useQuery({
+    queryKey: ['suppliers', 'importance-levels'],
+    queryFn: api.getImportanceLevels,
+    staleTime: 5 * 60 * 1000,
   });
-};
+
+export const useGovernorates = () =>
+  useQuery({
+    queryKey: ['suppliers', 'governorates'],
+    queryFn: api.getGovernorates,
+    staleTime: 5 * 60 * 1000,
+  });

@@ -9,13 +9,6 @@ export const customersRoutes = [
     ),
   },
   {
-    path: '/customers/new',
-    element: lazyPage(
-      () => import('../pages/new-customer'),
-      'جاري تحميل نموذج العميل...'
-    ),
-  },
-  {
     path: '/customers/:id',
     element: lazyPage(
       () => import('../pages/customer-details'),

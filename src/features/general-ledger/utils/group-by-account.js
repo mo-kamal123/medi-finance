@@ -1,10 +1,11 @@
 export const groupByAccount = (data) => {
   return data.reduce((acc, item) => {
-    if (!acc[item.AccountID]) {
-      acc[item.AccountID] = [];
+    const key = item.accountID ?? item.AccountID;
+    if (!acc[key]) {
+      acc[key] = [];
     }
 
-    acc[item.AccountID].push(item);
+    acc[key].push(item);
     return acc;
   }, {});
 };

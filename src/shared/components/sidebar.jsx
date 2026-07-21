@@ -13,6 +13,7 @@ import {
   FileClock,
   CreditCard,
   Wallet,
+  Banknote,
 } from 'lucide-react';
 
 import SidebarItem from '../ui/sidebar-item';
@@ -75,7 +76,10 @@ const Sidebar = () => {
       sub: [
         { name: 'أعمار الذمم', link: '/aging-report', icon: BookOpen },
         { name: 'حساب الأستاذ', link: '/general-ledger', icon: BookOpen },
+        { name: 'كشف حساب مورد', link: '/general-ledger/supplier', icon: Users },
+        { name: 'كشف حساب عميل', link: '/general-ledger/customer', icon: Users },
         { name: 'ميزان المراجعة', link: '/trial-balance', icon: Scale },
+        { name: 'قائمة الدخل', link: '/income-statement', icon: Banknote },
         { name: 'الميزانية العمومية', link: '/balance-sheet', icon: Wallet },
       ],
     },

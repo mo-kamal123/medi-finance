@@ -8,4 +8,18 @@ export const generalLedgerRoutes = [
       'جاري تحميل الأستاذ العام...'
     ),
   },
+  {
+    path: '/general-ledger/supplier',
+    element: lazyPage(
+      () => import('../pages/supplier-account-statement'),
+      'جاري تحميل كشف حساب المورد...'
+    ),
+  },
+  {
+    path: '/general-ledger/customer',
+    element: lazyPage(
+      () => import('../pages/customer-account-statement'),
+      'جاري تحميل كشف حساب العميل...'
+    ),
+  },
 ];
