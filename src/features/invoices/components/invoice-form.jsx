@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+﻿import React, { useEffect, useRef } from 'react';
 import { Controller, useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2 } from 'lucide-react';
@@ -476,7 +476,7 @@ const InvoiceForm = ({
         </div>
 
         <div className="hidden max-w-full overflow-x-auto lg:block">
-          <table className="min-w-max overflow-hidden rounded-lg border border-gray-200 text-sm">
+          <table className="w-full overflow-hidden rounded-lg border border-gray-200 text-sm">
             <thead className="bg-primary/90 text-white">
               <tr>
                 <th className="p-3 text-right">الخدمة</th>
@@ -512,7 +512,7 @@ const InvoiceForm = ({
                       ) : null}
                     </td>
 
-                    <td className="min-w-[120px] p-2">
+                    <td className="min-w-30 p-2">
                       {renderDetailNumberInput('quantity', index)}
                       {detailErrors?.quantity?.message ? (
                         <p className="mt-1 text-xs text-red-500">
@@ -521,7 +521,7 @@ const InvoiceForm = ({
                       ) : null}
                     </td>
 
-                    <td className="min-w-[140px] p-2">
+                    <td className="min-w-30 p-2">
                       {renderDetailNumberInput('unitPrice', index)}
                       {detailErrors?.unitPrice?.message ? (
                         <p className="mt-1 text-xs text-red-500">
@@ -530,7 +530,7 @@ const InvoiceForm = ({
                       ) : null}
                     </td>
 
-                    <td className="min-w-[120px] p-2">
+                    <td className="min-w-30 p-2">
                       {renderDetailNumberInput('discountPercentage', index)}
                       {detailErrors?.discountPercentage?.message ? (
                         <p className="mt-1 text-xs text-red-500">
@@ -539,7 +539,7 @@ const InvoiceForm = ({
                       ) : null}
                     </td>
 
-                    <td className="min-w-[120px] p-2">
+                    <td className="min-w-30 p-2">
                       {renderDetailNumberInput('taxPercentage', index)}
                       {detailErrors?.taxPercentage?.message ? (
                         <p className="mt-1 text-xs text-red-500">
@@ -548,7 +548,7 @@ const InvoiceForm = ({
                       ) : null}
                     </td>
 
-                    <td className="min-w-[140px] p-3 font-semibold text-gray-700">
+                    <td className="min-w-30 p-3 font-semibold text-gray-700">
                       {formatCurrency(rowTotal)}
                     </td>
 

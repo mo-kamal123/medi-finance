@@ -1,31 +1,59 @@
-﻿import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Eye, Plus, Trash2 } from 'lucide-react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronDown, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import FormInput from '../../../shared/ui/input';
-import SearchableSelect from '../../../shared/ui/searchable-select';
+import NormalSelect from '../../../shared/ui/NormalSelect';
 import PageLoader from '../../../shared/ui/page-loader';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
-import ConfirmModal from '../../../shared/ui/modal';
 import { useDebounce } from '../../../shared/lib/use-debounce';
-import { useSuppliers, useDeleteSupplier } from '../hooks/suppliers.queries';
+import {
+  useSuppliers,
+  useSupplierStatuses,
+  useProviderClasses,
+  useImportanceLevels,
+  useGovernorates,
+} from '../hooks/suppliers.queries';
 
-const ACTIVE_OPTIONS = [
-  { value: '', label: 'الكل' },
-  { value: 'true', label: 'نشط' },
-  { value: 'false', label: 'غير نشط' },
+const StatusBadge = ({ statusName }) => {
+  const colors = {
+    Active: 'bg-emerald-100 text-emerald-700',
+    Deactive: 'bg-red-100 text-red-700',
+    Hold: 'bg-amber-100 text-amber-700',
+  };
+  const color = colors[statusName] || 'bg-gray-100 text-gray-700';
+  return (
+    <span className={`px-3 py-1 rounded-full text-xs font-medium ${color}`}>
+      {statusName || 'Unknown'}
+    </span>
+  );
+};
+
+const Columns = [
+  { header: 'الكود', key: 'supplierCode' },
+  { header: 'الاسم العربي', key: 'supplierNameAr' },
+  { header: 'الاسم الانجليزي', key: 'supplierNameEn' },
+  { header: 'التصنيف', key: 'categoryName' },
+  { header: 'الفئة', key: 'providerClassName' },
+  { header: 'مستوى الأهمية', key: 'importanceLevelName' },
+  { header: 'المقر الرئيسي', key: 'headQuarterGovernorateName' },
+  {
+    header: 'الحالة', key: 'statusName', type: 'custom',
+    render: (row) => <StatusBadge statusName={row.statusName} />,
+  },
 ];
 
 const SuppliersPage = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [isActive, setIsActive] = useState('');
+  const [status, setStatus] = useState(null);
+  const [providerClass, setProviderClass] = useState(null);
+  const [importanceLevel, setImportanceLevel] = useState(null);
+  const [governorateId, setGovernorateId] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const { mutate: deleteSupplier } = useDeleteSupplier();
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const debouncedSearchTerm = useDebounce(search, 500);
   const isFirstRender = useRef(true);
@@ -39,114 +67,167 @@ const SuppliersPage = () => {
     setPageNumber(1);
   }, [debouncedSearchTerm]);
 
+  const activeFilterCount = useMemo(
+    () =>
+      [status, providerClass, importanceLevel, governorateId].filter(
+        (v) => v !== null && v !== ''
+      ).length,
+    [status, providerClass, importanceLevel, governorateId]
+  );
+
+  const handleReset = () => {
+    setSearch('');
+    setDebouncedSearch('');
+    setStatus(null);
+    setProviderClass(null);
+    setImportanceLevel(null);
+    setGovernorateId(null);
+    setPageNumber(1);
+    setShowAdvanced(false);
+  };
+
+  const { data: statuses = [] } = useSupplierStatuses();
+  const { data: providerClasses = [] } = useProviderClasses();
+  const { data: importanceLevels = [] } = useImportanceLevels();
+  const { data: governorates = [] } = useGovernorates();
+
   const { data: response, isLoading } = useSuppliers({
     search: debouncedSearch || undefined,
-    isActive: isActive || undefined,
+    status: status ?? undefined,
+    providerClass: providerClass ?? undefined,
+    importanceLevel: importanceLevel ?? undefined,
+    governorateId: governorateId ?? undefined,
     pageNumber,
     pageSize,
   });
 
   const { items: suppliers = [], totalPages = 1 } = response || {};
 
-  const columns = [
-    { header: 'الكود', key: 'supplierCode' },
-    { header: 'الاسم العربي', key: 'supplierNameAr' },
-    { header: 'الاسم الانجليزي', key: 'supplierNameEn' },
-    { header: 'الشخص المسؤول', key: 'contactPerson' },
-    { header: 'الموبايل', key: 'phone' },
-    { header: 'البريد الالكتروني', key: 'email' },
-    {
-      header: 'نوع المورد', key: 'supplierType', type: 'custom',
-      render: (row) => (row.supplierType === 1 ? 'مورد' : 'مورد نقدي'),
-    },
-    {
-      header: 'مدة السداد', key: 'paymentTermDays', type: 'custom',
-      render: (row) => `${row.paymentTermDays} يوم`,
-    },
-    {
-      header: 'الحالة', key: 'isActive', type: 'custom',
-      render: (row) => (
-        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-          row.isActive
-            ? 'bg-emerald-100 text-emerald-700'
-            : 'bg-red-100 text-red-700'
-        }`}>
-          {row.isActive ? 'نشط' : 'غير نشط'}
-        </span>
-      ),
-    },
-    {
-      header: 'الإجراءات', key: 'actions', type: 'custom',
-      render: (row) => (
-        <div className="flex items-center gap-3">
-          <Link to={`/suppliers/${row.supplierID}`} className="text-blue-600 transition-colors hover:text-blue-800" title="عرض">
-            <Eye size={18} />
-          </Link>
-          <button onClick={() => setDeleteTarget(row)} className="text-red-600 transition-colors hover:text-red-800" title="حذف">
-            <Trash2 size={18} />
-          </button>
-        </div>
-      ),
-    },
-  ];
-
   if (isLoading) return <PageLoader label="جاري تحميل الموردين..." />;
 
   return (
     <div className="space-y-4 p-6">
-      <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-        <div>
-          <h1 className="text-2xl font-bold">الموردين</h1>
-          <p className="text-sm text-gray-600">إدارة جميع الموردين بسهولة</p>
+      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+        <h1 className="text-2xl font-bold">الموردين</h1>
+        <p className="text-sm text-gray-600">إدارة جميع الموردين</p>
+      </div>
+
+      <div className="space-y-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <FormInput
+            label="بحث"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="ابحث بالكود أو الاسم أو الهاتف"
+            autoFocus
+          />
+          <NormalSelect
+            label="الحالة"
+            options={statuses.map((s) => ({
+              value: s.id,
+              label: s.nameAr || s.name,
+            }))}
+            value={status}
+            onChange={(event) => {
+              setStatus(event.target.value || null);
+              setPageNumber(1);
+            }}
+            isClearable
+          />
+          <NormalSelect
+            label="فئة المورد"
+            options={providerClasses.map((p) => ({
+              value: p.id,
+              label: p.name,
+            }))}
+            value={providerClass}
+            onChange={(event) => {
+              setProviderClass(event.target.value || null);
+              setPageNumber(1);
+            }}
+            isClearable
+          />
+          <NormalSelect
+            label="مستوى الأهمية"
+            options={importanceLevels.map((l) => ({
+              value: l.id,
+              label: l.name,
+            }))}
+            value={importanceLevel}
+            onChange={(event) => {
+              setImportanceLevel(event.target.value || null);
+              setPageNumber(1);
+            }}
+            isClearable
+          />
         </div>
-        <button onClick={() => navigate('/suppliers/new')} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary/90">
-          <Plus size={16} /> مورد جديد
-        </button>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((prev) => !prev)}
+            className="inline-flex items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-primary/80"
+          >
+            <SlidersHorizontal size={16} />
+            <span>فلاتر إضافية</span>
+            {activeFilterCount > 0 ? (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                {activeFilterCount}
+              </span>
+            ) : null}
+            <ChevronDown
+              size={16}
+              className={`transition-transform ${showAdvanced ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {activeFilterCount > 0 ? (
+            <button
+              type="button"
+              onClick={handleReset}
+              className="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
+            >
+              <RotateCcw size={16} />
+              مسح الفلاتر
+            </button>
+          ) : null}
+        </div>
+
+        {showAdvanced ? (
+          <div className="grid grid-cols-1 gap-4 border-t border-gray-100 pt-4 md:grid-cols-2 lg:grid-cols-4">
+            <NormalSelect
+              label="المحافظة"
+              options={governorates.map((g) => ({
+                value: g.id,
+                label: g.nameAr,
+              }))}
+              value={governorateId}
+              onChange={(event) => {
+                setGovernorateId(event.target.value || null);
+                setPageNumber(1);
+              }}
+              isClearable
+            />
+          </div>
+        ) : null}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:grid-cols-2">
-        <FormInput label="بحث" value={search} onChange={(e) => setSearch(e.target.value)}
-          placeholder="ابحث بالكود أو الاسم أو الهاتف" autoFocus />
-        <SearchableSelect
-          label="الحالة"
-          value={isActive}
-          onChange={(event) => {
-            setIsActive(event.target.value);
-            setPageNumber(1);
-          }}
-          placeholder="الكل"
-          options={ACTIVE_OPTIONS}
-        />
-      </div>
-
-      <Table columns={columns} data={suppliers} loading={isLoading} onRowClick={(row) => navigate(`/suppliers/${row.supplierID}`)} />
+      <Table
+        columns={Columns}
+        data={suppliers}
+        loading={isLoading}
+        onRowClick={(row) => navigate(`/suppliers/${row.supplierID || row.id}`)}
+      />
 
       <Pagination
         currentPage={pageNumber}
         totalPages={totalPages}
         pageSize={pageSize}
         onPageChange={setPageNumber}
-        onPageSizeChange={(value) => { setPageSize(value); setPageNumber(1); }}
-      />
-
-      <ConfirmModal
-        isOpen={!!deleteTarget}
-        onClose={() => !isDeleting && setDeleteTarget(null)}
-        onConfirm={() => {
-          if (deleteTarget) {
-            setIsDeleting(true);
-            deleteSupplier(deleteTarget.supplierID, {
-              onSettled: () => setIsDeleting(false),
-            });
-          }
-          setDeleteTarget(null);
+        onPageSizeChange={(value) => {
+          setPageSize(value);
+          setPageNumber(1);
         }}
-        isLoading={isDeleting}
-        loadingText="جاري الحذف..."
-        title="تأكيد حذف المورد"
-        description={`هل أنت متأكد من حذف المورد "${deleteTarget?.supplierNameAr}"؟`}
-        confirmText="نعم، حذف"
-        cancelText="إلغاء"
       />
     </div>
   );

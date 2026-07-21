@@ -11,14 +11,27 @@ export const getSuppliers = async (params = {}) => {
   };
 };
 
-export const getSupplier = (id) => axiosInstance.get(`/suppliers/${id}`);
+export const getSupplier = async (id) => {
+  const { data } = await axiosInstance.get(`/suppliers/${id}`);
+  return data;
+};
 
-export const createSupplier = (data) => axiosInstance.post('/suppliers', data);
+export const getSupplierStatuses = async () => {
+  const { data } = await axiosInstance.get('/lookups/supplier-statuses');
+  return Array.isArray(data) ? data : [];
+};
 
-export const updateSupplier = (id, data) =>
-  axiosInstance.put(`/suppliers/${id}`, data);
+export const getProviderClasses = async () => {
+  const { data } = await axiosInstance.get('/lookups/provider-classes');
+  return Array.isArray(data) ? data : [];
+};
 
-export const deleteSupplier = (id) => axiosInstance.delete(`/suppliers/${id}`);
+export const getImportanceLevels = async () => {
+  const { data } = await axiosInstance.get('/lookups/importance-levels');
+  return Array.isArray(data) ? data : [];
+};
 
-export const getSupplierTypes = () =>
-  axiosInstance.get('/supplier-types').then((res) => res.data);
+export const getGovernorates = async () => {
+  const { data } = await axiosInstance.get('/lookups/governorates');
+  return Array.isArray(data) ? data : [];
+};

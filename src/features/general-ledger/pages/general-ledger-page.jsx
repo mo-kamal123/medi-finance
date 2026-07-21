@@ -1,146 +1,55 @@
+import { useMemo, useState } from 'react';
+import { Download } from 'lucide-react';
+import PageLoader from '../../../shared/ui/page-loader';
 import { useGeneralLedger } from '../hooks/general-ledger.queries';
+import { useGeneralLedgerExport } from '../hooks/use-general-ledger-export';
 import GeneralLedgerTable from '../components/general-ledger-table';
 import GeneralLedgerFilter from '../components/general-ledger-filter';
-import { useState } from 'react';
+import { DEFAULT_GENERAL_LEDGER_FILTERS } from '../utils/general-ledger-filters.utils';
+import { buildGeneralLedgerQueryParams } from '../utils/general-ledger-filters.utils';
 
 const GeneralLedgerPage = () => {
-  //   const { data, isLoading } = useGeneralLedger();
-  const [filters, setFilters] = useState({});
+  const [filters, setFilters] = useState(DEFAULT_GENERAL_LEDGER_FILTERS);
 
-  const data = [
-    {
-      AccountID: 4,
-      EntryDate: '2026-02-23',
-      JournalEntryNumber: 'JE-20260223-0001',
-      DebitAmount: 1140.0,
-      CreditAmount: 0.0,
-      RunningBalance: 1140.0,
-    },
-    {
-      AccountID: 4,
-      EntryDate: '2026-02-23',
-      JournalEntryNumber: 'JE-20260223-0004',
-      DebitAmount: 1140.0,
-      CreditAmount: 0.0,
-      RunningBalance: 2280.0,
-    },
-    {
-      AccountID: 4,
-      EntryDate: '2026-02-23',
-      JournalEntryNumber: 'JE-20260223-0005',
-      DebitAmount: 1140.0,
-      CreditAmount: 0.0,
-      RunningBalance: 3420.0,
-    },
-    {
-      AccountID: 4,
-      EntryDate: '2026-02-23',
-      JournalEntryNumber: 'JE-20260223-0007',
-      DebitAmount: 13600.0,
-      CreditAmount: 0.0,
-      RunningBalance: 17020.0,
-    },
-    {
-      AccountID: 4,
-      EntryDate: '2026-02-23',
-      JournalEntryNumber: 'JE-20260223-0009',
-      DebitAmount: 1140.0,
-      CreditAmount: 0.0,
-      RunningBalance: 18160.0,
-    },
-    {
-      AccountID: 4,
-      EntryDate: '2026-02-23',
-      JournalEntryNumber: 'JE-20260224-0001',
-      DebitAmount: 1140.0,
-      CreditAmount: 0.0,
-      RunningBalance: 19300.0,
-    },
-    {
-      AccountID: 4,
-      EntryDate: '2026-02-23',
-      JournalEntryNumber: 'JE-20260224-0002',
-      DebitAmount: 1140.0,
-      CreditAmount: 0.0,
-      RunningBalance: 20440.0,
-    },
-    {
-      AccountID: 4,
-      EntryDate: '2026-02-23',
-      JournalEntryNumber: 'JE-20260224-0003',
-      DebitAmount: 13600.0,
-      CreditAmount: 0.0,
-      RunningBalance: 34040.0,
-    },
-    {
-      AccountID: 4,
-      EntryDate: '2026-02-24',
-      JournalEntryNumber: 'JE-20260224-0005',
-      DebitAmount: 11630.0,
-      CreditAmount: 0.0,
-      RunningBalance: 45670.0,
-    },
-    {
-      AccountID: 4,
-      EntryDate: '2026-02-24',
-      JournalEntryNumber: 'JE-20260224-0004',
-      DebitAmount: 29300.0,
-      CreditAmount: 0.0,
-      RunningBalance: 74970.0,
-    },
-    {
-      AccountID: 5,
-      EntryDate: '2026-02-23',
-      JournalEntryNumber: 'JE-20260223-0002',
-      DebitAmount: 0.0,
-      CreditAmount: 1000.0,
-      RunningBalance: -1000.0,
-    },
-    {
-      AccountID: 5,
-      EntryDate: '2026-02-23',
-      JournalEntryNumber: 'JE-20260223-0003',
-      DebitAmount: 0.0,
-      CreditAmount: 1000.0,
-      RunningBalance: -2000.0,
-    },
-    {
-      AccountID: 5,
-      EntryDate: '2026-02-23',
-      JournalEntryNumber: 'JE-20260223-0006',
-      DebitAmount: 0.0,
-      CreditAmount: 1000.0,
-      RunningBalance: -3000.0,
-    },
-    {
-      AccountID: 5,
-      EntryDate: '2026-02-23',
-      JournalEntryNumber: 'JE-20260223-0008',
-      DebitAmount: 0.0,
-      CreditAmount: 61250.0,
-      RunningBalance: -64250.0,
-    },
-  ];
-  //   if (isLoading) return <div>Loading...</div>;
+  const queryParams = useMemo(
+    () => buildGeneralLedgerQueryParams(filters),
+    [filters]
+  );
+
+  const { data, isLoading } = useGeneralLedger(queryParams);
+  const { handleExport, isExporting } = useGeneralLedgerExport();
+
+  const entries = data ?? [];
+
+  if (isLoading && !entries.length) {
+    return <PageLoader label="جاري تحميل دفتر الأستاذ العام..." />;
+  }
+
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-bold">دفتر الأستاذ العام</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          عرض الحركات المحاسبية مجمعة حسب الحساب مع الرصيد الجاري
-        </p>
+    <div className="space-y-6 p-6">
+      <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">دفتر الأستاذ العام</h1>
+          <p className="mt-1 text-sm text-gray-600">
+            عرض الحركات المحاسبية مجمعة حسب الحساب مع الرصيد الجاري
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => handleExport(queryParams)}
+          disabled={isExporting}
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
+        >
+          <Download size={16} />
+          {isExporting ? 'جاري التصدير...' : 'تصدير Excel'}
+        </button>
       </div>
 
-      {/* Filters */}
-      <GeneralLedgerFilter onFilter={setFilters} />
+      <GeneralLedgerFilter filters={filters} setFilters={setFilters} />
 
-      {/* Table */}
-      {!data ? (
-        <div>جاري التحميل...</div>
-      ) : (
-        <GeneralLedgerTable data={data || []} />
-      )}
+      <div className="overflow-hidden rounded-xl">
+        <GeneralLedgerTable data={entries} loading={isLoading} />
+      </div>
     </div>
   );
 };

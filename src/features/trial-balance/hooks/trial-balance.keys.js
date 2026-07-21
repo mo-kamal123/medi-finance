@@ -1,4 +1,10 @@
 export const trialBalanceKeys = {
   all: ['trial-balance'],
-  list: (filters) => [...trialBalanceKeys.all, filters],
+  roots: (filters) => [...trialBalanceKeys.all, 'roots', filters],
+  children: (accountId, filters) => [
+    ...trialBalanceKeys.all,
+    'children',
+    accountId,
+    filters,
+  ],
 };

@@ -6,6 +6,7 @@ import {
   FolderOpen,
   FileText,
   MoreVertical,
+  Loader2,
 } from 'lucide-react';
 import Dropdown from '../../../shared/ui/dropdown';
 
@@ -20,12 +21,16 @@ const TreeNode = ({
   getChildren,
   getParentId,
   actions = [],
+  onExpand,
+  isLoading,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const children = getChildren(node);
-  const hasChildren = children && children.length > 0;
+  const hasChildren = node.hasChildren ?? (children && children.length > 0);
+  const loading = isLoading?.(node) ?? false;
+  const resolvedChildren = children && children.length > 0 ? children : [];
 
   useEffect(() => {
     if (expandedAll !== null) {
@@ -39,6 +44,18 @@ const TreeNode = ({
 
   const bgClass = isExpanded && isMain ? 'bg-gray-100 hover:bg-gray-100' : '';
 
+  const handleClick = async () => {
+    if (!hasChildren || loading) return;
+    if (!isExpanded) {
+      if (onExpand) {
+        await onExpand(node);
+      }
+      setIsExpanded(true);
+    } else {
+      setIsExpanded(false);
+    }
+  };
+
   return (
     <div className="relative flex flex-col gap-2">
       <div
@@ -48,12 +65,14 @@ const TreeNode = ({
           ${bgClass}
         `}
         style={{ paddingLeft: `${paddingLeft + 12}px` }}
-        onClick={() => hasChildren && setIsExpanded(!isExpanded)}
+        onClick={handleClick}
       >
         {/* Expand */}
         {hasChildren ? (
           <div className="w-5 h-5 flex items-center justify-center">
-            {isExpanded ? (
+            {loading ? (
+              <Loader2 size={16} className="animate-spin text-primary" />
+            ) : isExpanded ? (
               <ChevronDown size={16} className="text-gray-400" />
             ) : (
               <ChevronRight size={16} className="text-gray-400" />
@@ -64,7 +83,9 @@ const TreeNode = ({
         )}
 
         {/* Icon */}
-        {hasChildren ? (
+        {loading ? (
+          <FolderOpen size={18} className="text-primary" />
+        ) : hasChildren ? (
           isExpanded ? (
             <FolderOpen size={18} className="text-primary" />
           ) : (
@@ -114,9 +135,9 @@ const TreeNode = ({
         )}
       </div>
 
-      {hasChildren && isExpanded && (
+      {hasChildren && isExpanded && resolvedChildren.length > 0 && (
         <div>
-          {children.map((child) => (
+          {resolvedChildren.map((child) => (
             <TreeNode
               key={getNodeId(child)}
               node={child}
@@ -127,6 +148,8 @@ const TreeNode = ({
               getChildren={getChildren}
               getParentId={getParentId}
               actions={actions}
+              onExpand={onExpand}
+              isLoading={isLoading}
             />
           ))}
         </div>
