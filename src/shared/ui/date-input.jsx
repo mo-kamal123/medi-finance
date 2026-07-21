@@ -227,7 +227,7 @@ const DateInput = ({ label, value, onChange, error, required, readOnly, ...props
               onClick={() => moveMonth(-1)}
               aria-label="Previous month"
             >
-              <ChevronLeft size={18} />
+              <ChevronRight size={18} />
             </button>
 
             <span className="text-sm font-semibold text-gray-800">
@@ -240,7 +240,7 @@ const DateInput = ({ label, value, onChange, error, required, readOnly, ...props
               onClick={() => moveMonth(1)}
               aria-label="Next month"
             >
-              <ChevronRight size={18} />
+              <ChevronLeft size={18} />
             </button>
           </div>
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+﻿import { useEffect, useMemo } from 'react';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -1083,7 +1083,7 @@ const JournalEntryForm = ({
           <button
             type="button"
             onClick={() => navigate('/entries')}
-            className="rounded-lg border border-gray-300 px-6 py-2 text-gray-700"
+            className="rounded-lg border border-gray-400 px-6 py-2 text-gray-700"
           >
             رجوع
           </button>

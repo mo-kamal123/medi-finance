@@ -1,5 +1,5 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { getCustomers, getCustomerById, getCustomerTypes } from '../api/customers.api';
+import { getCustomers, getCustomerById } from '../api/customers.api';
 import { customersKeys } from './customers.keys';
 
 export const useCustomers = (filters) =>
@@ -7,12 +7,6 @@ export const useCustomers = (filters) =>
     queryKey: customersKeys.lists(filters),
     queryFn: () => getCustomers(filters),
     placeholderData: keepPreviousData,
-  });
-
-export const useCustomerTypes = () =>
-  useQuery({
-    queryKey: ['customer-types'],
-    queryFn: getCustomerTypes,
   });
 
 export const useCustomer = (id) =>

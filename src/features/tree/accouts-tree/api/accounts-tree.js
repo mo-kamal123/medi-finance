@@ -5,6 +5,16 @@ export const getAccountsTree = async () => {
   return response.data;
 };
 
+export const getAccountRoots = async (params = {}) => {
+  const { data } = await axiosInstance.get('/accounts/roots', { params });
+  return data;
+};
+
+export const getAccountChildren = async (id) => {
+  const { data } = await axiosInstance.get(`/accounts/${id}/children`);
+  return data;
+};
+
 export const getAccountById = async (id) => {
   const response = await axiosInstance.get(`accounts/${id}`);
   return response.data;

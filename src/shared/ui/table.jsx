@@ -18,10 +18,10 @@ const Table = ({
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
       <table className="min-w-full border-collapse text-sm">
-        <thead className="bg-primary/90 text-white">
+        <thead className="bg-primary text-white">
           <tr>
             {columns.map((col, index) => (
-              <th key={index} className="p-3 text-right font-semibold">
+              <th key={index} className="p-3 text-center font-semibold">
                 {col.header}
               </th>
             ))}
@@ -49,7 +49,7 @@ const Table = ({
                 {columns.map((col, colIndex) => (
                   <td
                     key={colIndex}
-                    className="border border-gray-200 p-3 align-middle"
+                    className="border border-gray-200 p-3 align-middle text-center"
                   >
                     {renderCell(col, row, rowIndex, onChange)}
                   </td>
