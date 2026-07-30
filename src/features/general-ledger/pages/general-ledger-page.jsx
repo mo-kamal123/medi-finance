@@ -31,7 +31,7 @@ const GeneralLedgerPage = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">دفتر الأستاذ العام</h1>
           <p className="mt-1 text-sm text-gray-600">
-            عرض الحركات المحاسبية مجمعة حسب الحساب مع الرصيد الجاري
+            عرض الحركات المحاسبية مجمعة حسب الحساب مع الرصيد
           </p>
         </div>
         <button

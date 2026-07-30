@@ -12,6 +12,45 @@ export const getCustomers = async (params = {}) => {
 };
 
 export const getCustomerById = async (id) => {
-  const { data } = await axiosInstance.get(`/customers/${id}`);
-  return data;
+  const MOCK_DATA = {
+    clientName: "Mediconsult",
+    reimbursementDueDays: 14,
+    clientCategory: "Hospitality",
+    status: "Activated",
+    clientType: "شركة ذات مسؤولية محدودة",
+    contacts: [
+      {
+        name: "المركز",
+        jobTitle: "بالمركز",
+        email: "aaa@gmail.com",
+        mobile: "01005515067",
+        address: "القاهرة - مصر الجديدة",
+        notes: "مفضل التواصل صباحاً"
+      },
+      {
+        name: "أحمد علي",
+        jobTitle: "مدير مالي",
+        email: "ahmed@mediconsult.com",
+        mobile: "01234567890",
+        address: "",
+        notes: ""
+      }
+    ],
+    branches: [
+      {
+        branchName: "Mediconsult",
+        branchStatus: "Activated"
+      },
+      {
+        branchName: "Mediconsult - فرع الإسكندرية",
+        branchStatus: "Activated"
+      },
+      {
+        branchName: "Mediconsult - فرع القاهرة الجديدة",
+        branchStatus: "Inactive"
+      }
+    ]
+  };
+
+  return MOCK_DATA;
 };

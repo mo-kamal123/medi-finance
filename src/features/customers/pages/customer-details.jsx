@@ -1,97 +1,228 @@
-﻿import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building2, CreditCard, Info, Paperclip } from 'lucide-react';
+﻿import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+  ArrowLeft,
+  Building2,
+  Calendar,
+  FileText,
+  User,
+  Users,
+  GitBranch,
+} from 'lucide-react';
 import PageLoader from '../../../shared/ui/page-loader';
 import { useCustomer } from '../hooks/customers.queries';
 
-const Section = ({ icon: Icon, title, children }) => (
-  <div>
-    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
-      {Icon && <Icon size={20} className="text-primary" />}
-      <h3 className="text-xl font-bold text-gray-800">{title}</h3>
+const ReadOnlyField = ({ label, value, className = '' }) => (
+  <div className={className}>
+    <label className="mb-1 block text-base font-medium text-gray-500">{label}</label>
+    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-gray-900">
+      {value || <span className="text-gray-400">-</span>}
     </div>
-    <div className="space-y-4">{children}</div>
   </div>
 );
 
-const Field = ({ label, value }) => (
-  <div>
-    <span className="text-base text-gray-500 font-medium">{label}</span>
-    <p className="text-xl font-bold text-gray-900 mt-1">{value ?? '-'}</p>
-  </div>
-);
+const StatusBadge = ({ statusName }) => {
+  const colors = {
+    Activated: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    Active: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    Inactive: 'bg-red-100 text-red-700 border-red-200',
+    Deactive: 'bg-red-100 text-red-700 border-red-200',
+    Suspended: 'bg-amber-100 text-amber-700 border-amber-200',
+    Terminated: 'bg-gray-100 text-gray-700 border-gray-200',
+  };
+  const color = colors[statusName] || 'bg-gray-100 text-gray-700 border-gray-200';
+  return (
+    <div>
+      <label className="mb-1 block text-base font-medium text-gray-500">الحالة</label>
+      <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-base">
+        <span className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1 font-medium ${color}`}>
+          {statusName || '-'}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+const TABS = [
+  { key: 'basic', label: 'المعلومات الأساسية', icon: Building2 },
+  { key: 'contacts', label: 'جهات الاتصال', icon: Users },
+  { key: 'branches', label: 'الفروع', icon: GitBranch },
+  { key: 'system', label: 'معلومات النظام', icon: Calendar },
+];
 
 const CustomerDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: customer, isLoading } = useCustomer(id);
+  const [activeTab, setActiveTab] = useState('basic');
 
   if (isLoading) return <PageLoader label="جاري تحميل بيانات العميل..." />;
-  if (!customer) return <div className="p-6 text-center text-gray-500">العميل غير موجود</div>;
+  if (!customer) {
+    return (
+      <div className="p-6 text-center text-gray-500">العميل غير موجود</div>
+    );
+  }
+
+  const contacts = customer.contacts || [];
+  const branches = customer.branches || [];
 
   return (
     <div className="space-y-6 p-6">
-      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="bg-gradient-to-r from-primary to-primary/80 px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/20 text-white shadow-inner">
-                <span className="text-2xl font-bold">{customer.customerNameAr?.[0]}</span>
+                <span className="text-2xl font-bold">
+                  {customer.clientName?.[0] || customer.customerNameAr?.[0]}
+                </span>
               </div>
               <div className="text-white">
-                <h1 className="text-2xl font-bold">{customer.customerNameAr}</h1>
-                <p className="text-white/70 mt-0.5">{customer.customerCode}</p>
+                <h1 className="text-2xl font-bold">{customer.clientName || customer.customerNameAr}</h1>
+                <p className="mt-0.5 text-white/70">{customer.customerCode || customer.clientType || ''}</p>
               </div>
             </div>
             <button
               onClick={() => navigate('/customers')}
-              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-xl transition-colors text-sm font-medium"
+              className="flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 text-base font-medium text-white transition-colors hover:bg-white/30"
             >
               <ArrowLeft size={16} />
               العودة إلى العملاء
             </button>
           </div>
         </div>
+      </div>
 
-        <div className="px-8 py-6 space-y-8">
-          <Section icon={Building2} title="معلومات أساسية">
-            <Field label="الاسم بالإنجليزية" value={customer.customerNameEn} />
-            <Field label="التصنيف" value={customer.categoryName} />
-            <Field label="الحالة" value={customer.statusName} />
-            <Field label="أيام السداد" value={customer.reimbursementDueDays} />
-          </Section>
+      <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
+        <div className="flex gap-1 overflow-x-auto border-b border-gray-100 px-4 pt-3">
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex items-center gap-2 whitespace-nowrap rounded-t-lg px-4 py-2.5 text-base font-medium transition-colors ${
+                  isActive
+                    ? 'border-b-2 border-primary bg-primary/5 text-primary'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <Icon size={16} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
 
-          <Section icon={CreditCard} title="معلومات الحساب">
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="كود الحساب" value={customer.accountCode} />
-              <Field label="اسم الحساب بالعربية" value={customer.accountNameAr} />
-              <Field label="اسم الحساب بالإنجليزية" value={customer.accountNameEn} />
-              <Field label="نوع الحساب" value={customer.accountType} />
-              <Field label="سعر الصرف" value={customer.exchangeRate} />
+        <div className="p-6">
+          {activeTab === 'basic' && (
+            <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+              <ReadOnlyField label="اسم العميل" value={customer.clientName} />
+              <ReadOnlyField label="أيام السداد" value={customer.reimbursementDueDays} />
+              <ReadOnlyField label="تصنيف العميل" value={customer.clientCategory} />
+              <ReadOnlyField label="نوع العميل" value={customer.clientType} />
+              <StatusBadge statusName={customer.status || customer.statusName} />
             </div>
-          </Section>
+          )}
 
-          <Section icon={Info} title="معلومات إضافية">
-            <Field label="تاريخ الإنشاء" value={customer.createdAt ? new Date(customer.createdAt).toLocaleDateString('ar-EG') : null} />
-            <Field label="إنشاء بواسطة" value={customer.createdBy} />
-          </Section>
+          {activeTab === 'contacts' && (
+            <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="bg-gray-100 text-gray-700">
+                    <th className="border border-gray-200 px-4 py-3 text-right font-semibold">#</th>
+                    <th className="border border-gray-200 px-4 py-3 text-right font-semibold">الاسم</th>
+                    <th className="border border-gray-200 px-4 py-3 text-right font-semibold">المسمى الوظيفي</th>
+                    <th className="border border-gray-200 px-4 py-3 text-right font-semibold">البريد الإلكتروني</th>
+                    <th className="border border-gray-200 px-4 py-3 text-right font-semibold">الموبايل</th>
+                    <th className="border border-gray-200 px-4 py-3 text-right font-semibold">العنوان</th>
+                    <th className="border border-gray-200 px-4 py-3 text-right font-semibold">ملاحظات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {contacts.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="border border-gray-200 px-4 py-8 text-center text-gray-400">
+                        لا توجد جهات اتصال
+                      </td>
+                    </tr>
+                  ) : (
+                    contacts.map((contact, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        <td className="border border-gray-200 px-4 py-3 text-gray-500">{idx + 1}</td>
+                        <td className="border border-gray-200 px-4 py-3">{contact.name || '-'}</td>
+                        <td className="border border-gray-200 px-4 py-3">{contact.jobTitle || '-'}</td>
+                        <td className="border border-gray-200 px-4 py-3" dir="ltr">{contact.email || '-'}</td>
+                        <td className="border border-gray-200 px-4 py-3" dir="ltr">{contact.mobile || '-'}</td>
+                        <td className="border border-gray-200 px-4 py-3">{contact.address || '-'}</td>
+                        <td className="border border-gray-200 px-4 py-3">{contact.notes || '-'}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-          {customer.attachments?.length > 0 && (
-            <Section icon={Paperclip} title="المرفقات">
-              <div className="flex flex-wrap gap-3">
-                {customer.attachments.map((att) => (
-                  <a
-                    key={att.attachmentID}
-                    href={att.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 transition-colors"
-                  >
-                    <Paperclip size={16} />
-                    مرفق {att.attachmentID}
-                  </a>
-                ))}
-              </div>
-            </Section>
+          {activeTab === 'branches' && (
+            <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="bg-gray-100 text-gray-700">
+                    <th className="border border-gray-200 px-4 py-3 text-right font-semibold">#</th>
+                    <th className="border border-gray-200 px-4 py-3 text-right font-semibold">اسم الفرع</th>
+                    <th className="border border-gray-200 px-4 py-3 text-right font-semibold">الحالة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {branches.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="border border-gray-200 px-4 py-8 text-center text-gray-400">
+                        لا توجد فروع
+                      </td>
+                    </tr>
+                  ) : (
+                    branches.map((branch, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        <td className="border border-gray-200 px-4 py-3 text-gray-500">{idx + 1}</td>
+                        <td className="border border-gray-200 px-4 py-3">{branch.branchName || '-'}</td>
+                        <td className="border border-gray-200 px-4 py-3">
+                          <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${
+                            branch.branchStatus === 'Activated'
+                              ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                              : 'bg-gray-100 text-gray-700 border-gray-200'
+                          }`}>
+                            {branch.branchStatus || '-'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === 'system' && (
+            <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+              <ReadOnlyField
+                label="تاريخ الإنشاء"
+                value={
+                  customer.createdAt
+                    ? new Date(customer.createdAt).toLocaleDateString('ar-EG', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : null
+                }
+              />
+              <ReadOnlyField label="إنشاء بواسطة" value={customer.createdBy} />
+            </div>
           )}
         </div>
       </div>
