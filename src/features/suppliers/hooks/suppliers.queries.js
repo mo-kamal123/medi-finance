@@ -43,3 +43,24 @@ export const useGovernorates = () =>
     queryFn: api.getGovernorates,
     staleTime: 5 * 60 * 1000,
   });
+
+export const useOperationTypes = () =>
+  useQuery({
+    queryKey: ['suppliers', 'operation-types'],
+    queryFn: api.getOperationTypes,
+    staleTime: 5 * 60 * 1000,
+  });
+
+export const useNetworks = () =>
+  useQuery({
+    queryKey: ['suppliers', 'networks'],
+    queryFn: api.getNetworks,
+    staleTime: 5 * 60 * 1000,
+  });
+
+export const usePrograms = () =>
+  useQuery({
+    queryKey: ['suppliers', 'programs'],
+    queryFn: api.getPrograms,
+    staleTime: 5 * 60 * 1000,
+  });

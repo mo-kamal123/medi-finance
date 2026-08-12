@@ -84,10 +84,15 @@ const AccountSearchSelect = ({ value, onChange, disabled, error }) => {
   }, [isOpen]);
 
   const handleSelect = (account) => {
+    if (account.lockedInJournal) return;
     onChange({ target: { value: String(getAccountId(account)), name: 'accountID' } });
     setSearchText(account.accountCode || '');
     setIsOpen(false);
   };
+
+  const lockedError = displayAccount?.lockedInJournal
+    ? 'لا يمكن استخدام هذا الحساب لأنه مقفل'
+    : null;
 
   return (
     <div ref={wrapperRef} className="w-full">
@@ -110,7 +115,7 @@ const AccountSearchSelect = ({ value, onChange, disabled, error }) => {
           dir="rtl"
           className={cn(
             'w-full rounded-lg border py-2 pr-10 text-sm outline-none transition-colors',
-            error ? 'border-red-500' : 'border-gray-300',
+            error || lockedError ? 'border-red-500' : 'border-gray-300',
             disabled ? 'cursor-not-allowed bg-gray-100' : 'bg-white',
           )}
         />
@@ -130,26 +135,48 @@ const AccountSearchSelect = ({ value, onChange, disabled, error }) => {
               ) : searchResults.length === 0 ? (
                 <div className="p-3 text-sm text-gray-500">لا توجد نتائج</div>
               ) : (
-                searchResults.map((account) => (
-                  <div
-                    key={getAccountId(account)}
-                    onMouseDown={() => handleSelect(account)}
-                    className={cn(
-                      'cursor-pointer border-b border-gray-100 p-3 last:border-b-0 hover:bg-gray-50',
-                      String(getAccountId(account)) === String(value) && 'bg-primary/10',
-                    )}
-                  >
-                    <div className="text-sm font-medium">{account.accountCode}</div>
-                    <div className="text-xs text-gray-600">{account.nameAr || account.nameEn}</div>
-                  </div>
-                ))
+                searchResults.map((account) => {
+                  const isLocked = !!account.lockedInJournal;
+                  return (
+                    <div
+                      key={getAccountId(account)}
+                      onMouseDown={() => handleSelect(account)}
+                      className={cn(
+                        'border-b border-gray-100 p-3 last:border-b-0',
+                        isLocked
+                          ? 'cursor-not-allowed hover:bg-white'
+                          : 'cursor-pointer hover:bg-gray-50',
+                        String(getAccountId(account)) === String(value) &&
+                          'bg-primary/10',
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm font-medium">
+                          {account.accountCode}
+                        </div>
+                        {isLocked ? (
+                          <span className="shrink-0 rounded bg-red-200 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
+                            مقفل
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {account.nameAr || account.nameEn}
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>,
             document.body,
           )
         : null}
 
-      {error ? <p className="mt-1 text-xs text-red-500">{error}</p> : null}
+      {lockedError ? (
+        <p className="mt-1 text-xs text-red-500">{lockedError}</p>
+      ) : error ? (
+        <p className="mt-1 text-xs text-red-500">{error}</p>
+      ) : null}
     </div>
   );
 };

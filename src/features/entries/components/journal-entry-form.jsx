@@ -9,6 +9,7 @@ import {
   X,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import FormInput from '../../../shared/ui/input';
@@ -120,6 +121,7 @@ const JournalEntryForm = ({
   viewOnly = false,
 }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const createMutation = useCreateJournalEntry();
   const updateMutation = useUpdateJournalEntry();
   const postMutation = usePostJournalEntry();
@@ -182,6 +184,7 @@ const JournalEntryForm = ({
     handleSubmit,
     reset,
     setValue,
+    setError,
     formState: { errors },
   } = useForm({
     defaultValues: mapEntryToForm(defaultValues),
@@ -334,6 +337,25 @@ const JournalEntryForm = ({
 
   // Build API payload & submit
   const onSubmit = (data) => {
+    const getCachedAccount = (id) => queryClient.getQueryData(['account', id]);
+
+    let hasLockedAccount = false;
+    data.details.forEach((d, index) => {
+      if (!d.accountID) return;
+      const account = getCachedAccount(d.accountID);
+      if (account?.lockedInJournal) {
+        hasLockedAccount = true;
+        setError(`details.${index}.accountID`, {
+          type: 'locked',
+          message: 'لا يمكن استخدام هذا الحساب لأنه مقفل',
+        });
+      }
+    });
+    if (hasLockedAccount) {
+      toast.error('لا يمكن إنشاء القيد باستخدام حساب مقفل');
+      return;
+    }
+
     const payload = buildJournalEntryPayload(data, { isCreate: !isEditMode });
     if (isEditMode) {
       updateMutation.mutate(
