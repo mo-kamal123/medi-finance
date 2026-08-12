@@ -10,11 +10,19 @@ import { useDebounce } from '../../../shared/lib/use-debounce';
 import { formatFileSize } from '../../../shared/utils/formatters';
 import {
   useSuppliers,
-  useSupplierStatuses,
-  useProviderClasses,
-  useImportanceLevels,
   useGovernorates,
 } from '../hooks/suppliers.queries';
+
+const STATUS_OPTIONS = [
+  { value: 'activated', label: 'Activated' },
+  { value: 'Deactived', label: 'Deactivated' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'hold', label: 'Hold' },
+];
+
+const CLASS_OPTIONS = ['A', 'B', 'C', 'P'].map((value) => ({ value, label: value }));
+
+const IMPORTANCE_OPTIONS = ['A', 'AA', 'AKK', 'Y', 'X'].map((value) => ({ value, label: value }));
 
 const StatusBadge = ({ statusName }) => {
   const normalized = String(statusName || '').trim().toLowerCase();
@@ -182,9 +190,6 @@ const SuppliersPage = () => {
     setShowAdvanced(false);
   };
 
-  const { data: statuses = [] } = useSupplierStatuses();
-  const { data: providerClasses = [] } = useProviderClasses();
-  const { data: importanceLevels = [] } = useImportanceLevels();
   const { data: governorates = [] } = useGovernorates();
 
   const { data: response, isLoading } = useSuppliers({
@@ -217,15 +222,12 @@ const SuppliersPage = () => {
               setSearch(e.target.value);
               setPageNumber(1);
             }}
-            placeholder="ابحث بالكود أو الاسم أو الهاتف"
+            placeholder="ابحث ب اسم المورد"
             autoFocus
           />
           <NormalSelect
             label="الحالة"
-            options={statuses.map((s) => ({
-              value: s.id,
-              label: s.nameAr || s.name,
-            }))}
+            options={STATUS_OPTIONS}
             value={status}
             onChange={(event) => {
               setStatus(event.target.value || null);
@@ -235,10 +237,7 @@ const SuppliersPage = () => {
           />
           <NormalSelect
             label="فئة المورد"
-            options={providerClasses.map((p) => ({
-              value: p.id,
-              label: p.name,
-            }))}
+            options={CLASS_OPTIONS}
             value={providerClass}
             onChange={(event) => {
               setProviderClass(event.target.value || null);
@@ -248,10 +247,7 @@ const SuppliersPage = () => {
           />
           <NormalSelect
             label="مستوى الأهمية"
-            options={importanceLevels.map((l) => ({
-              value: l.id,
-              label: l.name,
-            }))}
+            options={IMPORTANCE_OPTIONS}
             value={importanceLevel}
             onChange={(event) => {
               setImportanceLevel(event.target.value || null);

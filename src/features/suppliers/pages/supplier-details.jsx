@@ -21,7 +21,7 @@ import { useSupplier } from '../hooks/suppliers.queries';
 import {
   useNetworks,
   useOperationTypes,
-  usePrograms,
+  usePaymentStatuses
 } from '../hooks/suppliers.queries';
 import { useUpdateSupplierFinanceInfo } from '../hooks/suppliers.mutations';
 
@@ -152,7 +152,7 @@ const SupplierDetails = () => {
   const { data: supplier, isLoading } = useSupplier(id);
   const { data: operationTypes = [] } = useOperationTypes();
   const { data: networks = [] } = useNetworks();
-  const { data: programs = [] } = usePrograms();
+  const { data: paymentsStatuses = [] } = usePaymentStatuses();
   const updateFinanceInfoMutation = useUpdateSupplierFinanceInfo();
   const [activeTab, setActiveTab] = useState('basic');
   const [paymentStatusId, setPaymentStatusId] = useState('');
@@ -189,17 +189,21 @@ const SupplierDetails = () => {
     (financeInfo.paymentStatusId != null
       ? String(financeInfo.paymentStatusId)
       : '');
-  const programIndex = Number(paymentStatusValue) - 1;
-  const paymentStatusLabel =
-    Number.isInteger(programIndex) && programs[programIndex]
-      ? programs[programIndex]
-      : paymentStatusValue;
   const paymentStatusOptions = includeCurrentOption(
-    programs,
+    paymentsStatuses.map((status) => ({
+      value: String(status.paymentStatusID ?? status.id ?? status.value ?? ''),
+      label: status.nameAr || status.name || status.label || '',
+    })),
     paymentStatusValue,
-    paymentStatusLabel
+    (() => {
+      const current = paymentsStatuses.find(
+        (status) =>
+          String(status.paymentStatusID ?? status.id ?? status.value ?? '') ===
+          paymentStatusValue
+      );
+      return (current?.nameAr || current?.name) || paymentStatusValue;
+    })()
   );
-
   const operationTypeValue =
     operationType ||
     (financeInfo.operationType != null

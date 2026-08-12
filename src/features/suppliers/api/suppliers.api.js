@@ -51,6 +51,11 @@ export const getPrograms = async () => {
   return Array.isArray(data) ? data : [];
 };
 
+export const getPaymentStatuses = async () => {
+  const { data } = await axiosInstance.get('/payment-statuses');
+  return Array.isArray(data) ? data : [];
+};
+
 export const updateSupplierFinanceInfo = async ({ id, ...payload }) => {
   const { data } = await axiosInstance.patch(
     `/suppliers/${id}/finance-info`,
