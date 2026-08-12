@@ -171,8 +171,8 @@ const AgingReportPage = () => {
   const columns = useMemo(() => {
     const base = [
       { header: 'رقم الفاتورة', key: 'invoiceNumber' },
-      { header: 'الطرف', key: 'partyNameAr', type: 'custom', render: (row) => row.partyNameAr || row.partyNameEn || '-' },
-      { header: 'كود الطرف', key: 'partyCode' },
+      { header: isSupplier ? 'المورد' : 'العميل', key: 'partyNameAr', type: 'custom', render: (row) => row.partyNameAr || row.partyNameEn || '-' },
+      { header: isSupplier ? 'كود المورد' : 'كود العميل', key: 'partyCode' },
     ];
 
     if (isSupplier) {
@@ -246,10 +246,10 @@ const AgingReportPage = () => {
           </div>
 
           <SearchableSelect
-            label="الطرف"
+            label={isSupplier ? 'المورد' : 'العميل'}
             value={filters.partyId || ''}
             onChange={(event) => handleChange('partyId', event.target.value)}
-            placeholder="اختر الطرف..."
+            placeholder={isSupplier ? 'اختر المورد...' : 'اختر العميل...'}
             options={partyOptions}
           />
 

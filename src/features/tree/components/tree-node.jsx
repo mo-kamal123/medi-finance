@@ -7,6 +7,7 @@ import {
   FileText,
   MoreVertical,
   Loader2,
+  Lock,
 } from 'lucide-react';
 import Dropdown from '../../../shared/ui/dropdown';
 
@@ -64,7 +65,7 @@ const TreeNode = ({
           hover:bg-gray-50
           ${bgClass}
         `}
-        style={{ paddingLeft: `${paddingLeft + 12}px` }}
+        style={{ paddingInlineStart: `${paddingLeft + 12}px` }}
         onClick={handleClick}
       >
         {/* Expand */}
@@ -104,6 +105,17 @@ const TreeNode = ({
         <span className="text-sm font-medium text-gray-900 flex-1">
           {getLabel(node)}
         </span>
+
+        {/* Locked in journal */}
+        {node.lockedInJournal ? (
+          <span
+            className="flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-amber-600"
+            title="هذا الحساب مقفل ولا يمكن استخدامه في القيود"
+          >
+            <Lock size={12} />
+            <span className="text-[10px] font-semibold">مقفل</span>
+          </span>
+        ) : null}
 
         {/* Menu */}
         {actions.length > 0 && (

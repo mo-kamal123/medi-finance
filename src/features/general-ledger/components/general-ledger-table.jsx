@@ -52,7 +52,7 @@ const GeneralLedgerTable = ({ data, loading }) => {
       ),
     },
     {
-      header: 'الرصيد الجاري',
+      header: 'الرصيد',
       key: 'runningBalance',
       type: 'custom',
       render: (row) => {
@@ -133,7 +133,7 @@ const GeneralLedgerTable = ({ data, loading }) => {
                   </div>
                   <div className="h-8 w-px bg-gray-200" />
                   <div className="text-left">
-                    <p className="text-xs text-gray-500">الرصيد الجاري</p>
+                    <p className="text-xs text-gray-500">الرصيد</p>
                     <p
                       dir="ltr"
                       className={`text-sm font-bold ${

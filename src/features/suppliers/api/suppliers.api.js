@@ -35,3 +35,26 @@ export const getGovernorates = async () => {
   const { data } = await axiosInstance.get('/lookups/governorates');
   return Array.isArray(data) ? data : [];
 };
+
+export const getOperationTypes = async () => {
+  const { data } = await axiosInstance.get('/operation-types');
+  return Array.isArray(data) ? data : [];
+};
+
+export const getNetworks = async () => {
+  const { data } = await axiosInstance.get('/networks');
+  return Array.isArray(data) ? data : [];
+};
+
+export const getPrograms = async () => {
+  const { data } = await axiosInstance.get('/programs');
+  return Array.isArray(data) ? data : [];
+};
+
+export const updateSupplierFinanceInfo = async ({ id, ...payload }) => {
+  const { data } = await axiosInstance.patch(
+    `/suppliers/${id}/finance-info`,
+    payload
+  );
+  return data;
+};
