@@ -64,3 +64,10 @@ export const usePrograms = () =>
     queryFn: api.getPrograms,
     staleTime: 5 * 60 * 1000,
   });
+
+  export const usePaymentStatuses = () =>
+  useQuery({
+    queryKey: ['suppliers', 'payments'],
+    queryFn: api.getPaymentStatuses,
+    staleTime: 5 * 60 * 1000,
+  });

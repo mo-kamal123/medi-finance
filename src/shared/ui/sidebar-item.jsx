@@ -11,10 +11,10 @@ const SidebarItem = ({ item, active, toggle, openSidebar, setSubActive }) => {
       <NavLink
         to={item.link || '#'}
         onClick={() => toggle(item.name)}
-        className={`flex items-center w-full rounded-xl transition-colors
+        className={`flex items-center w-full rounded-xl transition-colors text-lg font-medium
         ${openSidebar ? 'justify-between px-3 py-2.5' : 'justify-center p-3'}
         ${
-          isOpen ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/10'
+          isOpen ? 'bg-white/10 text-white font-semibold' : 'text-white/80 hover:bg-white/10'
         }`}
       >
         <div className="flex items-center gap-3">
@@ -43,7 +43,7 @@ const SidebarItem = ({ item, active, toggle, openSidebar, setSubActive }) => {
                   to={sub.link}
                   onClick={() => setSubActive(sub.name)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors
+                    `flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-base
                     ${
                       isActive
                         ? 'bg-white/10  font-semibold'
