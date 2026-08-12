@@ -42,3 +42,11 @@ export const formatDisplayValue = (value) => {
   }
   return value;
 };
+
+export const formatFileSize = (bytes) => {
+  const value = Number(bytes) || 0;
+  if (value === 0) return '-';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const index = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
+  return `${formatNumber((value / 1024 ** index).toFixed(2))} ${units[index]}`;
+};

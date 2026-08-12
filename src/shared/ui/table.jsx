@@ -12,12 +12,14 @@ const Table = ({
   footer,
   onRowClick,
   emptyMessage = 'لا توجد بيانات',
+  extraRenderArg,
 }) => {
   const colSpan = columns.length + (onDelete ? 1 : 0);
 
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-      <table className="min-w-full border-collapse text-sm">
+      <table className="w-max min-w-full table-auto border-collapse text-sm">
+        {' '}
         <thead className="bg-primary text-white">
           <tr>
             {columns.map((col, index) => (
@@ -28,7 +30,6 @@ const Table = ({
             {onDelete ? <th className="border border-gray-200" /> : null}
           </tr>
         </thead>
-
         <tbody>
           {loading ? (
             <tr>
@@ -51,7 +52,7 @@ const Table = ({
                     key={colIndex}
                     className="border border-gray-200 p-3 align-middle text-center"
                   >
-                    {renderCell(col, row, rowIndex, onChange)}
+                    {renderCell(col, row, rowIndex, onChange, extraRenderArg)}
                   </td>
                 ))}
 
@@ -79,7 +80,6 @@ const Table = ({
             </tr>
           )}
         </tbody>
-
         {footer ? (
           <tfoot className="bg-gray-50 font-semibold">{footer}</tfoot>
         ) : null}
@@ -88,7 +88,7 @@ const Table = ({
   );
 };
 
-const renderCell = (col, row, rowIndex, onChange) => {
+const renderCell = (col, row, rowIndex, onChange, extraRenderArg) => {
   switch (col.type) {
     case 'select':
       return (
@@ -120,7 +120,7 @@ const renderCell = (col, row, rowIndex, onChange) => {
       );
 
     case 'custom':
-      return col.render(row, rowIndex);
+      return col.render(row, rowIndex, extraRenderArg);
 
     default:
       return formatDisplayValue(row[col.key]);
