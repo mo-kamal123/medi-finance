@@ -1,16 +1,21 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createAccount } from '../api/accounts-tree';
+import { getErrorMessage, toast } from '../../../../shared/lib/toast';
 
 const useCreateAccount = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: createAccount,
-    onSuccess: (data) => {
-      console.log('Account created:', data);
-      alert('تم إنشاء الحساب بنجاح!');
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['accounts'],
+        refetchType: 'all',
+      });
+      toast.success('تم إنشاء الحساب بنجاح');
     },
     onError: (err) => {
-      console.error('Create failed:', err);
-      alert('فشل إنشاء الحساب. تحقق من البيانات.');
+      toast.error(getErrorMessage(err, 'تعذر إنشاء الحساب. تحقق من البيانات.'));
     },
   });
 };

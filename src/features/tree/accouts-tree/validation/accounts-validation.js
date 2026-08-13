@@ -1,30 +1,28 @@
 import z from 'zod';
 
 export const accountSchema = z.object({
-  id: z.coerce.number().optional(),
+  accountID: z.coerce.number().optional(),
 
-  accountCode: z.string().min(1, 'رقم الحساب مطلوب'),
+  accountCode: z.string().optional(),
 
   nameAr: z.string().min(2, 'الاسم العربي مطلوب'),
 
   nameEn: z.string().min(2, 'الاسم الإنجليزي مطلوب'),
 
-  parentID: z
+  parentId: z
     .union([z.coerce.number(), z.literal('')])
+    .nullable()
     .optional()
     .transform((val) => {
-      if (val === '' || val === 0) return null;
+      if (val === '' || val == null || val === 0) return null;
       return val;
     }),
-  accountType: z.string().min(1, 'نوع الحساب مطلوب'),
 
-  accountNature: z.string().optional(),
+  accountTypeId: z.coerce
+    .number({ invalid_type_error: 'نوع الحساب مطلوب' })
+    .refine((val) => val > 0, { message: 'نوع الحساب مطلوب' }),
 
-  accountCategory: z.string().nullable().optional(),
+  lockedInJournal: z.boolean(),
 
   isActive: z.boolean(),
-
-  isFinal: z.boolean(),
-
-  allowPosting: z.boolean().optional(),
 });
