@@ -1,32 +1,68 @@
+import { useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowRight, FolderPlus } from 'lucide-react';
 import AccountForm from '../components/AccountForm';
-import useAccountsTree from '../hooks/use-accounts-tree';
 import useCreateAccount from '../hooks/use-create-account';
 
 const NewAccount = () => {
-  const { data: accountsTree = [] } = useAccountsTree();
-  const { mutate, isLoading } = useCreateAccount();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { mutateAsync } = useCreateAccount();
 
-  const handleCreate = (formData) => {
-    console.log('Submitting form:', formData);
-    mutate(formData);
+  const defaultValues = useMemo(() => {
+    const parentId = searchParams.get('parentId');
+    return {
+      parentId: parentId ? String(parentId) : '',
+      nameAr: '',
+      nameEn: '',
+      accountTypeId: '',
+      lockedInJournal: false,
+      isActive: true,
+    };
+  }, [searchParams]);
+
+  const handleCreate = async (formData) => {
+    await mutateAsync(
+      {
+        nameAr: formData.nameAr,
+        nameEn: formData.nameEn,
+        parentId: formData.parentId,
+        accountTypeId: formData.accountTypeId,
+        lockedInJournal: formData.lockedInJournal,
+        isActive: formData.isActive,
+      },
+      { onSuccess: () => navigate('/accounts-tree') }
+    );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800">
+    <div className="min-h-screen bg-gray-50 px-4 py-10">
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-6 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/accounts-tree')}
+            className="rounded-lg border border-gray-200 bg-white p-2 text-gray-600 shadow-sm transition hover:bg-gray-100"
+          >
+            <ArrowRight size={18} />
+          </button>
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <FolderPlus size={22} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
               إضافة حساب جديد
             </h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500">
               قم بإدخال بيانات الحساب لإضافته إلى شجرة الحسابات
             </p>
           </div>
+        </div>
 
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
           <AccountForm
             mode="create"
-            parentAccounts={accountsTree}
+            defaultValues={defaultValues}
             onSubmit={handleCreate}
           />
         </div>

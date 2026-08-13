@@ -208,57 +208,75 @@ const SuppliersPage = () => {
 
   return (
     <div className="space-y-4 p-6">
-      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold">الموردين</h1>
-        <p className="text-sm text-gray-600">إدارة جميع الموردين</p>
-      </div>
-
-      <div className="space-y-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <FormInput
-            label="بحث"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPageNumber(1);
-            }}
-            placeholder="ابحث ب اسم المورد"
-            autoFocus
-          />
-          <NormalSelect
-            label="الحالة"
-            options={STATUS_OPTIONS}
-            value={status}
-            onChange={(event) => {
-              setStatus(event.target.value || null);
-              setPageNumber(1);
-            }}
-            isClearable
-          />
-          <NormalSelect
-            label="فئة المورد"
-            options={CLASS_OPTIONS}
-            value={providerClass}
-            onChange={(event) => {
-              setProviderClass(event.target.value || null);
-              setPageNumber(1);
-            }}
-            isClearable
-          />
-          <NormalSelect
-            label="مستوى الأهمية"
-            options={IMPORTANCE_OPTIONS}
-            value={importanceLevel}
-            onChange={(event) => {
-              setImportanceLevel(event.target.value || null);
-              setPageNumber(1);
-            }}
-            isClearable
-          />
+        <div className='rounded-xl border border-gray-100 bg-white p-6 shadow-sm'>
+          <h1 className="text-2xl font-bold">الموردين</h1>
+          <p className="text-sm text-gray-600">إدارة جميع الموردين</p>
         </div>
+      <div className="rounded-xl border flex flex-col gap-7 border-gray-100 bg-white p-6 shadow-sm">
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <button
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <FormInput
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPageNumber(1);
+              }}
+              placeholder="ابحث باسم المورد"
+              autoFocus
+              containerClass="min-w-64 flex-1"
+            />
+            <NormalSelect
+              options={STATUS_OPTIONS}
+              value={status}
+              onChange={(event) => {
+                setStatus(event.target.value || null);
+                setPageNumber(1);
+              }}
+              isClearable
+              placeholder="الحالة"
+              containerClass="sm:w-40"
+            />
+            <NormalSelect
+              options={CLASS_OPTIONS}
+              value={providerClass}
+              onChange={(event) => {
+                setProviderClass(event.target.value || null);
+                setPageNumber(1);
+              }}
+              isClearable
+              placeholder="فئة المورد"
+              containerClass="sm:w-44"
+            />
+            <NormalSelect
+              options={IMPORTANCE_OPTIONS}
+              value={importanceLevel}
+              onChange={(event) => {
+                setImportanceLevel(event.target.value || null);
+                setPageNumber(1);
+              }}
+              isClearable
+              placeholder="مستوى الأهمية"
+              containerClass="sm:w-44"
+            />
+            <NormalSelect
+              options={governorates.map((g) => ({
+                value: g.id,
+                label: g.nameAr,
+              }))}
+              value={governorateId}
+              onChange={(event) => {
+                setGovernorateId(event.target.value || null);
+                setPageNumber(1);
+              }}
+              isClearable
+              placeholder="المحافظة"
+              containerClass="sm:w-44"
+            />
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* <button
             type="button"
             onClick={() => setShowAdvanced((prev) => !prev)}
             className="inline-flex items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-primary/80"
@@ -274,51 +292,40 @@ const SuppliersPage = () => {
               size={16}
               className={`transition-transform ${showAdvanced ? 'rotate-180' : ''}`}
             />
-          </button>
+          </button> */}
 
-          {activeFilterCount > 0 ? (
-            <button
-              type="button"
-              onClick={handleReset}
-              className="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
-            >
-              <RotateCcw size={16} />
-              مسح الفلاتر
-            </button>
+            {activeFilterCount > 0 ? (
+              <button
+                type="button"
+                onClick={handleReset}
+                className="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
+              >
+                <RotateCcw size={16} />
+                مسح الفلاتر
+              </button>
+            ) : null}
+          </div>
+
+          {showAdvanced ? (
+            <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 pt-4"></div>
           ) : null}
         </div>
 
-        {showAdvanced ? (
-          <div className="grid grid-cols-1 gap-4 border-t border-gray-100 pt-4 md:grid-cols-2 lg:grid-cols-4">
-            <NormalSelect
-              label="المحافظة"
-              options={governorates.map((g) => ({
-                value: g.id,
-                label: g.nameAr,
-              }))}
-              value={governorateId}
-              onChange={(event) => {
-                setGovernorateId(event.target.value || null);
-                setPageNumber(1);
-              }}
-              isClearable
-            />
-          </div>
-        ) : null}
+        <Table
+          columns={Columns}
+          data={suppliers}
+          loading={isLoading}
+          extraRenderArg={setAttachmentsSupplier}
+          onRowClick={(row) =>
+            navigate(`/suppliers/${row.supplierID || row.id}`)
+          }
+        />
+
+        <AttachmentsModal
+          supplier={attachmentsSupplier}
+          onClose={() => setAttachmentsSupplier(null)}
+        />
       </div>
-
-      <Table
-        columns={Columns}
-        data={suppliers}
-        loading={isLoading}
-        extraRenderArg={setAttachmentsSupplier}
-        onRowClick={(row) => navigate(`/suppliers/${row.supplierID || row.id}`)}
-      />
-
-      <AttachmentsModal
-        supplier={attachmentsSupplier}
-        onClose={() => setAttachmentsSupplier(null)}
-      />
 
       <Pagination
         currentPage={pageNumber}
