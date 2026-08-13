@@ -5,6 +5,7 @@ import AccountForm from '../components/AccountForm';
 import useAccountById from '../hooks/use-account-by-Id';
 import useUpdateAccount from '../hooks/use-update-account';
 import Spinner from '../../../../shared/ui/spinner';
+import Breadcrumb from '../../../../shared/ui/breadcrumb';
 
 const mapAccountToForm = (account) => ({
   accountID: account?.accountID,
@@ -72,6 +73,14 @@ const UpdateAccount = () => {
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10">
       <div className="mx-auto max-w-3xl">
+        <div className="mb-6">
+          <Breadcrumb
+            items={[
+              { label: 'شجرة الحسابات', to: '/accounts-tree' },
+              { label: 'تحديث الحساب' },
+            ]}
+          />
+        </div>
         <div className="mb-6 flex items-center gap-3">
           <button
             type="button"

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import PageLoader from '../../../shared/ui/page-loader';
 import Pagination from '../../../shared/ui/pagination';
+import Breadcrumb from '../../../shared/ui/breadcrumb';
 import { useCustomer } from '../hooks/customers.queries';
 
 const ReadOnlyField = ({ label, value, className = '' }) => (
@@ -83,6 +84,12 @@ const CustomerDetails = () => {
 
   return (
     <div className="space-y-6 p-6">
+      <Breadcrumb
+        items={[
+          { label: 'العملاء', to: '/customers' },
+          { label: customer.clientName || 'تفاصيل العميل' },
+        ]}
+      />
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="bg-linear-to-r from-primary to-primary/80 px-8 py-6">
           <div className="flex items-center justify-between">

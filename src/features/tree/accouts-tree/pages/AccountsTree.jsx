@@ -4,6 +4,7 @@ import TreeNode from '../../components/tree-node';
 import AccountActionsMenu from '../../components/account-actions-menu';
 import { filterTree } from '../../utils/filterTree';
 import SearchFilter from '../../../../shared/components/search-filter';
+import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from '../../../../shared/ui/modal';
 import { useDebounce } from '../../../../shared/lib/use-debounce';
@@ -136,6 +137,7 @@ const AccountsTree = () => {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb items={[{ label: 'شجرة الحسابات' }]} />
       {/* Header */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
@@ -169,43 +171,43 @@ const AccountsTree = () => {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
+            <div className="mt-3 text-lg font-medium text-gray-600 mb-1">إجمالي الحسابات</div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-gray-600">
                 <FolderTree size={20} />
               </div>
             </div>
-            <div className="mt-3 text-sm text-gray-600 mb-1">إجمالي الحسابات</div>
-            <div className="text-xl font-bold text-gray-900">{stats.total}</div>
+            <div className="text-3xl font-bold text-gray-900">{stats.total}</div>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
+            <div className="mt-3 text-lg font-medium text-emerald-600 mb-1">نشطة</div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
                 <CheckCircle size={20} />
               </div>
             </div>
-            <div className="mt-3 text-sm text-emerald-600 mb-1">نشطة</div>
-            <div className="text-xl font-bold text-emerald-700">
+            <div className="text-3xl font-bold text-emerald-700">
               {stats.active}
             </div>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
+            <div className="mt-3 text-lg font-medium text-red-600 mb-1">غير نشطة</div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 text-red-600">
                 <XCircle size={20} />
               </div>
             </div>
-            <div className="mt-3 text-sm text-red-600 mb-1">غير نشطة</div>
-            <div className="text-xl font-bold text-red-700">
+            <div className="text-3xl font-bold text-red-700">
               {stats.total - stats.active}
             </div>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
+            <div className="mt-3 text-lg font-medium text-primary mb-1">أنواع الحسابات</div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <Layers size={20} />
               </div>
             </div>
-            <div className="mt-3 text-sm text-primary mb-1">أنواع الحسابات</div>
-            <div className="text-xl font-bold text-primary">
+            <div className="text-3xl font-bold text-primary">
               {accountTypes.length}
             </div>
           </div>

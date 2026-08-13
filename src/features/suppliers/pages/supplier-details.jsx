@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import PageLoader from '../../../shared/ui/page-loader';
 import NormalSelect from '../../../shared/ui/NormalSelect';
+import Breadcrumb from '../../../shared/ui/breadcrumb';
 import { useSupplier } from '../hooks/suppliers.queries';
 import {
   useNetworks,
@@ -226,6 +227,12 @@ const SupplierDetails = () => {
 
   return (
     <div className="space-y-6 p-6">
+      <Breadcrumb
+        items={[
+          { label: 'الموردين', to: '/suppliers' },
+          { label: basicInfo.providerNameAr || 'تفاصيل المورد' },
+        ]}
+      />
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="bg-linear-to-r from-primary to-primary/80 px-8 py-6">
           <div className="flex items-center justify-between">
