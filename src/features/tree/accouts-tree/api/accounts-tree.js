@@ -33,8 +33,8 @@ export const createAccount = async (formData) => {
   return data;
 };
 // Update
-export const updateAccount = async ({ body }) => {
-  const { data } = await axiosInstance.post(`/accounts`, body, {
+export const updateAccount = async ({ id, body }) => {
+  const { data } = await axiosInstance.put(`/accounts/${id}`, body, {
     headers: {
       'Content-Type': 'application/json',
     },

@@ -1,14 +1,22 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { cn } from '../../../shared/lib/cn';
 import { useDebounce } from '../../../shared/lib/use-debounce';
 import { getAccountById, searchAccounts } from '../../tree/accouts-tree/api/accounts-tree';
 
 const getAccountId = (account) => account.id ?? account.accountID;
 
-const AccountSearchSelect = ({ value, onChange, disabled, error }) => {
+const AccountSearchSelect = ({
+  value,
+  onChange,
+  disabled,
+  error,
+  allowLocked = false,
+  placeholder = 'ابحث بكود الحساب',
+  searchHint = 'ابدأ بكتابة اسم أو كود الحساب للبحث',
+}) => {
   const [searchText, setSearchText] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef(null);
@@ -19,7 +27,7 @@ const AccountSearchSelect = ({ value, onChange, disabled, error }) => {
 
   const { data: searchResults = [], isLoading: isSearching } = useQuery({
     queryKey: ['accounts', 'search', debouncedSearch],
-    queryFn: () => searchAccounts({ code: debouncedSearch }),
+    queryFn: () => searchAccounts({ searchText: debouncedSearch }),
     enabled: debouncedSearch.length > 0,
   });
 
@@ -84,15 +92,22 @@ const AccountSearchSelect = ({ value, onChange, disabled, error }) => {
   }, [isOpen]);
 
   const handleSelect = (account) => {
-    if (account.lockedInJournal) return;
+    if (!allowLocked && account.lockedInJournal) return;
     onChange({ target: { value: String(getAccountId(account)), name: 'accountID' } });
     setSearchText(account.accountCode || '');
     setIsOpen(false);
   };
 
-  const lockedError = displayAccount?.lockedInJournal
-    ? 'لا يمكن استخدام هذا الحساب لأنه مقفل'
-    : null;
+  const handleClear = () => {
+    onChange({ target: { value: '', name: 'accountID' } });
+    setSearchText('');
+    setIsOpen(false);
+  };
+
+  const lockedError =
+    !allowLocked && displayAccount?.lockedInJournal
+      ? 'لا يمكن استخدام هذا الحساب لأنه مقفل'
+      : null;
 
   return (
     <div ref={wrapperRef} className="w-full">
@@ -110,15 +125,25 @@ const AccountSearchSelect = ({ value, onChange, disabled, error }) => {
             setIsOpen(true);
             if (value && !displayLabel) setSearchText(String(value));
           }}
-          placeholder="ابحث بكود الحساب"
+          placeholder={placeholder}
           disabled={disabled}
           dir="rtl"
           className={cn(
             'w-full rounded-lg border py-2 pr-10 text-sm outline-none transition-colors',
+            displayAccount ? 'pl-8' : 'pl-3',
             error || lockedError ? 'border-red-500' : 'border-gray-300',
             disabled ? 'cursor-not-allowed bg-gray-100' : 'bg-white',
           )}
         />
+        {displayAccount && !disabled ? (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+          >
+            <X size={14} />
+          </button>
+        ) : null}
       </div>
 
       {isOpen && !disabled && dropdownStyle
@@ -129,7 +154,7 @@ const AccountSearchSelect = ({ value, onChange, disabled, error }) => {
               className="z-[9999] max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg"
             >
               {debouncedSearch.length === 0 ? (
-                <div className="p-3 text-sm text-gray-500">ابدأ بكتابة كود الحساب للبحث</div>
+                <div className="p-3 text-sm text-gray-500">{searchHint}</div>
               ) : isSearching ? (
                 <div className="p-3 text-sm text-gray-500">جاري التحميل...</div>
               ) : searchResults.length === 0 ? (
@@ -137,13 +162,14 @@ const AccountSearchSelect = ({ value, onChange, disabled, error }) => {
               ) : (
                 searchResults.map((account) => {
                   const isLocked = !!account.lockedInJournal;
+                  const blocked = !allowLocked && isLocked;
                   return (
                     <div
                       key={getAccountId(account)}
                       onMouseDown={() => handleSelect(account)}
                       className={cn(
                         'border-b border-gray-100 p-3 last:border-b-0',
-                        isLocked
+                        blocked
                           ? 'cursor-not-allowed hover:bg-white'
                           : 'cursor-pointer hover:bg-gray-50',
                         String(getAccountId(account)) === String(value) &&

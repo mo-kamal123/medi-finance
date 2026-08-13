@@ -143,7 +143,6 @@ const TABS = [
   { key: 'discounts', label: 'الخصومات', icon: Percent },
   { key: 'medicardDiscounts', label: 'خصومات ميديكارد', icon: HeartHandshake },
   { key: 'settings', label: 'الإعدادات', icon: Settings },
-  { key: 'system', label: 'معلومات النظام', icon: Calendar },
 ];
 
 const SupplierDetails = () => {
@@ -228,7 +227,7 @@ const SupplierDetails = () => {
   return (
     <div className="space-y-6 p-6">
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <div className="bg-gradient-to-r from-primary to-primary/80 px-8 py-6">
+        <div className="bg-linear-to-r from-primary to-primary/80 px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/20 text-white shadow-inner">
@@ -797,26 +796,6 @@ const SupplierDetails = () => {
                   className="md:col-span-2"
                 />
               )}
-            </div>
-          )}
-
-          {activeTab === 'system' && (
-            <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
-              <ReadOnlyField
-                label="تاريخ الإنشاء"
-                value={
-                  supplier.createdAt
-                    ? new Date(supplier.createdAt).toLocaleDateString('ar-EG', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
-                    : null
-                }
-              />
-              <ReadOnlyField label="إنشاء بواسطة" value={supplier.createdBy} />
             </div>
           )}
         </div>

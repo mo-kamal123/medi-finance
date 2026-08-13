@@ -1,12 +1,17 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { CheckCircle, Download, FolderTree, Layers, Link, PlusIcon, RefreshCw, Search, XCircle } from 'lucide-react';
+import { Ban, CheckCircle, FileText, FolderTree, Layers, Link, Pencil, PlusIcon, PlusCircle, RefreshCw, XCircle } from 'lucide-react';
 import TreeNode from '../../components/tree-node';
+import AccountActionsMenu from '../../components/account-actions-menu';
 import { filterTree } from '../../utils/filterTree';
 import SearchFilter from '../../../../shared/components/search-filter';
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from '../../../../shared/ui/modal';
+import { useDebounce } from '../../../../shared/lib/use-debounce';
 import useAccountRoots from '../hooks/use-account-roots';
+import useSearchAccounts from '../hooks/use-search-accounts';
 import { getAccountChildren } from '../api/accounts-tree';
+
+const getAccountId = (account) => account.accountID ?? account.id;
 
 const flattenTree = (nodes) => {
   const result = [];
@@ -32,6 +37,17 @@ const AccountsTree = () => {
 
   const { data: roots = [], isLoading: rootsLoading } = useAccountRoots({ isActive: true });
   const navigate = useNavigate();
+
+  const debouncedSearch = useDebounce(searchQuery, 500);
+  const isSearching = searchQuery.trim().length > 0;
+
+  const {
+    data: searchResults = [],
+    isFetching: searchLoading,
+  } = useSearchAccounts({
+    searchText: debouncedSearch,
+    accountType: filterType,
+  });
 
   const attachChildren = (nodes, cache) =>
     nodes.map((node) => ({
@@ -86,11 +102,11 @@ const AccountsTree = () => {
   const isLoading = useCallback((node) => !!loadingNodes[node.accountID], [loadingNodes]);
 
   const editAccount = (account) => {
-    navigate(`${account.id}`);
+    navigate(`${getAccountId(account)}`);
   };
 
-  const addSubAccount = () => {
-    navigate(`new`);
+  const addSubAccount = (account) => {
+    navigate(`new?parentId=${getAccountId(account)}`);
   };
 
   const disableAccount = (account) => {
@@ -102,6 +118,21 @@ const AccountsTree = () => {
     console.log('تم تعطيل:', selectedNode);
     setModalOpen(false);
   };
+
+  const actions = [
+    { label: 'تعديل الحساب', onClick: editAccount, icon: Pencil },
+    {
+      label: 'إضافة حساب فرعي',
+      onClick: addSubAccount,
+      icon: PlusCircle,
+    },
+    {
+      label: 'تعطيل الحساب',
+      onClick: disableAccount,
+      icon: Ban,
+      danger: true,
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -212,6 +243,45 @@ const AccountsTree = () => {
               <RefreshCw size={24} className="animate-spin ml-2" />
               جاري تحميل الحسابات...
             </div>
+          ) : isSearching ? (
+            searchLoading && searchResults.length === 0 ? (
+              <div className="flex items-center justify-center py-12 text-gray-400">
+                <RefreshCw size={24} className="animate-spin ml-2" />
+                جاري البحث...
+              </div>
+            ) : searchResults.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500">لا توجد حسابات مطابقة للبحث</p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {searchResults.map((account) => (
+                  <div
+                    key={getAccountId(account)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 transition-colors hover:bg-gray-50"
+                  >
+                    <FileText size={18} className="shrink-0 text-gray-400" />
+                    <span className="min-w-20 font-mono text-sm text-gray-500">
+                      {account.accountCode}
+                    </span>
+                    <span className="flex-1 truncate text-sm font-medium text-gray-900">
+                      {account.nameAr || account.nameEn}
+                    </span>
+                    {account.accountType ? (
+                      <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-500">
+                        {account.accountType}
+                      </span>
+                    ) : null}
+                    {account.lockedInJournal ? (
+                      <span className="shrink-0 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600">
+                        مقفل
+                      </span>
+                    ) : null}
+                    <AccountActionsMenu node={account} actions={actions} />
+                  </div>
+                ))}
+              </div>
+            )
           ) : filteredTree.length > 0 ? (
             <div className="space-y-1">
               {filteredTree.map((account) => (
@@ -225,15 +295,7 @@ const AccountsTree = () => {
                   getParentId={(a) => a.parentId}
                   onExpand={handleExpand}
                   isLoading={isLoading}
-                  actions={[
-                    { label: 'تعديل الحساب', onClick: editAccount },
-                    { label: 'إضافة حساب فرعي', onClick: addSubAccount },
-                    {
-                      label: 'تعطيل الحساب',
-                      onClick: disableAccount,
-                      danger: true,
-                    },
-                  ]}
+                  actions={actions}
                 />
               ))}
             </div>

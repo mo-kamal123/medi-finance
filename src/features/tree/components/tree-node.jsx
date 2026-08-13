@@ -5,11 +5,10 @@ import {
   Folder,
   FolderOpen,
   FileText,
-  MoreVertical,
   Loader2,
   Lock,
 } from 'lucide-react';
-import Dropdown from '../../../shared/ui/dropdown';
+import AccountActionsMenu from './account-actions-menu';
 
 const getNodeId = (node) => node.id ?? node.accountID ?? node.costCenterID;
 
@@ -26,7 +25,6 @@ const TreeNode = ({
   isLoading,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const children = getChildren(node);
   const hasChildren = node.hasChildren ?? (children && children.length > 0);
@@ -118,33 +116,7 @@ const TreeNode = ({
         ) : null}
 
         {/* Menu */}
-        {actions.length > 0 && (
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsMenuOpen(!isMenuOpen);
-              }}
-              className="p-1 rounded hover:bg-gray-200"
-            >
-              <MoreVertical size={16} />
-            </button>
-
-            <Dropdown isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)}>
-              {actions.map((action, i) => (
-                <button
-                  key={i}
-                  onClick={() => action.onClick(node)}
-                  className={`w-full text-right px-3 py-2 text-sm hover:bg-gray-100 ${
-                    action.danger ? 'text-red-600 hover:bg-red-50' : ''
-                  }`}
-                >
-                  {action.label}
-                </button>
-              ))}
-            </Dropdown>
-          </div>
-        )}
+        {actions.length > 0 && <AccountActionsMenu node={node} actions={actions} />}
       </div>
 
       {hasChildren && isExpanded && resolvedChildren.length > 0 && (

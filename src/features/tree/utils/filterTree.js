@@ -6,9 +6,9 @@ export const filterTree = (accounts, query, type) => {
     .map((account) => {
       const matchesSearch =
         !query ||
-        account.nameAr.toLowerCase().includes(query.toLowerCase()) ||
-        account.nameEn.toLowerCase().includes(query.toLowerCase()) ||
-        account.accountCode.includes(query);
+        (account.nameAr ?? '').toLowerCase().includes(query.toLowerCase()) ||
+        (account.nameEn ?? '').toLowerCase().includes(query.toLowerCase()) ||
+        String(account.accountCode ?? '').includes(query);
 
       const matchesType = type === 'all' || account.accountType === type;
 
