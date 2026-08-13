@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, FolderPlus } from 'lucide-react';
 import AccountForm from '../components/AccountForm';
 import useCreateAccount from '../hooks/use-create-account';
+import Breadcrumb from '../../../../shared/ui/breadcrumb';
 
 const NewAccount = () => {
   const navigate = useNavigate();
@@ -38,6 +39,14 @@ const NewAccount = () => {
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10">
       <div className="mx-auto max-w-3xl">
+        <div className="mb-6">
+          <Breadcrumb
+            items={[
+              { label: 'شجرة الحسابات', to: '/accounts-tree' },
+              { label: 'إضافة حساب' },
+            ]}
+          />
+        </div>
         <div className="mb-6 flex items-center gap-3">
           <button
             type="button"
