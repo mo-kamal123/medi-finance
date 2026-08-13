@@ -6,6 +6,7 @@ import NormalSelect from '../../../shared/ui/NormalSelect';
 import PageLoader from '../../../shared/ui/page-loader';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
+import Breadcrumb from '../../../shared/ui/breadcrumb';
 import { useDebounce } from '../../../shared/lib/use-debounce';
 import { formatFileSize } from '../../../shared/utils/formatters';
 import {
@@ -208,6 +209,7 @@ const SuppliersPage = () => {
 
   return (
     <div className="space-y-4 p-6">
+      <Breadcrumb items={[{ label: 'الموردين' }]} />
         <div className='rounded-xl border border-gray-100 bg-white p-6 shadow-sm'>
           <h1 className="text-2xl font-bold">الموردين</h1>
           <p className="text-sm text-gray-600">إدارة جميع الموردين</p>

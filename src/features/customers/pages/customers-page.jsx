@@ -2,6 +2,7 @@
 import FormInput from '../../../shared/ui/input';
 import PageLoader from '../../../shared/ui/page-loader';
 import Pagination from '../../../shared/ui/pagination';
+import Breadcrumb from '../../../shared/ui/breadcrumb';
 import { useDebounce } from '../../../shared/lib/use-debounce';
 import CustomerTable from '../components/customer-table';
 import { useCustomers } from '../hooks/customers.queries';
@@ -33,6 +34,7 @@ const CustomersPage = () => {
 
   return (
     <div className="space-y-4 p-6">
+      <Breadcrumb items={[{ label: 'العملاء' }]} />
       <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-bold">العملاء</h1>
         <p className="text-sm text-gray-600">إدارة جميع العملاء</p>
