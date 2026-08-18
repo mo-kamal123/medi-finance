@@ -276,7 +276,7 @@ const SearchableSelect = forwardRef(
               'flex min-h-[44px] w-full items-center justify-between gap-3 rounded-xl border bg-white px-4 py-2 text-right transition',
               error
                 ? 'border-red-400'
-                : 'border-gray-200 shadow-sm hover:border-primary/40',
+                : 'border-gray-200 hover:border-primary/40',
               disabled && 'cursor-not-allowed bg-gray-100 text-gray-400',
               className,
               inputClass

@@ -11,7 +11,7 @@ const RootLayout = () => {
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-gray-50">
+    <div className="flex h-screen w-full overflow-hidden">
       {/* Sidebar */}
       <Sidebar />
 

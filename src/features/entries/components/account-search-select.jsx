@@ -129,9 +129,9 @@ const AccountSearchSelect = ({
           disabled={disabled}
           dir="rtl"
           className={cn(
-            'w-full rounded-lg border py-2 pr-10 text-sm outline-none transition-colors',
+            'w-full rounded-lg border py-2 pr-10 outline-none transition-colors',
             displayAccount ? 'pl-8' : 'pl-3',
-            error || lockedError ? 'border-red-500' : 'border-gray-300',
+            error || lockedError ? 'border-red-500' : 'border-gray-200',
             disabled ? 'cursor-not-allowed bg-gray-100' : 'bg-white',
           )}
         />
@@ -151,7 +151,7 @@ const AccountSearchSelect = ({
             <div
               ref={portalRef}
               style={dropdownStyle}
-              className="z-[9999] max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg"
+              className="z-9999 max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg"
             >
               {debouncedSearch.length === 0 ? (
                 <div className="p-3 text-sm text-gray-500">{searchHint}</div>

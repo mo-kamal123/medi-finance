@@ -71,8 +71,8 @@ const UpdateAccount = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-10">
-      <div className="mx-auto max-w-3xl">
+    <div className="min-h-screen px-4 py-10">
+      <div className="mx-auto w-full">
         <div className="mb-6">
           <Breadcrumb
             items={[
@@ -82,13 +82,6 @@ const UpdateAccount = () => {
           />
         </div>
         <div className="mb-6 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/accounts-tree')}
-            className="rounded-lg border border-gray-200 bg-white p-2 text-gray-600 shadow-sm transition hover:bg-gray-100"
-          >
-            <ArrowRight size={18} />
-          </button>
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <PencilLine size={22} />
           </div>
