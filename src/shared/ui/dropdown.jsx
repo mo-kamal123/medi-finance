@@ -71,7 +71,7 @@ const Dropdown = ({ isOpen, onClose, children, anchorRef }) => {
     <div
       ref={ref}
       style={style}
-      className="z-[9999] min-w-48 overflow-hidden rounded-2xl border border-gray-100 bg-white p-1.5 shadow-xl shadow-gray-200/60 ring-1 ring-black/5"
+      className="z-9999 min-w-48 overflow-hidden rounded-2xl border border-gray-100 bg-white p-1.5 shadow-xl shadow-gray-200/60 ring-1 ring-black/5"
     >
       {children}
     </div>,

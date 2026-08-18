@@ -90,8 +90,7 @@ const AccountForm = ({ mode = 'create', defaultValues = {}, onSubmit }) => {
         <div className="flex items-start gap-3 rounded-xl border border-sky-100 bg-sky-50 p-4 text-sm text-sky-800">
           <ShieldAlert size={18} className="mt-0.5 shrink-0" />
           <p>
-            رقم الحساب يتم توليده تلقائياً بواسطة النظام بعد الإنشاء، لا داعي
-            لإدخاله.
+            رقم الحساب يتم توليده تلقائياً بواسطة النظام بعد الإنشاء.
           </p>
         </div>
       )}
@@ -118,7 +117,7 @@ const AccountForm = ({ mode = 'create', defaultValues = {}, onSubmit }) => {
       {/* Parent + Type */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             الحساب الأب
             <span className="mr-1 text-xs font-normal text-gray-400">
               (اختياري، اتركه فارغاً لحساب رئيسي)
