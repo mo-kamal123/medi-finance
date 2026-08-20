@@ -1,6 +1,7 @@
 ﻿import { useState } from 'react';
 import { Eye, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Breadcrumb from '../../../shared/ui/breadcrumb';
 import FormInput from '../../../shared/ui/input';
 import Pagination from '../../../shared/ui/pagination';
 import Table from '../../../shared/ui/table';
@@ -74,7 +75,9 @@ const BanksPage = () => {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4 p-6">
+      <Breadcrumb items={[{ label: 'البنوك' }]} />
+
       <div className="flex justify-between items-center bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div>
           <h1 className="text-2xl font-bold">البنوك</h1>
