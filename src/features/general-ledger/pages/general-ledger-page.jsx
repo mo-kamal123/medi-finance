@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Download } from 'lucide-react';
 import PageLoader from '../../../shared/ui/page-loader';
 import { useGeneralLedger } from '../hooks/general-ledger.queries';
@@ -9,7 +10,13 @@ import { DEFAULT_GENERAL_LEDGER_FILTERS } from '../utils/general-ledger-filters.
 import { buildGeneralLedgerQueryParams } from '../utils/general-ledger-filters.utils';
 
 const GeneralLedgerPage = () => {
-  const [filters, setFilters] = useState(DEFAULT_GENERAL_LEDGER_FILTERS);
+  const [searchParams] = useSearchParams();
+  const initialAccountId = searchParams.get('accountId') || '';
+
+  const [filters, setFilters] = useState({
+    ...DEFAULT_GENERAL_LEDGER_FILTERS,
+    ...(initialAccountId ? { accountId: initialAccountId } : {}),
+  });
 
   const queryParams = useMemo(
     () => buildGeneralLedgerQueryParams(filters),

@@ -153,7 +153,7 @@ const getInvoiceParty = (invoice) => {
   return null;
 };
 
-const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, onStatusChange, isStatusUpdating }) => {
+const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, onStatusChange, isStatusUpdating, activeTab }) => {
   const navigate = useNavigate();
   const createMutation = useCreateCheque();
   const [invoiceParty, setInvoiceParty] = useState(null);
@@ -252,248 +252,273 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, onSta
     />
   );
 
-  return (
-    <div className="p-6 bg-white rounded-xl shadow-sm border border-gray-300 space-y-6">
-      <div>
-        <h2 className="text-xl font-bold">
-          {isViewMode
-            ? 'تفاصيل الشيك'
-            : mode === 'edit'
-              ? 'تعديل الشيك'
-              : 'إضافة شيك'}
-        </h2>
-        <p className="text-sm text-gray-500">
-          {isViewMode ? 'استعراض بيانات الشيك' : 'أدخل بيانات الشيك'}
-        </p>
+  const isTabMode = !!activeTab;
+
+  const renderInfoTab = () => (
+    <>
+      <SectionHeader title="بيانات الشيك الأساسية" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormInput
+          label="رقم الشيك"
+          required
+          {...register('chequeNumber')}
+          error={errors.chequeNumber?.message}
+          readOnly={isViewMode}
+        />
+        <FormInput
+          type="number"
+          label="القيمة"
+          required
+          {...register('amount')}
+          error={errors.amount?.message}
+          readOnly={isViewMode}
+        />
+        {renderDate('chequeDate', 'تاريخ الشيك', true)}
+        {renderDate('receiptDate', 'تاريخ الاستلام')}
+        {renderDate('dueDate', 'تاريخ الاستحقاق')}
+        {renderDate('voucherDate', 'تاريخ القيد')}
+        {renderSelect('statusID', 'الحالة', [
+          { value: '', label: 'اختر الحالة' },
+          ...statusOptions,
+        ], {
+          onChange: (val) => onStatusChange?.(val),
+          disabled: isStatusUpdating,
+        })}
       </div>
+
+      <SectionHeader title="بيانات إضافية" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormInput
+          label="اسم المستفيد"
+          {...register('beneficiaryName')}
+          readOnly={isViewMode}
+        />
+        <FormInput
+          label="فرع الشركة"
+          {...register('branchName')}
+          readOnly={isViewMode}
+        />
+        <FormInput
+          label="فرع البنك"
+          {...register('bankBranchName')}
+          readOnly={isViewMode}
+        />
+        <FormInput
+          label="رقم الكارت"
+          {...register('cardNumber')}
+          readOnly={isViewMode}
+        />
+      </div>
+    </>
+  );
+
+  const renderPartyTab = () => (
+    <>
+      <SectionHeader title="بيانات العميل والبنك والعملة" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {renderSelect('customerID', 'العميل', customerOptions, {
+          onChange: (val) => val && setValue('supplierID', ''),
+          disabled: !!supplierID,
+        })}
+        {renderSelect('supplierID', 'المورد', supplierOptions, {
+          onChange: (val) => val && setValue('customerID', ''),
+          disabled: !!customerID,
+        })}
+        {renderSelect('bankID', 'البنك', bankOptions, { required: true })}
+        {renderSelect('currencyID', 'العملة', currencyOptions)}
+        <FormInput
+          type="number"
+          step="0.01"
+          label="سعر الصرف"
+          {...register('exchangeRate')}
+          error={errors.exchangeRate?.message}
+          readOnly={isViewMode}
+        />
+        <div>
+          <label className="mb-1 block font-medium text-gray-700">
+            الفاتورة
+          </label>
+          <Controller
+            name="invoiceID"
+            control={control}
+            render={({ field }) => (
+              <InvoiceSearch
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                displayValue={formDefaults.invoiceNumber}
+                onInvoiceSelect={(invoice) => {
+                  const party = getInvoiceParty(invoice);
+                  setValue('invoiceNumber', invoice.invoiceNumber || '');
+                  setInvoiceParty(party);
+                  if (invoice.netAmount)
+                    setValue('amount', invoice.netAmount);
+                  if (party?.type === 'customer') {
+                    setValue('customerID', party.value);
+                    setValue('supplierID', '');
+                  }
+                  if (party?.type === 'supplier') {
+                    setValue('supplierID', party.value);
+                    setValue('customerID', '');
+                  }
+                }}
+                disabled={isViewMode}
+                error={errors.invoiceID?.message}
+              />
+            )}
+          />
+        </div>
+      </div>
+    </>
+  );
+
+  const renderAccountsTab = () => (
+    <>
+      <SectionHeader title="بيانات الحسابات" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="mb-1 block font-medium text-gray-700">
+            حساب تحت التحصيل
+          </label>
+          <Controller
+            name="underDeliveryAccountID"
+            control={control}
+            render={({ field }) => (
+              <AccountSearchSelect
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                disabled={isViewMode}
+                error={errors.underDeliveryAccountID?.message}
+              />
+            )}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block font-medium text-gray-700">
+            حساب التحصيل
+          </label>
+          <Controller
+            name="collectionAccountID"
+            control={control}
+            render={({ field }) => (
+              <AccountSearchSelect
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                disabled={isViewMode}
+                error={errors.collectionAccountID?.message}
+              />
+            )}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block font-medium text-gray-700">
+            الحساب المقابل
+          </label>
+          <Controller
+            name="counterAccountID"
+            control={control}
+            render={({ field }) => (
+              <AccountSearchSelect
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                disabled={isViewMode}
+                error={errors.counterAccountID?.message}
+              />
+            )}
+          />
+        </div>
+      </div>
+    </>
+  );
+
+  const renderSettingsTab = () => (
+    <>
+      <SectionHeader title="خصائص الشيك" />
+      <div className="grid grid-cols-3 gap-4">
+        <label className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-3">
+          <input
+            type="checkbox"
+            {...register('isNonCashable')}
+            disabled={isViewMode}
+          />
+          <span className="text-sm">غير قابل للصرف</span>
+        </label>
+        <label className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-3">
+          <input
+            type="checkbox"
+            {...register('isBearerOnly')}
+            disabled={isViewMode}
+          />
+          <span className="text-sm">لحامله فقط</span>
+        </label>
+        <label className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-3">
+          <input
+            type="checkbox"
+            {...register('hasAttachmentPage')}
+            disabled={isViewMode}
+          />
+          <span className="text-sm">صفحة مرفقة</span>
+        </label>
+      </div>
+
+      <SectionHeader title="ملاحظات" />
+      <div>
+        <FormInput
+          as="textarea"
+          label="ملاحظات"
+          {...register('notes')}
+          readOnly={isViewMode}
+        />
+      </div>
+    </>
+  );
+
+  const renderTabContent = () => {
+    if (!isTabMode) {
+      return (
+        <>
+          {renderInfoTab()}
+          {renderPartyTab()}
+          {renderAccountsTab()}
+          {renderSettingsTab()}
+        </>
+      );
+    }
+    switch (activeTab) {
+      case 'info':
+        return renderInfoTab();
+      case 'party':
+        return renderPartyTab();
+      case 'accounts':
+        return renderAccountsTab();
+      case 'settings':
+        return renderSettingsTab();
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className={isTabMode ? '' : 'p-6 bg-white rounded-xl shadow-sm border border-gray-300 space-y-6'}>
+      {!isTabMode && (
+        <div>
+          <h2 className="text-xl font-bold">
+            {isViewMode
+              ? 'تفاصيل الشيك'
+              : mode === 'edit'
+                ? 'تعديل الشيك'
+                : 'إضافة شيك'}
+          </h2>
+          <p className="text-sm text-gray-500">
+            {isViewMode ? 'استعراض بيانات الشيك' : 'أدخل بيانات الشيك'}
+          </p>
+        </div>
+      )}
 
       <form
         onSubmit={handleSubmit(handleFormSubmit)}
         className="space-y-6"
       >
-        <SectionHeader title="بيانات الشيك الأساسية" />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormInput
-            label="رقم الشيك"
-            required
-            {...register('chequeNumber')}
-            error={errors.chequeNumber?.message}
-            readOnly={isViewMode}
-          />
-
-          <FormInput
-            type="number"
-            label="القيمة"
-            required
-            {...register('amount')}
-            error={errors.amount?.message}
-            readOnly={isViewMode}
-          />
-
-          {renderDate('chequeDate', 'تاريخ الشيك', true)}
-
-          {renderDate('receiptDate', 'تاريخ الاستلام')}
-
-          {renderDate('dueDate', 'تاريخ الاستحقاق')}
-
-          {renderDate('voucherDate', 'تاريخ القيد')}
-
-          {renderSelect('statusID', 'الحالة', [
-            { value: '', label: 'اختر الحالة' },
-            ...statusOptions,
-          ], {
-            onChange: (val) => onStatusChange?.(val),
-            disabled: isStatusUpdating,
-          })}
-        </div>
-
-        <SectionHeader title="بيانات العميل والبنك والعملة" />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {renderSelect('customerID', 'العميل', customerOptions, {
-            onChange: (val) => val && setValue('supplierID', ''),
-            disabled: !!supplierID,
-          })}
-
-          {renderSelect('supplierID', 'المورد', supplierOptions, {
-            onChange: (val) => val && setValue('customerID', ''),
-            disabled: !!customerID,
-          })}
-
-          {renderSelect('bankID', 'البنك', bankOptions, { required: true })}
-
-          {renderSelect('currencyID', 'العملة', currencyOptions)}
-
-          <FormInput
-            type="number"
-            step="0.01"
-            label="سعر الصرف"
-            {...register('exchangeRate')}
-            error={errors.exchangeRate?.message}
-            readOnly={isViewMode}
-          />
-
-          <div>
-            <label className="mb-1 block font-medium text-gray-700">
-              الفاتورة
-            </label>
-            <Controller
-              name="invoiceID"
-              control={control}
-              render={({ field }) => (
-                <InvoiceSearch
-                  value={field.value ?? ''}
-                  onChange={field.onChange}
-                  displayValue={formDefaults.invoiceNumber}
-                  onInvoiceSelect={(invoice) => {
-                    const party = getInvoiceParty(invoice);
-                    setValue('invoiceNumber', invoice.invoiceNumber || '');
-                    setInvoiceParty(party);
-                    if (invoice.netAmount)
-                      setValue('amount', invoice.netAmount);
-                    if (party?.type === 'customer') {
-                      setValue('customerID', party.value);
-                      setValue('supplierID', '');
-                    }
-                    if (party?.type === 'supplier') {
-                      setValue('supplierID', party.value);
-                      setValue('customerID', '');
-                    }
-                  }}
-                  disabled={isViewMode}
-                  error={errors.invoiceID?.message}
-                />
-              )}
-            />
-          </div>
-        </div>
-
-        <SectionHeader title="بيانات إضافية" />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormInput
-            label="اسم المستفيد"
-            {...register('beneficiaryName')}
-            readOnly={isViewMode}
-          />
-
-          <FormInput
-            label="فرع الشركة"
-            {...register('branchName')}
-            readOnly={isViewMode}
-          />
-
-          <FormInput
-            label="فرع البنك"
-            {...register('bankBranchName')}
-            readOnly={isViewMode}
-          />
-
-          <FormInput
-            label="رقم الكارت"
-            {...register('cardNumber')}
-            readOnly={isViewMode}
-          />
-        </div>
-
-        <SectionHeader title="بيانات الحسابات" />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1 block font-medium text-gray-700">
-              حساب تحت التحصيل
-            </label>
-            <Controller
-              name="underDeliveryAccountID"
-              control={control}
-              render={({ field }) => (
-                <AccountSearchSelect
-                  value={field.value ?? ''}
-                  onChange={field.onChange}
-                  disabled={isViewMode}
-                  error={errors.underDeliveryAccountID?.message}
-                />
-              )}
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block font-medium text-gray-700">
-              حساب التحصيل
-            </label>
-            <Controller
-              name="collectionAccountID"
-              control={control}
-              render={({ field }) => (
-                <AccountSearchSelect
-                  value={field.value ?? ''}
-                  onChange={field.onChange}
-                  disabled={isViewMode}
-                  error={errors.collectionAccountID?.message}
-                />
-              )}
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block font-medium text-gray-700">
-              الحساب المقابل
-            </label>
-            <Controller
-              name="counterAccountID"
-              control={control}
-              render={({ field }) => (
-                <AccountSearchSelect
-                  value={field.value ?? ''}
-                  onChange={field.onChange}
-                  disabled={isViewMode}
-                  error={errors.counterAccountID?.message}
-                />
-              )}
-            />
-          </div>
-        </div>
-
-        <SectionHeader title="خصائص الشيك" />
-
-        <div className="grid grid-cols-3 gap-4">
-          <label className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-3">
-            <input
-              type="checkbox"
-              {...register('isNonCashable')}
-              disabled={isViewMode}
-            />
-            <span className="text-sm">غير قابل للصرف</span>
-          </label>
-
-          <label className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-3">
-            <input
-              type="checkbox"
-              {...register('isBearerOnly')}
-              disabled={isViewMode}
-            />
-            <span className="text-sm">لحامله فقط</span>
-          </label>
-
-          <label className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-3">
-            <input
-              type="checkbox"
-              {...register('hasAttachmentPage')}
-              disabled={isViewMode}
-            />
-            <span className="text-sm">صفحة مرفقة</span>
-          </label>
-        </div>
-
-        <div>
-          <FormInput
-            as="textarea"
-            label="ملاحظات"
-            {...register('notes')}
-            readOnly={isViewMode}
-          />
-        </div>
+        {renderTabContent()}
 
         <div className="flex justify-end gap-3">
           <button
