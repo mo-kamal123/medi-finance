@@ -64,9 +64,10 @@ const Sidebar = () => {
       ],
     },
     {
-      name: 'الأوراق التجارية',
-      icon: CreditCard,
+      name: 'البنوك',
+      icon: Landmark,
       sub: [
+        { name: 'البنوك المتاحه', link: '/banks', icon: Landmark },
         { name: 'الشيكات', link: '/cheques', icon: CreditCard },
       ],
     },
@@ -92,11 +93,6 @@ const Sidebar = () => {
       name: 'المورديين',
       icon: Users,
       link: '/suppliers',
-    },
-    {
-      name: 'البنوك',
-      icon: Landmark,
-      link: '/banks',
     },
   ];
 
