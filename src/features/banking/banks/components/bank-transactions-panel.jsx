@@ -2,137 +2,105 @@ const STATIC_TRANSACTIONS = [
   {
     transactionNumber: 'TXN-2026-001',
     transactionDate: '2026-08-15',
-    valueDate: '2026-08-15',
     bankAccount: '1234567890',
     transactionType: 'إيداع',
     amount: 150000.00,
     currency: 'SAR',
-    referenceNumber: 'REF-00123',
     description: 'تحويل رواتب الموظفين',
     beneficiaryPayer: 'شركة أرامكو',
     relatedDocument: 'DOC-2026-045',
     status: 'معتمد',
-    createdBy: 'أحمد محمد',
-    approvedBy: 'خالد العلي',
     journalEntry: 'JE-2026-0892',
   },
   {
     transactionNumber: 'TXN-2026-002',
     transactionDate: '2026-08-14',
-    valueDate: '2026-08-14',
     bankAccount: '1234567890',
     transactionType: 'سحب',
     amount: -35000.00,
     currency: 'SAR',
-    referenceNumber: 'REF-00124',
     description: 'دفع فاتورة مورد',
     beneficiaryPayer: 'شركة التقنية',
     relatedDocument: 'INV-2026-112',
     status: 'معتمد',
-    createdBy: 'سارة أحمد',
-    approvedBy: 'خالد العلي',
     journalEntry: 'JE-2026-0893',
   },
   {
     transactionNumber: 'TXN-2026-003',
     transactionDate: '2026-08-13',
-    valueDate: '2026-08-14',
     bankAccount: '0987654321',
     transactionType: 'تحويل',
     amount: 75000.00,
     currency: 'USD',
-    referenceNumber: 'REF-00125',
     description: 'تحويل دولي - دفعة عقود',
     beneficiaryPayer: 'Global Corp',
     relatedDocument: 'CTR-2026-078',
     status: 'قيد المراجعة',
-    createdBy: 'محمد خالد',
-    approvedBy: '-',
     journalEntry: '-',
   },
   {
     transactionNumber: 'TXN-2026-004',
     transactionDate: '2026-08-12',
-    valueDate: '2026-08-12',
     bankAccount: '1234567890',
     transactionType: 'رسوم بنكية',
     amount: -250.00,
     currency: 'SAR',
-    referenceNumber: 'REF-00126',
     description: 'رسوم التحويل الدولي',
     beneficiaryPayer: 'البنك الأهلي',
     relatedDocument: '-',
     status: 'معتمد',
-    createdBy: 'نورة سعيد',
-    approvedBy: 'خالد العلي',
     journalEntry: 'JE-2026-0895',
   },
   {
     transactionNumber: 'TXN-2026-005',
     transactionDate: '2026-08-11',
-    valueDate: '2026-08-11',
     bankAccount: '0987654321',
     transactionType: 'إيداع',
     amount: 220000.00,
     currency: 'SAR',
-    referenceNumber: 'REF-00127',
     description: 'إيداع مبيعات نقدي',
     beneficiaryPayer: 'عميل نقدي',
     relatedDocument: 'RCP-2026-334',
     status: 'معتمد',
-    createdBy: 'أحمد محمد',
-    approvedBy: 'خالد العلي',
     journalEntry: 'JE-2026-0896',
   },
   {
     transactionNumber: 'TXN-2026-006',
     transactionDate: '2026-08-10',
-    valueDate: '2026-08-11',
     bankAccount: '1234567890',
     transactionType: 'سحب',
     amount: -12500.00,
     currency: 'SAR',
-    referenceNumber: 'REF-00128',
     description: 'صرف رواتب',
     beneficiaryPayer: 'الموظفين',
     relatedDocument: 'PAY-2026-089',
     status: 'قيد المراجعة',
-    createdBy: 'سارة أحمد',
-    approvedBy: '-',
     journalEntry: '-',
   },
   {
     transactionNumber: 'TXN-2026-007',
     transactionDate: '2026-08-09',
-    valueDate: '2026-08-09',
     bankAccount: '0987654321',
     transactionType: 'تحويل',
     amount: -50000.00,
     currency: 'EUR',
-    referenceNumber: 'REF-00129',
     description: 'دفع فاتورة استيراد',
     beneficiaryPayer: 'European Supplies',
     relatedDocument: 'PO-2026-056',
     status: 'مرفوض',
-    createdBy: 'محمد خالد',
-    approvedBy: 'خالد العلي',
     journalEntry: '-',
   },
   {
     transactionNumber: 'TXN-2026-008',
     transactionDate: '2026-08-08',
-    valueDate: '2026-08-08',
     bankAccount: '1234567890',
     transactionType: 'إيداع',
     amount: 89500.00,
     currency: 'SAR',
-    referenceNumber: 'REF-00130',
     description: 'إيداع شيك بنكي',
     beneficiaryPayer: 'مصرف الراجحي',
     relatedDocument: 'CHQ-2026-201',
     status: 'معتمد',
-    createdBy: 'نورة سعيد',
-    approvedBy: 'خالد العلي',
     journalEntry: 'JE-2026-0899',
   },
 ];
@@ -173,19 +141,15 @@ const BankTransactionsPanel = () => {
           <thead className="bg-primary/90 text-white">
             <tr>
               <th className="whitespace-nowrap p-3 text-right font-semibold">رقم المعاملة</th>
-              <th className="whitespace-nowrap p-3 text-right font-semibold">تاريخ المعاملة</th>
-              <th className="whitespace-nowrap p-3 text-right font-semibold">تاريخ القيمة</th>
+              <th className="whitespace-nowrap p-3 text-right font-semibold">تاريخ</th>
               <th className="whitespace-nowrap p-3 text-right font-semibold">الحساب البنكي</th>
-              <th className="whitespace-nowrap p-3 text-right font-semibold">نوع المعاملة</th>
+              <th className="whitespace-nowrap p-3 text-right font-semibold">النوع</th>
               <th className="whitespace-nowrap p-3 text-right font-semibold">المبلغ</th>
               <th className="whitespace-nowrap p-3 text-right font-semibold">العملة</th>
-              <th className="whitespace-nowrap p-3 text-right font-semibold">رقم المرجع</th>
               <th className="whitespace-nowrap p-3 text-right font-semibold">الوصف</th>
               <th className="whitespace-nowrap p-3 text-right font-semibold">المستفيد / المحول</th>
               <th className="whitespace-nowrap p-3 text-right font-semibold">المستند المرتبط</th>
               <th className="whitespace-nowrap p-3 text-right font-semibold">الحالة</th>
-              <th className="whitespace-nowrap p-3 text-right font-semibold">أنشأ بواسطة</th>
-              <th className="whitespace-nowrap p-3 text-right font-semibold">اعتمد بواسطة</th>
               <th className="whitespace-nowrap p-3 text-right font-semibold">القيد اليومي</th>
             </tr>
           </thead>
@@ -199,15 +163,13 @@ const BankTransactionsPanel = () => {
                   {tx.transactionNumber}
                 </td>
                 <td className="whitespace-nowrap p-3">{tx.transactionDate}</td>
-                <td className="whitespace-nowrap p-3">{tx.valueDate}</td>
                 <td className="whitespace-nowrap p-3">{tx.bankAccount}</td>
                 <td className="whitespace-nowrap p-3">{tx.transactionType}</td>
                 <td className={`whitespace-nowrap p-3 font-medium ${tx.amount < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                   {formatAmount(tx.amount)}
                 </td>
                 <td className="whitespace-nowrap p-3">{tx.currency}</td>
-                <td className="whitespace-nowrap p-3">{tx.referenceNumber}</td>
-                <td className="max-w-[200px] truncate p-3" title={tx.description}>
+                <td className="max-w-50 truncate p-3" title={tx.description}>
                   {tx.description}
                 </td>
                 <td className="whitespace-nowrap p-3">{tx.beneficiaryPayer}</td>
@@ -217,8 +179,6 @@ const BankTransactionsPanel = () => {
                     {tx.status}
                   </span>
                 </td>
-                <td className="whitespace-nowrap p-3">{tx.createdBy}</td>
-                <td className="whitespace-nowrap p-3">{tx.approvedBy}</td>
                 <td className="whitespace-nowrap p-3">{tx.journalEntry}</td>
               </tr>
             ))}
