@@ -1,62 +1,107 @@
+import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
-const SidebarItem = ({ item, active, toggle, openSidebar, setSubActive }) => {
-  const isOpen = active === item.name;
+const SidebarItem = ({ item, openSidebar, depth = 0, isOpen: controlledOpen, onToggle }) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = controlledOpen ?? internalOpen;
+  const toggle = () => (onToggle ? onToggle() : setInternalOpen((prev) => !prev));
+  const groupRef = useRef(null);
   const Icon = item.icon;
+  const hasChildren = Array.isArray(item.sub) && item.sub.length > 0;
+
+  useEffect(() => {
+    if (!isOpen || !openSidebar) return;
+    const el = groupRef.current;
+    const scroller = el?.closest('nav');
+    if (!el || !scroller) return;
+    const rect = el.getBoundingClientRect();
+    const sRect = scroller.getBoundingClientRect();
+    if (rect.bottom > sRect.bottom - 8) {
+      scroller.scrollBy({ top: rect.bottom - sRect.bottom + 64, behavior: 'smooth' });
+    }
+  }, [isOpen, openSidebar]);
+
+  if (!hasChildren) {
+    return (
+      <li>
+        <NavLink
+          to={item.link || '#'}
+          className={({ isActive }) =>
+            `flex items-center gap-3 rounded-lg transition-colors
+            ${depth === 0 ? 'py-2.5 pl-3 pr-3 text-[17px]' : ''}
+            ${depth === 1 ? 'py-2 pl-3 pr-3 text-[15px] font-medium' : ''}
+            ${depth >= 2 ? 'py-2 pl-3 pr-3 text-[14px]' : ''}
+            ${
+              isActive
+                ? 'bg-white text-primary shadow-sm font-semibold'
+                : 'text-white/70 hover:bg-white/10 hover:text-white'
+            }
+            ${depth >= 2 && !isActive ? 'font-normal' : ''}`
+          }
+        >
+          {depth >= 2 ? (
+            <span className="mx-1 h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-50" />
+          ) : (
+            <Icon size={depth === 0 ? (openSidebar ? 20 : 26) : 16} className="shrink-0" />
+          )}
+          {openSidebar && <span className="truncate">{item.name}</span>}
+        </NavLink>
+      </li>
+    );
+  }
+
+  const isTopLevel = depth === 0;
 
   return (
     <li>
-      {/* Parent */}
-      <NavLink
-        to={item.link || '#'}
-        onClick={() => toggle(item.name)}
-        className={`flex items-center w-full rounded-xl transition-colors text-lg font-medium
-        ${openSidebar ? 'justify-between px-3 py-2.5' : 'justify-center p-3'}
-        ${
-          isOpen ? 'bg-white/10 text-white font-semibold' : 'text-white/80 hover:bg-white/10'
-        }`}
+      {/* Group */}
+      <button
+        ref={groupRef}
+        type="button"
+        onClick={toggle}
+        aria-expanded={isOpen}
+        className={`flex w-full items-center rounded-lg transition-colors
+        ${isTopLevel ? 'text-[17px] font-bold' : 'py-2 pl-3 pr-3 text-[15px] font-semibold'}
+        ${openSidebar ? 'justify-between' : 'justify-center'}
+        ${isTopLevel ? (openSidebar ? 'px-2 py-2.5' : 'p-3') : ''}
+        ${isOpen ? 'text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}
       >
-        <div className="flex items-center gap-3">
-          <Icon size={openSidebar ? 18 : 25} />
+        <span className="flex items-center gap-3">
+          <span
+            className={`flex shrink-0 items-center justify-center rounded-md transition-colors
+            ${isTopLevel ? 'h-9 w-9 bg-white/10' : 'h-7 w-7 bg-white/[0.07]'}`}
+          >
+            <Icon size={isTopLevel ? (openSidebar ? 18 : 24) : 14} />
+          </span>
           {openSidebar && <span>{item.name}</span>}
-        </div>
+        </span>
 
-        {openSidebar && item.sub?.length > 0 && (
+        {openSidebar && (
           <ChevronLeft
             size={16}
-            className={`transition-transform ${
-              isOpen ? 'rotate-90 text-primary' : 'text-white/60'
+            className={`transition-transform duration-200 ${
+              isOpen ? 'rotate-90 text-white' : 'text-white/40'
             }`}
           />
         )}
-      </NavLink>
+      </button>
 
-      {/* Sub items */}
+      {/* Children */}
       {openSidebar && isOpen && (
-        <ul className="mt-1 space-y-1 pr-6 border-r border-white/10">
-          {item?.sub?.map((sub) => {
-            const SubIcon = sub.icon;
-            return (
-              <li key={sub.name}>
-                <NavLink
-                  to={sub.link}
-                  onClick={() => setSubActive(sub.name)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-base
-                    ${
-                      isActive
-                        ? 'bg-white/10  font-semibold'
-                        : 'text-white/70 hover:bg-white/10'
-                    }`
-                  }
-                >
-                  <SubIcon size={16} />
-                  <span>{sub.name}</span>
-                </NavLink>
-              </li>
-            );
-          })}
+        <ul
+          className={`mt-1 space-y-1 border-r border-white/10 ${
+            isTopLevel ? 'mr-6 pr-3' : 'mr-4 pr-2'
+          }`}
+        >
+          {item.sub.map((child) => (
+            <SidebarItem
+              key={child.name}
+              item={child}
+              openSidebar={openSidebar}
+              depth={depth + 1}
+            />
+          ))}
         </ul>
       )}
     </li>
