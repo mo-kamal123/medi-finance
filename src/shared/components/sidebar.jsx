@@ -1,130 +1,56 @@
-import { useState } from 'react';
-import {
-  Calculator,
-  FolderTree,
-  FileText,
-  Receipt,
-  Users,
-  Landmark,
-  BarChart3,
-  BookOpen,
-  Scale,
-  FileCheck,
-  FileClock,
-  CreditCard,
-  Wallet,
-  Banknote,
-} from 'lucide-react';
-
 import SidebarItem from '../ui/sidebar-item';
 import { useSelector } from 'react-redux';
 import logo from '../../app/assets/logo.png';
 import khusum from '../../app/assets/Khusm Logo (1).png';
+import { links } from '../utils/sidebar-data';
+import { useState } from 'react';
 
 const Sidebar = () => {
-  const [active, setActive] = useState(null);
-  const [, setSubActive] = useState(null);
   const openSidebar = useSelector((state) => state.main.sidebar);
-
-  const toggle = (name) => {
-    setActive((prev) => (prev === name ? null : name));
-  };
-
-  const links = [
-    {
-      name: 'محاسبة',
-      icon: Calculator,
-      sub: [
-        { name: 'شجرة الحسابات', link: '/accounts-tree', icon: FolderTree },
-        { name: 'شجرة التكاليف', link: '/cost-tree', icon: FolderTree },
-        { name: 'القيود اليومية', link: '/entries', icon: FileText },
-        { name: 'الصندوق', link: '/cash-transactions', icon: Wallet },
-        { name: 'السندات', link: '/cash-vouchers', icon: Receipt },
-      ],
-    },
-    {
-      name: 'الفواتير',
-      icon: Receipt,
-      sub: [
-        {
-          name: 'فواتير العملاء',
-          link: '/customers-invoices',
-          icon: FileCheck,
-        },
-        {
-          name: 'فواتير المورديين',
-          link: '/suppliers-invoices',
-          icon: FileClock,
-        },
-        {
-          name: 'فواتير المطالبات',
-          link: '/batches-invoices',
-          icon: FileClock,
-        },
-      ],
-    },
-    {
-      name: 'البنوك',
-      icon: Landmark,
-      sub: [
-        { name: 'البنوك المتاحه', link: '/banks', icon: Landmark },
-        { name: 'الشيكات', link: '/cheques', icon: CreditCard },
-      ],
-    },
-    {
-      name: 'التقارير',
-      icon: BarChart3,
-      sub: [
-        { name: 'أعمار الذمم', link: '/aging-report', icon: BookOpen },
-        { name: 'حساب الأستاذ', link: '/general-ledger', icon: BookOpen },
-        { name: 'كشف حساب مورد', link: '/general-ledger/supplier', icon: Users },
-        { name: 'كشف حساب عميل', link: '/general-ledger/customer', icon: Users },
-        { name: 'ميزان المراجعة', link: '/trial-balance', icon: Scale },
-        { name: 'قائمة الدخل', link: '/income-statement', icon: Banknote },
-        { name: 'الميزانية العمومية', link: '/balance-sheet', icon: Wallet },
-      ],
-    },
-    {
-      name: 'العملاء',
-      icon: Users,
-      link: '/customers',
-    },
-    {
-      name: 'المورديين',
-      icon: Users,
-      link: '/suppliers',
-    },
-  ];
+  const [openGroup, setOpenGroup] = useState(null);
 
   return (
     <aside
       className={`
         bg-primary h-screen shrink-0 text-white flex flex-col
         transition-all duration-300 ease-in-out overflow-hidden
-        ${openSidebar ? 'w-72 p-4 shadow-2xl' : 'w-0 p-0'}
+        ${openSidebar ? 'w-78 p-4 shadow-2xl' : 'w-0 p-0'}
       `}
     >
       <div
         className={`${openSidebar ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300 flex flex-col flex-1`}
       >
-        <div className="mb-6 flex items-center justify-start gap-2 px-2">
+        <div className="mb-4 flex shrink-0 items-center justify-start gap-2 px-2">
           <img src={logo} alt="logo" className="w-100" />
         </div>
 
-        <ul className="space-y-1 flex-1">
-          {links.map((link) => (
-            <SidebarItem
-              key={link.name}
-              active={active}
-              toggle={toggle}
-              item={link}
-              openSidebar={openSidebar}
-              setSubActive={setSubActive}
-            />
-          ))}
-        </ul>
+        <nav
+          className={`
+            flex-1 min-h-0 overflow-y-auto overscroll-contain pl-1 pr-0.5
+            [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.2)_transparent]
+            [&::-webkit-scrollbar]:w-1.5
+            [&::-webkit-scrollbar-track]:bg-transparent
+            [&::-webkit-scrollbar-thumb]:rounded-full
+            [&::-webkit-scrollbar-thumb]:bg-white/15
+            [&::-webkit-scrollbar-thumb:hover]:bg-white/30
+          `}
+        >
+          <ul className="space-y-1.5 pb-4">
+            {links.map((link) => (
+              <SidebarItem
+                key={link.name}
+                item={link}
+                openSidebar={openSidebar}
+                isOpen={openGroup === link.name}
+                onToggle={() =>
+                  setOpenGroup((prev) => (prev === link.name ? null : link.name))
+                }
+              />
+            ))}
+          </ul>
+        </nav>
 
-        <div className="pt-4 flex flex-col items-end justify-center gap-2 px-2">
+        <div className="pt-3 flex shrink-0 flex-col items-end justify-center gap-2 px-2">
           <p className="text-2xl text-white font-bold">powered by</p>
           <img src={khusum} alt="logo" className="w-100" />
         </div>
