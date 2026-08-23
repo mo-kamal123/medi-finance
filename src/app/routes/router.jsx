@@ -1,22 +1,22 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { authRoutes } from '../../features/auth/routes/routes';
-import { agingReportRoutes } from '../../features/aging-report/routes/routes';
-import { balanceSheetRoutes } from '../../features/balance-sheet/routes/routes';
-import { incomeStatementRoutes } from '../../features/income-statement/routes/routes';
-import { banksRoutes } from '../../features/banks/routes/routes';
-import { cashTransactionsRoutes } from '../../features/cash-transactions/routes/routes';
-import chequesRoutes from '../../features/cheques/routes/routes';
-import CommercialPapersRoutes from '../../features/commercial-papers/routes/routes';
-import cashVouchersRoutes from '../../features/cash-vouchers/routes/routes';
-import { customersRoutes } from '../../features/customers/routes/routes';
-import { entriesRoutes } from '../../features/entries/routes/routes';
-import { generalLedgerRoutes } from '../../features/general-ledger/routes/routes';
-import InvoicesRoutes from '../../features/invoices/routes/routes';
-import { suppliersRoutes } from '../../features/suppliers/routes/routes';
-import { accountsTreeRoutes } from '../../features/tree/accouts-tree/routes/routes';
-import costCenterRoutes from '../../features/tree/cost-tree/routes/routes';
-import { linkAccountCostRoutes } from '../../features/tree/link-account-cost/routes/routes';
-import { trialBalanceRoutes } from '../../features/trial-balance/routes/routes';
+import { agingReportRoutes } from '../../features/reports/accounting/aging-report/routes/routes';
+import { balanceSheetRoutes } from '../../features/reports/financial-statements/balance-sheet/routes/routes';
+import { incomeStatementRoutes } from '../../features/reports/financial-statements/income-statement/routes/routes';
+import { banksRoutes } from '../../features/banking/banks/routes/routes';
+import { cashTransactionsRoutes } from '../../features/transactions/cash-transactions/routes/routes';
+import chequesRoutes from '../../features/banking/cheques/routes/routes';
+import CommercialPapersRoutes from '../../features/transactions/commercial-papers/routes/routes';
+import cashVouchersRoutes from '../../features/transactions/cash-vouchers/routes/routes';
+import { customersRoutes } from '../../features/master-data/customers/routes/routes';
+import { entriesRoutes } from '../../features/transactions/entries/routes/routes';
+import { generalLedgerRoutes } from '../../features/reports/accounting/general-ledger/routes/routes';
+import InvoicesRoutes from '../../features/transactions/invoices/routes/routes';
+import { suppliersRoutes } from '../../features/master-data/suppliers/routes/routes';
+import { accountsTreeRoutes } from '../../features/accounting/tree/accouts-tree/routes/routes';
+import costCenterRoutes from '../../features/accounting/tree/cost-tree/routes/routes';
+import { linkAccountCostRoutes } from '../../features/accounting/tree/link-account-cost/routes/routes';
+import { trialBalanceRoutes } from '../../features/reports/financial-statements/trial-balance/routes/routes';
 import { lazyPage } from '../../shared/lib/lazy-page';
 
 export const router = createBrowserRouter([
@@ -38,7 +38,7 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: lazyPage(
-          () => import('../../features/home/pages/home'),
+          () => import('../../features/dashboard/pages/home'),
           'جاري تحميل الصفحة الرئيسية...'
         ),
       },
