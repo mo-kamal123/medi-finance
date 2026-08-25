@@ -40,11 +40,13 @@ const BanksPage = () => {
       key: 'isActive',
       type: 'custom',
       render: (row) => (
-        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-          row.isActive
-            ? 'bg-emerald-100 text-emerald-700'
-            : 'bg-red-100 text-red-700'
-        }`}>
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-medium ${
+            row.isActive
+              ? 'bg-emerald-100 text-emerald-700'
+              : 'bg-red-100 text-red-700'
+          }`}
+        >
           {row.isActive ? 'نشط' : 'غير نشط'}
         </span>
       ),
@@ -63,7 +65,10 @@ const BanksPage = () => {
             <Eye size={18} />
           </button>
           <button
-            onClick={() => setDeleteTarget(row)}
+            onClick={(event) => {
+              event.stopPropagation();
+              setDeleteTarget(row);
+            }}
             className="text-red-500 hover:text-red-700"
             title="حذف"
           >

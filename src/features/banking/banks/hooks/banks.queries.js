@@ -5,6 +5,8 @@ import {
   getAllBankAccounts,
   getBankAccountById,
   getBankById,
+  getBankTransactions,
+  getBankTransactionFilterOptions,
 } from '../api/banks.api';
 import { banksKeys } from './banks.keys';
 
@@ -44,5 +46,22 @@ export const useBankAccount = (id) => {
     queryKey: banksKeys.accountDetail(id),
     queryFn: () => getBankAccountById(id),
     enabled: !!id,
+  });
+};
+
+export const useBankTransactions = (filters = {}) => {
+  return useQuery({
+    queryKey: banksKeys.transactions(filters),
+    queryFn: () => getBankTransactions(filters),
+    placeholderData: keepPreviousData,
+    enabled: !!filters?.bankId,
+  });
+};
+
+export const useBankTransactionFilterOptions = (type) => {
+  return useQuery({
+    queryKey: banksKeys.transactionFilter(type),
+    queryFn: () => getBankTransactionFilterOptions(type),
+    staleTime: Infinity,
   });
 };
