@@ -52,9 +52,9 @@ const BankDetails = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {data.bankCode && (
+              {data.bankID && (
                 <button
-                  onClick={() => navigate(`/general-ledger?accountId=${data.bankCode}`)}
+                  onClick={() => navigate(`/general-ledger?accountId=${data.bankID}`)}
                   className="flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/30"
                 >
                   <BookOpen size={16} />
@@ -103,7 +103,7 @@ const BankDetails = () => {
             <BankAccountsPanel bankId={id} />
           )}
           {activeTab === 'transactions' && (
-            <BankTransactionsPanel />
+            <BankTransactionsPanel bankId={id} />
           )}
         </div>
       </div>
