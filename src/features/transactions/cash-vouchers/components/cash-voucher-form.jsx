@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, Eye, Search, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import DateInput from '../../../../shared/ui/date-input';
 import FormInput from '../../../../shared/ui/input';
 import SearchableSelect from '../../../../shared/ui/searchable-select';
@@ -73,6 +73,8 @@ const voucherTypeOptions = [
 
 const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams(); 
+  const bankIdFromUrl = searchParams.get('bankId');
   const createMutation = useCreateCashVoucher();
   const updateMutation = useUpdateCashVoucher();
   const isViewMode = mode === 'view';
@@ -134,6 +136,14 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
     () => normalizeCollection(banksResponse),
     [banksResponse]
   );
+
+  useEffect(() => {
+    if (!bankIdFromUrl || isEditMode || isViewMode) return;
+    if (!banks.length) return;
+    const exists = banks.some((b) => String(b.bankID) === String(bankIdFromUrl));
+    if (!exists) return;
+    setValue('bankId', String(bankIdFromUrl));
+  }, [bankIdFromUrl, banks, setValue, isEditMode, isViewMode]);
 
   const statusOptions = useMemo(
     () =>
@@ -649,7 +659,7 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
                   const detailErrors = errors?.details?.[index] || {};
                   return (
                     <tr key={field.id} className="align-top border border-gray-200">
-                      <td className="min-w-[220px] p-2">
+                      <td className="min-w-55 p-2">
                         <Controller
                           name={`details.${index}.partyID`}
                           control={control}
@@ -678,7 +688,7 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
                           )}
                         />
                       </td>
-                      <td className="min-w-[140px] p-2">
+                      <td className="min-w-35 p-2">
                         <Controller
                           name={`details.${index}.amount`}
                           control={control}
@@ -702,7 +712,7 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
                           </p>
                         ) : null}
                       </td>
-                      <td className="min-w-[260px] p-2">
+                      <td className="min-w-65 p-2">
                         <Controller
                           name={`details.${index}.notes`}
                           control={control}

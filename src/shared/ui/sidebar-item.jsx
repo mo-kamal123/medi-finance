@@ -63,6 +63,7 @@ const SidebarItem = ({ item, openSidebar, depth = 0, isOpen: controlledOpen, onT
         aria-expanded={isOpen}
         className={`flex w-full items-center rounded-lg transition-colors
         ${isTopLevel ? 'text-[17px] font-bold' : 'py-2 pl-3 pr-3 text-[15px] font-semibold'}
+        ${isTopLevel && isOpen ? 'bg-white/10 mb-2' : ''}
         ${openSidebar ? 'justify-between' : 'justify-center'}
         ${isTopLevel ? (openSidebar ? 'px-2 py-2.5' : 'p-3') : ''}
         ${isOpen ? 'text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}

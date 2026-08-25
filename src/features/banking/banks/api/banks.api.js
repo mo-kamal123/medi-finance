@@ -172,3 +172,76 @@ export const getAllBankAccounts = async (params = {}) => {
   });
   return data;
 };
+
+const normalizePaged = (data, fallbackPageSize = 20) => {
+  const items = extractArray(data);
+  return {
+    items,
+    totalCount: Number(data?.totalCount ?? items.length) || 0,
+    pageNumber: Number(data?.pageNumber ?? 1) || 1,
+    pageSize: Number(data?.pageSize ?? fallbackPageSize) || fallbackPageSize,
+  };
+};
+
+const STATIC_BANK_TRANSACTIONS = [
+  {
+    transactionID: 1,
+    bankAccountID: 123,
+    bankAccountName: '120402010000-بنك مصر',
+    transactionNumber: 'TXN000001',
+    transactionDate: '2026-08-23T00:00:00',
+    transactionType: 'Receipt',
+    transactionTypeName: 'Receipt',
+    direction: 'In',
+    directionName: 'وارد',
+    amount: 5000.0,
+    currencyID: 1,
+    currencyName: 'جنيه مصري',
+    exchangeRate: 1.0,
+    localAmount: 5000.0,
+    descriptionAr: 'سند قبض رقم 105',
+    referenceNumber: 'CV-000105',
+    sourceType: 'CashVoucher',
+    sourceTypeName: 'CashVoucher',
+    sourceId: 105,
+    chequeNumber: null,
+    status: 'Posted',
+    statusName: 'Posted',
+    isReconciled: false,
+    reconciledDate: null,
+    reconciledBy: null,
+    journalEntryID: 342,
+    financialPeriodID: 1,
+    bankTransferID: null,
+    createdBy: 'admin',
+    createdAt: '2026-08-23T12:00:00',
+    modifiedBy: null,
+    modifiedAt: null,
+    approvedBy: 'admin',
+    approvedAt: '2026-08-23T12:00:01',
+    cancelledBy: null,
+    cancelledAt: null,
+    cancelReason: null,
+  },
+];
+
+export const getBankTransactions = async (params = {}) => {
+  const fallback = {
+    items: STATIC_BANK_TRANSACTIONS,
+    totalCount: STATIC_BANK_TRANSACTIONS.length,
+    pageNumber: Number(params.pageNumber ?? 1) || 1,
+    pageSize: Number(params.pageSize ?? 20) || 20,
+  };
+  try {
+    const { data } = await axiosInstance.get('/bank-transactions', { params });
+    const normalized = normalizePaged(data, fallback.pageSize);
+    return normalized.items.length > 0 ? normalized : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+export const getBankTransactionFilterOptions = async (type) => {
+  const { data } = await axiosInstance.get(`/bank-transactions/${type}`);
+  return extractArray(data);
+};

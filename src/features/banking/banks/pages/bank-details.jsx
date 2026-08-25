@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building2, BookOpen, Receipt, Wallet } from 'lucide-react';
+import { ArrowLeft, Building2, BookOpen, Receipt, Wallet, ArrowUpLeft } from 'lucide-react';
 import PageLoader from '../../../../shared/ui/page-loader';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import BankAccountsPanel from '../components/bank-accounts-panel';
@@ -52,21 +52,20 @@ const BankDetails = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {data.accountID && (
+              {data.bankID && (
                 <button
-                  onClick={() => navigate(`/general-ledger?accountId=${data.accountID}`)}
+                  onClick={() => navigate(`/general-ledger?accountId=${data.bankID}`)}
                   className="flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/30"
                 >
                   <BookOpen size={16} />
-                  دفتر الأستاذ
+                  كشف الحساب
                 </button>
               )}
               <button
-                onClick={() => navigate('/banks')}
+                onClick={() => navigate('/cash-vouchers/new?bankId=' + data.bankID)}
                 className="flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/30"
               >
-                العودة إلى البنوك
-                <ArrowLeft size={16} />
+                اضافه سند<ArrowUpLeft size={16} />
               </button>
             </div>
           </div>
@@ -104,7 +103,7 @@ const BankDetails = () => {
             <BankAccountsPanel bankId={id} />
           )}
           {activeTab === 'transactions' && (
-            <BankTransactionsPanel />
+            <BankTransactionsPanel bankId={id} />
           )}
         </div>
       </div>
