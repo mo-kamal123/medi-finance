@@ -120,7 +120,11 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
     }
   }, [defaultValues, reset, initialPaymentMode]);
 
-  const { data: bankAccountsData = [] } = useBankAccounts(watchedPaymentModeId === '1' ? watchedBankId : '');
+  const { data: bankAccountsData = [] } = useBankAccounts(
+    watchedPaymentModeId === '1' || watchedPaymentModeId === '3'
+      ? watchedBankId
+      : ''
+  );
 
   const bankAccounts = useMemo(
     () => normalizeCollection(bankAccountsData),
@@ -140,7 +144,9 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
   useEffect(() => {
     if (!bankIdFromUrl || isEditMode || isViewMode) return;
     if (!banks.length) return;
-    const exists = banks.some((b) => String(b.bankID) === String(bankIdFromUrl));
+    const exists = banks.some(
+      (b) => String(b.bankID) === String(bankIdFromUrl)
+    );
     if (!exists) return;
     setValue('bankId', String(bankIdFromUrl));
   }, [bankIdFromUrl, banks, setValue, isEditMode, isViewMode]);
@@ -209,12 +215,14 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
     () =>
       partySource.map((party) => ({
         value: String(
-          watchedIsReceipt !== false ? party.customerID : party.supplierID
+          watchedIsReceipt !== false
+            ? party.customerID ?? party.id
+            : party.supplierID ?? party.id
         ),
         label:
           (watchedIsReceipt !== false
-            ? party.customerNameAr || party.customerNameEn
-            : party.supplierNameAr || party.supplierNameEn) || '',
+            ? party.clientName || party.customerNameAr || party.customerNameEn
+            : party.clientName || party.supplierNameAr || party.supplierNameEn) || '',
       })),
     [partySource, watchedIsReceipt]
   );
@@ -231,7 +239,9 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
     if (hasMatch) return partyOptions;
     return [
       {
-        value: String(watchedFirstDetail.partyID || watchedFirstDetail.partyName),
+        value: String(
+          watchedFirstDetail.partyID || watchedFirstDetail.partyName
+        ),
         label: watchedFirstDetail.partyName,
       },
       ...partyOptions,
@@ -253,7 +263,8 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
         return;
       }
       const preview = {
-        invoiceId: invoice.invoiceId || invoice.invoiceID || invoice.id || invoiceNumber,
+        invoiceId:
+          invoice.invoiceId || invoice.invoiceID || invoice.id || invoiceNumber,
         invoiceNumber: invoice.invoiceNumber || invoiceNumber,
         netAmount:
           invoice.amount ??
@@ -279,7 +290,10 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
         supplierID: invoice.supplierID ?? invoice.supplierId,
       };
       setInvoicePreview(preview);
-      setValue('details.0.partyID', String(preview.customerID ?? preview.supplierID ?? ''));
+      setValue(
+        'details.0.partyID',
+        String(preview.customerID ?? preview.supplierID ?? '')
+      );
       setValue('details.0.partyName', preview.name);
       setValue('details.0.amount', String(preview.netAmount));
       setValue('details.0.notes', `سداد الفاتورة رقم ${preview.invoiceNumber}`);
@@ -321,15 +335,19 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
     [statusOptions, watchedStatusId]
   );
 
-  const successPath = initialPaymentMode === '2' ? '/cash-transactions' : '/cash-vouchers';
+  const successPath =
+    initialPaymentMode === '2' ? '/cash-transactions' : '/cash-vouchers';
 
   const onSubmit = (data) => {
     const payload = buildCashVoucherPayload(data);
     if (isEditMode) {
       const id = defaultValues?.voucherID || defaultValues?.id;
-      updateMutation.mutate({ id, ...payload }, {
-        onSuccess: () => navigate(successPath),
-      });
+      updateMutation.mutate(
+        { id, ...payload },
+        {
+          onSuccess: () => navigate(successPath),
+        }
+      );
     } else {
       createMutation.mutate(payload, {
         onSuccess: () => navigate(successPath),
@@ -341,13 +359,13 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
     <div className="min-w-0 w-full max-w-full space-y-4 md:space-y-6">
       <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between md:p-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
-          <ArrowLeft
-            className="cursor-pointer text-gray-500 hover:text-gray-800"
-            onClick={() => navigate(-1)}
-          />
           <div>
             <h1 className="text-xl font-bold md:text-2xl">
-              {isViewMode ? 'تفاصيل السند' : 'إنشاء سند قبض أو صرف'}
+              {isViewMode
+                ? 'تفاصيل السند'
+                : isEditMode
+                  ? 'تعديل السند'
+                  : 'إنشاء سند قبض أو صرف'}
             </h1>
             <p className="text-sm text-gray-600">
               {isViewMode
@@ -356,12 +374,54 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
             </p>
           </div>
         </div>
+        <p className='bg-main text-white flex items-center p-2 rounded-md'>
+            العوده للسندات
+          <ArrowLeft
+            className="cursor-pointer"
+            onClick={() => navigate(-1)}
+          />
+            </p>
       </div>
 
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:space-y-6 md:p-6"
       >
+        {isEditMode || isViewMode ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <div className="text-sm text-gray-500">إجمالي المبلغ</div>
+              <div className="mt-2 text-2xl font-bold text-primary">
+                {totalAmount.toFixed(2)}
+              </div>
+            </div>
+            {watchedPaymentModeId === '1' || watchedPaymentModeId === '3' ? (
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <div className="text-sm text-gray-500">اسم البنك</div>
+                <div className="mt-2 font-semibold text-gray-900">
+                  {selectedBank?.label || '-'}
+                </div>
+              </div>
+            ) : null}
+            {watchedPaymentModeId === '1' || watchedPaymentModeId === '3' ? (
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <div className="text-sm text-gray-500">حساب البنك</div>
+                <div className="mt-2 font-semibold text-gray-900">
+                  {selectedBankAccount?.accountNumberWithBranch ||
+                    selectedBankAccount?.accountNumber ||
+                    '-'}
+                </div>
+              </div>
+            ) : null}
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <div className="text-sm text-gray-500">حالة السند</div>
+              <div className="mt-2 font-semibold text-gray-900">
+                {selectedStatus?.label || '-'}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Controller
             name="isReceipt"
@@ -415,8 +475,6 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
                   setValue('bankAccountId', '');
                   setValue('checkNumber', '');
                   setValue('costCenterId', '');
-                  setValue('fromBankAccountId', '');
-                  setValue('toBankAccountId', '');
                 }}
                 disabled={isViewMode}
                 required
@@ -429,6 +487,43 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
               </FormInput>
             )}
           />
+          <div className="mt-1">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              رقم الفاتورة
+            </label>
+            <div className="relative">
+              <Controller
+                name="invoiceNumber"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    type="text"
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleInvoiceLookup();
+                      }
+                    }}
+                    readOnly={isViewMode}
+                    placeholder="أدخل رقم الفاتورة"
+                    className="w-full rounded-lg border border-gray-200 py-2 pl-10 pr-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:bg-gray-50"
+                  />
+                )}
+              />
+              {!isViewMode ? (
+                <button
+                  type="button"
+                  onClick={handleInvoiceLookup}
+                  disabled={isLoadingInvoice}
+                  className="absolute left-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md bg-main text-white disabled:opacity-50"
+                >
+                  <Search size={16} />
+                </button>
+              ) : null}
+            </div>
+          </div>
 
           {isEditMode || isViewMode ? (
             <Controller
@@ -451,45 +546,9 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
                 </FormInput>
               )}
             />
-          ) : (
-            <div />
-          )}
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              رقم الفاتورة
-            </label>
-            <div className="flex gap-2">
-              <Controller
-                name="invoiceNumber"
-                control={control}
-                render={({ field }) => (
-                  <input
-                    type="text"
-                    value={field.value ?? ''}
-                    onChange={field.onChange}
-                    readOnly={isViewMode}
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                  />
-                )}
-              />
-              {!isViewMode ? (
-                <button
-                  type="button"
-                  onClick={handleInvoiceLookup}
-                  disabled={isLoadingInvoice}
-                  className="flex shrink-0 items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary/90 disabled:opacity-50"
-                >
-                  <Search size={16} />
-                  {isLoadingInvoice ? 'جاري' : 'جلب'}
-                </button>
-              ) : null}
-            </div>
-          </div>
-        </div>
-
+          ) : null}
         {watchedPaymentModeId === '1' ? (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3 w-full col-span-3">
             <Controller
               name="bankId"
               control={control}
@@ -557,7 +616,7 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
         ) : null}
 
         {watchedPaymentModeId === '2' ? (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-1">
+          <div className="grid grid-cols-1 gap-4 col-span-2">
             <Controller
               name="costCenterId"
               control={control}
@@ -584,22 +643,25 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
         ) : null}
 
         {watchedPaymentModeId === '3' ? (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 col-span-2">
             <Controller
-              name="fromBankAccountId"
+              name="bankId"
               control={control}
               render={({ field }) => (
                 <FormInput
                   as="select"
-                  label="من حساب"
+                  label="البنك"
                   value={field.value ?? ''}
-                  onChange={field.onChange}
+                  onChange={(event) => {
+                    field.onChange(event.target.value);
+                    setValue('bankAccountId', '');
+                  }}
                   disabled={isViewMode}
-                  error={errors.fromBankAccountId?.message}
+                  error={errors.bankId?.message}
                   required
                 >
-                  <option value="">اختر الحساب المحول منه</option>
-                  {allBankAccountOptions.map((option) => (
+                  <option value="">اختر البنك</option>
+                  {bankOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -609,20 +671,20 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
             />
 
             <Controller
-              name="toBankAccountId"
+              name="bankAccountId"
               control={control}
               render={({ field }) => (
                 <FormInput
                   as="select"
-                  label="إلى حساب"
+                  label="حساب البنك"
                   value={field.value ?? ''}
                   onChange={field.onChange}
-                  disabled={isViewMode}
-                  error={errors.toBankAccountId?.message}
+                  disabled={isViewMode || !watchedBankId}
+                  error={errors.bankAccountId?.message}
                   required
                 >
-                  <option value="">اختر الحساب المحول إليه</option>
-                  {allBankAccountOptions.map((option) => (
+                  <option value="">اختر حساب البنك</option>
+                  {bankAccountOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -632,13 +694,19 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
             />
           </div>
         ) : null}
+        </div>
+
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">تفاصيل السند</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              تفاصيل السند
+            </h2>
           </div>
 
-          {errors.details && !Array.isArray(errors.details) && errors.details.message ? (
+          {errors.details &&
+          !Array.isArray(errors.details) &&
+          errors.details.message ? (
             <p className="text-sm text-red-500">{errors.details.message}</p>
           ) : null}
 
@@ -658,7 +726,10 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
                 {fields.map((field, index) => {
                   const detailErrors = errors?.details?.[index] || {};
                   return (
-                    <tr key={field.id} className="align-top border border-gray-200">
+                    <tr
+                      key={field.id}
+                      className="align-top border border-gray-200"
+                    >
                       <td className="min-w-55 p-2">
                         <Controller
                           name={`details.${index}.partyID`}
@@ -668,9 +739,11 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
                               value={partyField.value ?? ''}
                               onChange={(event) => {
                                 partyField.onChange(event.target.value);
-                                const selectedOption = partyOptionsWithCurrent.find(
-                                  (option) => option.value === event.target.value
-                                );
+                                const selectedOption =
+                                  partyOptionsWithCurrent.find(
+                                    (option) =>
+                                      option.value === event.target.value
+                                  );
                                 setValue(
                                   `details.${index}.partyName`,
                                   selectedOption?.label || ''
@@ -753,7 +826,7 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
                   key={field.id}
                   className="space-y-4 rounded-xl border border-gray-200 bg-gray-50 p-4"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-center">
                     <span className="text-sm font-semibold text-gray-700">
                       {`السطر ${index + 1}`}
                     </span>
@@ -774,13 +847,17 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
                       render={({ field: partyField }) => (
                         <FormInput
                           as="select"
-                          label={watchedIsReceipt !== false ? 'العميل' : 'المورد'}
+                          label={
+                            watchedIsReceipt !== false ? 'العميل' : 'المورد'
+                          }
                           value={partyField.value ?? ''}
                           onChange={(event) => {
                             partyField.onChange(event.target.value);
-                            const selectedOption = partyOptionsWithCurrent.find(
-                              (option) => option.value === event.target.value
-                            );
+                            const selectedOption =
+                              partyOptionsWithCurrent.find(
+                                (option) =>
+                                  option.value === event.target.value
+                              );
                             setValue(
                               `details.${index}.partyName`,
                               selectedOption?.label || ''
@@ -869,39 +946,6 @@ const CashVoucherForm = ({ defaultValues, mode = 'create', initialPaymentMode })
             </div>
           </div>
         ) : null}
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <div className="text-sm text-gray-500">إجمالي المبلغ</div>
-            <div className="mt-2 text-2xl font-bold text-primary">
-              {totalAmount.toFixed(2)}
-            </div>
-          </div>
-          {watchedPaymentModeId === '1' ? (
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <div className="text-sm text-gray-500">اسم البنك</div>
-              <div className="mt-2 font-semibold text-gray-900">
-                {selectedBank?.label || '-'}
-              </div>
-            </div>
-          ) : null}
-          {watchedPaymentModeId === '1' ? (
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <div className="text-sm text-gray-500">حساب البنك</div>
-              <div className="mt-2 font-semibold text-gray-900">
-                {selectedBankAccount?.accountNumberWithBranch ||
-                  selectedBankAccount?.accountNumber ||
-                  '-'}
-              </div>
-            </div>
-          ) : null}
-          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <div className="text-sm text-gray-500">حالة السند</div>
-            <div className="mt-2 font-semibold text-gray-900">
-              {selectedStatus?.label || '-'}
-            </div>
-          </div>
-        </div>
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import { ArrowDownLeft, ArrowUpRight, Search } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, ChevronDown, RotateCcw, Search, SlidersHorizontal } from 'lucide-react';
 import Pagination from '../../../../shared/ui/pagination';
 import SearchableSelect from '../../../../shared/ui/searchable-select';
+import DateInput from '../../../../shared/ui/date-input';
 import { useDebounce } from '../../../../shared/lib/use-debounce';
 import { formatCurrency, formatDate } from '../../../../shared/utils/formatters';
 import {
@@ -36,6 +37,8 @@ const STATUS_LABELS = {
   Cancelled: 'ملغاة',
 };
 
+const ADVANCED_KEYS = ['direction', 'status', 'sourceType', 'fromDate', 'toDate', 'minAmount', 'maxAmount'];
+
 const buildParams = (filters, searchTerm, pageNumber, pageSize) => {
   const params = { bankId: filters.bankId, pageNumber, pageSize };
   Object.entries({ ...filters, searchTerm }).forEach(([key, value]) => {
@@ -52,37 +55,12 @@ const toOptions = (list = []) =>
     label: item.name,
   }));
 
-const FilterSelect = ({ label, value, onChange, options }) => (
-  <label className="flex min-w-44 flex-1 flex-col gap-1 sm:max-w-56">
-    <span className="text-xs font-medium text-gray-500">{label}</span>
-    <SearchableSelect
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      options={options}
-      placeholder="الكل"
-      searchPlaceholder="ابحث..."
-    />
-  </label>
-);
-
-const FilterInput = ({ label, type = 'text', value, onChange, placeholder }) => (
-  <label className="flex min-w-36 flex-col gap-1">
-    <span className="text-xs font-medium text-gray-500">{label}</span>
-    <input
-      type={type}
-      value={value}
-      placeholder={placeholder}
-      onChange={(event) => onChange(event.target.value)}
-      className="rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary"
-    />
-  </label>
-);
-
 const BankTransactionsPanel = ({ bankId }) => {
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [searchTerm, setSearchTerm] = useState('');
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const debouncedSearch = useDebounce(searchTerm, 500);
 
@@ -105,6 +83,16 @@ const BankTransactionsPanel = ({ bankId }) => {
     [accountsRes]
   );
 
+  const advancedFilterCount = useMemo(
+    () => ADVANCED_KEYS.filter((k) => filters[k] !== '').length,
+    [filters]
+  );
+
+  const activeFilterCount = useMemo(
+    () => Object.values(filters).filter((v) => v !== '').length,
+    [filters]
+  );
+
   const queryParams = useMemo(
     () =>
       buildParams(
@@ -124,6 +112,11 @@ const BankTransactionsPanel = ({ bankId }) => {
 
   const updateFilter = (key) => (value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
+    setPageNumber(1);
+  };
+
+  const handleReset = () => {
+    setFilters(EMPTY_FILTERS);
     setPageNumber(1);
   };
 
@@ -153,61 +146,96 @@ const BankTransactionsPanel = ({ bankId }) => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
-        <FilterSelect
-          label="الحساب البنكي"
-          value={filters.bankAccountId}
-          onChange={updateFilter('bankAccountId')}
-          options={accountOptions}
-        />
-        <FilterSelect
-          label="نوع المعاملة"
-          value={filters.transactionType}
-          onChange={updateFilter('transactionType')}
-          options={toOptions(types)}
-        />
-        <FilterSelect
-          label="الاتجاه"
-          value={filters.direction}
-          onChange={updateFilter('direction')}
-          options={toOptions(directions)}
-        />
-        <FilterSelect
-          label="الحالة"
-          value={filters.status}
-          onChange={updateFilter('status')}
-          options={toOptions(statuses)}
-        />
-        <FilterSelect
-          label="المصدر"
-          value={filters.sourceType}
-          onChange={updateFilter('sourceType')}
-          options={toOptions(sourceTypes)}
-        />
-        <FilterInput
-          label="من تاريخ"
-          type="date"
-          value={filters.fromDate}
-          onChange={updateFilter('fromDate')}
-        />
-        <FilterInput
-          label="إلى تاريخ"
-          type="date"
-          value={filters.toDate}
-          onChange={updateFilter('toDate')}
-        />
-        <FilterInput
-          label="أقل مبلغ"
-          type="number"
-          value={filters.minAmount}
-          onChange={updateFilter('minAmount')}
-        />
-        <FilterInput
-          label="أعلى مبلغ"
-          type="number"
-          value={filters.maxAmount}
-          onChange={updateFilter('maxAmount')}
-        />
+      <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <SearchableSelect
+            label="الحساب البنكي"
+            value={filters.bankAccountId}
+            onChange={(event) => updateFilter('bankAccountId')(event.target.value)}
+            options={accountOptions}
+            placeholder="كل الحسابات"
+          />
+          <SearchableSelect
+            label="نوع المعاملة"
+            value={filters.transactionType}
+            onChange={(event) => updateFilter('transactionType')(event.target.value)}
+            options={toOptions(types)}
+            placeholder="كل الأنواع"
+          />
+          <SearchableSelect
+            label="الاتجاه"
+            value={filters.direction}
+            onChange={(event) => updateFilter('direction')(event.target.value)}
+            options={[
+              { value: 'In', label: 'وارد' },
+              { value: 'Out', label: 'صادر' },
+            ]}
+            placeholder="الكل"
+          />
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((prev) => !prev)}
+            className="inline-flex items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-primary/80"
+          >
+            <SlidersHorizontal size={16} />
+            <span>فلاتر إضافية</span>
+            {advancedFilterCount > 0 ? (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                {advancedFilterCount}
+              </span>
+            ) : null}
+            <ChevronDown
+              size={16}
+              className={`transition-transform ${showAdvanced ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {activeFilterCount > 0 || debouncedSearch ? (
+            <button
+              type="button"
+              onClick={() => {
+                handleReset();
+                setSearchTerm('');
+              }}
+              className="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
+            >
+              <RotateCcw size={16} />
+              مسح الفلاتر
+            </button>
+          ) : null}
+        </div>
+
+        {showAdvanced ? (
+          <div className="grid grid-cols-1 gap-4 border-t border-gray-200 pt-4 sm:grid-cols-2 xl:grid-cols-4">
+            <SearchableSelect
+              label="الحالة"
+              value={filters.status}
+              onChange={(event) => updateFilter('status')(event.target.value)}
+              options={toOptions(statuses)}
+              placeholder="كل الحالات"
+            />
+            <SearchableSelect
+              label="المصدر"
+              value={filters.sourceType}
+              onChange={(event) => updateFilter('sourceType')(event.target.value)}
+              options={toOptions(sourceTypes)}
+              placeholder="كل المصادر"
+            />
+            <DateInput
+              label="من تاريخ"
+              value={filters.fromDate || ''}
+              onChange={(event) => updateFilter('fromDate')(event.target.value)}
+            />
+            <DateInput
+              label="إلى تاريخ"
+              value={filters.toDate || ''}
+              onChange={(event) => updateFilter('toDate')(event.target.value)}
+            />
+          </div>
+        ) : null}
       </div>
 
       {/* Table */}

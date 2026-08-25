@@ -37,8 +37,8 @@ export const buildCashVoucherPayload = (formData) => {
   }
 
   if (paymentModeId === 3) {
-    payload.fromBankAccountId = formData.fromBankAccountId ? Number(formData.fromBankAccountId) : null;
-    payload.toBankAccountId = formData.toBankAccountId ? Number(formData.toBankAccountId) : null;
+    payload.bankId = formData.bankId ? Number(formData.bankId) : null;
+    payload.bankAccountId = formData.bankAccountId ? Number(formData.bankAccountId) : null;
   }
 
   return payload;

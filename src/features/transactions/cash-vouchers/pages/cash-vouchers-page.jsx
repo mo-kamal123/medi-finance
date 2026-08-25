@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Eye, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import CashVoucherFilters from '../components/cash-voucher-filter';
 import Pagination from '../../../../shared/ui/pagination';
 import Table from '../../../../shared/ui/table';
@@ -112,6 +113,8 @@ const CashVouchersPage = () => {
 
   return (
     <div className="p-6 space-y-6">
+      <Breadcrumb items={[{ label: 'سندات القبض والدفع' }]} />
+
       <div className="flex justify-between">
         <h1 className="text-xl font-bold">سندات القبض والدفع</h1>
 

@@ -52,11 +52,11 @@ export const cashVoucherSchema = z
       }
     }
     if (data.paymentModeId === 3) {
-      if (!data.fromBankAccountId) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['fromBankAccountId'], message: 'من حساب مطلوب' });
+      if (!data.bankId) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['bankId'], message: 'البنك مطلوب' });
       }
-      if (!data.toBankAccountId) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['toBankAccountId'], message: 'إلى حساب مطلوب' });
+      if (!data.bankAccountId) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['bankAccountId'], message: 'حساب البنك مطلوب' });
       }
     }
   });
