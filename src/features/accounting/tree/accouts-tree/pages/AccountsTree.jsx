@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Ban, CheckCircle, FileText, FolderTree, Layers, Link, Pencil, PlusIcon, PlusCircle, RefreshCw, XCircle } from 'lucide-react';
-import TreeNode from '../../components/tree-node';
+import { Ban, CheckCircle, FileText, FolderTree, Layers, Link, Lock, Pencil, PlusIcon, PlusCircle, RefreshCw, XCircle } from 'lucide-react';
+import TreeNode, { GRID_COLUMNS } from '../../components/tree-node';
 import AccountActionsMenu from '../../components/account-actions-menu';
 import { filterTree } from '../../utils/filterTree';
 import SearchFilter from '../../../../../shared/components/search-filter';
@@ -227,7 +227,7 @@ const AccountsTree = () => {
 
       {/* Tree View */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-4 border-b border-gray-100 bg-gray-50">
+        {/* <div className="p-4 border-b border-gray-100 bg-gray-50">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">عرض الشجرة</h2>
             <button
@@ -237,9 +237,21 @@ const AccountsTree = () => {
               {expandedAll ? 'طي الكل' : 'توسيع الكل'}
             </button>
           </div>
+        </div> */}
+
+        {/* Header Row */}
+        <div
+          className="grid items-center py-4 px-4 border-b-2 border-gray-200 bg-gray-50 text-sm font-semibold text-gray-600 select-none"
+          style={{ gridTemplateColumns: GRID_COLUMNS }}
+        >
+          <span>اسم الحساب</span>
+          <span>الكود</span>
+          <span>الحالة</span>
+          <span>مقفل</span>
+          <span className="text-right">الإجراءات</span>
         </div>
 
-        <div className="p-4 max-h-150 overflow-y-auto">
+        <div className="max-h-150 overflow-y-auto">
           {rootsLoading ? (
             <div className="flex items-center justify-center py-12 text-gray-400">
               <RefreshCw size={24} className="animate-spin ml-2" />
@@ -256,36 +268,42 @@ const AccountsTree = () => {
                 <p className="text-gray-500">لا توجد حسابات مطابقة للبحث</p>
               </div>
             ) : (
-              <div className="space-y-1">
+              <div>
                 {searchResults.map((account) => (
                   <div
                     key={getAccountId(account)}
-                    className="flex items-center gap-2 rounded-lg px-3 py-2 transition-colors hover:bg-gray-50"
+                    className="grid items-center border-b border-gray-100 py-4 px-3 hover:bg-gray-50 transition-colors"
+                    style={{ gridTemplateColumns: GRID_COLUMNS }}
                   >
-                    <FileText size={18} className="shrink-0 text-gray-400" />
-                    <span className="min-w-20 font-mono text-sm text-gray-500">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText size={18} className="shrink-0 text-gray-400" />
+                      <span className="text-lg font-medium text-gray-900 truncate">
+                        {account.nameAr || account.nameEn}
+                      </span>
+                    </div>
+                    <span className="text-sm font-mono text-gray-500 truncate">
                       {account.accountCode}
                     </span>
-                    <span className="flex-1 truncate text-sm font-medium text-gray-900">
-                      {account.nameAr || account.nameEn}
+                    <span className={`text-sm font-medium ${account.isActive !== false ? 'text-emerald-600' : 'text-red-500'}`}>
+                      {account.isActive !== false ? 'نشط' : 'غير نشط'}
                     </span>
-                    {account.accountType ? (
-                      <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-500">
-                        {account.accountType}
-                      </span>
-                    ) : null}
                     {account.lockedInJournal ? (
-                      <span className="shrink-0 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600">
-                        مقفل
+                      <span className="flex items-center gap-1 text-amber-600">
+                        <Lock size={12} />
+                        <span className="text-[10px] font-semibold">مقفل</span>
                       </span>
-                    ) : null}
-                    <AccountActionsMenu node={account} actions={actions} />
+                    ) : (
+                      <span className="text-sm text-gray-300">-</span>
+                    )}
+                    <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+                      <AccountActionsMenu node={account} actions={actions} />
+                    </div>
                   </div>
                 ))}
               </div>
             )
           ) : filteredTree.length > 0 ? (
-            <div className="space-y-1">
+            <div>
               {filteredTree.map((account) => (
                 <TreeNode
                   key={account.accountID}

@@ -30,6 +30,8 @@ export const buildCashVoucherPayload = (formData) => {
     payload.bankId = formData.bankId ? Number(formData.bankId) : null;
     payload.bankAccountId = formData.bankAccountId ? Number(formData.bankAccountId) : null;
     payload.checkNumber = formData.checkNumber || null;
+    payload.receiptDate = toApiDateTime(formData.receiptDate);
+    payload.dueDate = toApiDateTime(formData.dueDate);
   }
 
   if (paymentModeId === 2) {
@@ -113,14 +115,8 @@ export const mapCashVoucherToFormValues = (defaultValues = {}) => {
       defaultValues?.accountNumber ??
       '',
     checkNumber: defaultValues?.checkNumber ?? '',
-    fromBankAccountId:
-      defaultValues?.fromBankAccountId != null
-        ? String(defaultValues.fromBankAccountId)
-        : '',
-    toBankAccountId:
-      defaultValues?.toBankAccountId != null
-        ? String(defaultValues.toBankAccountId)
-        : '',
+    receiptDate: toDateInputValue(defaultValues?.receiptDate),
+    dueDate: toDateInputValue(defaultValues?.dueDate),
     description: initialNotes,
     date: toDateInputValue(defaultValues?.date || defaultValues?.voucherDate),
     name: initialName,

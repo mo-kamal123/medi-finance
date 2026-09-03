@@ -12,6 +12,8 @@ import AccountActionsMenu from './account-actions-menu';
 
 const getNodeId = (node) => node.id ?? node.accountID ?? node.costCenterID;
 
+export const GRID_COLUMNS = 'minmax(200px, 2fr) 120px 100px 100px 50px';
+
 const TreeNode = ({
   node,
   level = 0,
@@ -37,12 +39,6 @@ const TreeNode = ({
     }
   }, [expandedAll]);
 
-  const isMain = !getParentId(node);
-
-  const paddingLeft = level * 24;
-
-  const bgClass = isExpanded && isMain ? 'bg-gray-100 hover:bg-gray-100' : '';
-
   const handleClick = async () => {
     if (!hasChildren || loading) return;
     if (!isExpanded) {
@@ -55,86 +51,112 @@ const TreeNode = ({
     }
   };
 
+  const indentPx = level * 24 + 12;
+
   return (
-    <div className="relative flex flex-col gap-2">
+    <div className="relative">
+      {/* Row */}
       <div
-        className={`
-          flex items-center gap-2 py-2 px-3 rounded-lg transition-colors cursor-pointer
-          hover:bg-gray-50
-          ${bgClass}
-        `}
-        style={{ paddingInlineStart: `${paddingLeft + 12}px` }}
+        className="grid items-center border-b border-gray-200 py-3 px-3 cursor-pointer hover:bg-gray-50 transition-colors"
+        style={{
+          gridTemplateColumns: GRID_COLUMNS,
+          paddingInlineStart: `${indentPx}px`,
+          paddingInlineEnd: '12px',
+        }}
         onClick={handleClick}
       >
-        {/* Expand */}
-        {hasChildren ? (
-          <div className="w-5 h-5 flex items-center justify-center">
-            {loading ? (
-              <Loader2 size={16} className="animate-spin text-primary" />
-            ) : isExpanded ? (
-              <ChevronDown size={16} className="text-gray-400" />
-            ) : (
-              <ChevronRight size={16} className="text-gray-400" />
-            )}
-          </div>
-        ) : (
-          <div className="w-5 h-5" />
-        )}
-
-        {/* Icon */}
-        {loading ? (
-          <FolderOpen size={18} className="text-primary" />
-        ) : hasChildren ? (
-          isExpanded ? (
-            <FolderOpen size={18} className="text-primary" />
+        {/* Name */}
+        <div className="flex items-center gap-2 min-w-0">
+          {hasChildren ? (
+            <div className="w-5 h-5 flex items-center justify-center shrink-0">
+              {loading ? (
+                <Loader2 size={16} className="animate-spin text-primary" />
+              ) : isExpanded ? (
+                <ChevronDown size={16} className="text-gray-400" />
+              ) : (
+                <ChevronRight size={16} className="text-gray-400" />
+              )}
+            </div>
           ) : (
-            <Folder size={18} className="text-gray-400" />
-          )
-        ) : (
-          <FileText size={18} className="text-gray-400" />
-        )}
+            <div className="w-5 h-5 shrink-0" />
+          )}
+          {loading ? (
+            <FolderOpen size={18} className="text-primary shrink-0" />
+          ) : hasChildren ? (
+            isExpanded ? (
+              <FolderOpen size={18} className="text-primary shrink-0" />
+            ) : (
+              <Folder size={18} className="text-gray-400 shrink-0" />
+            )
+          ) : (
+            <FileText size={18} className="text-gray-400 shrink-0" />
+          )}
+          <span className="text-base font-semibold text-gray-900 truncate">
+            {getLabel(node)}
+          </span>
+        </div>
 
         {/* Code */}
-        <span className="text-sm font-mono text-gray-500 min-w-20">
+        <span className="text-sm font-mono text-gray-500 truncate">
           {getCode(node)}
         </span>
 
-        {/* Name */}
-        <span className="text-sm font-medium text-gray-900 flex-1">
-          {getLabel(node)}
+        {/* Status */}
+        <span className={`text-sm font-medium ${node.isActive !== false ? 'text-emerald-600' : 'text-red-500'}`}>
+          {node.isActive !== false ? 'نشط' : 'غير نشط'}
         </span>
 
-        {/* Locked in journal */}
+        {/* Locked in Journal */}
         {node.lockedInJournal ? (
           <span
-            className="flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-amber-600"
+            className="flex items-center gap-1 text-amber-600"
             title="هذا الحساب مقفل ولا يمكن استخدامه في القيود"
           >
             <Lock size={12} />
             <span className="text-[10px] font-semibold">مقفل</span>
           </span>
-        ) : null}
+        ) : (
+          <span className="text-sm text-gray-300">-</span>
+        )}
 
-        {/* Menu */}
-        {actions.length > 0 && <AccountActionsMenu node={node} actions={actions} />}
+        {/* Actions */}
+        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+          {actions.length > 0 && <AccountActionsMenu node={node} actions={actions} />}
+        </div>
       </div>
 
+      {/* Children */}
       {hasChildren && isExpanded && resolvedChildren.length > 0 && (
-        <div>
+        <div className="relative">
+          {/* Vertical line running through all children */}
+          <div
+            className="absolute top-0 bottom-0 w-px bg-gray-200"
+            style={{ insetInlineStart: `${indentPx}px` }}
+          />
           {resolvedChildren.map((child) => (
-            <TreeNode
-              key={getNodeId(child)}
-              node={child}
-              level={level + 1}
-              expandedAll={expandedAll}
-              getLabel={getLabel}
-              getCode={getCode}
-              getChildren={getChildren}
-              getParentId={getParentId}
-              actions={actions}
-              onExpand={onExpand}
-              isLoading={isLoading}
-            />
+            <div key={getNodeId(child)} className="relative">
+              {/* Horizontal connector line */}
+              <div
+                className="absolute h-px bg-gray-200"
+                style={{
+                  insetInlineStart: `${indentPx}px`,
+                  top: '16px',
+                  width: '24px',
+                }}
+              />
+              <TreeNode
+                node={child}
+                level={level + 1}
+                expandedAll={expandedAll}
+                getLabel={getLabel}
+                getCode={getCode}
+                getChildren={getChildren}
+                getParentId={getParentId}
+                actions={actions}
+                onExpand={onExpand}
+                isLoading={isLoading}
+              />
+            </div>
           ))}
         </div>
       )}

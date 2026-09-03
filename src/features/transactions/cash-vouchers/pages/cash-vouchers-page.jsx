@@ -115,20 +115,32 @@ const CashVouchersPage = () => {
     <div className="p-6 space-y-6">
       <Breadcrumb items={[{ label: 'سندات القبض والدفع' }]} />
 
-      <div className="flex justify-between">
-        <h1 className="text-xl font-bold">سندات القبض والدفع</h1>
+      <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-gray-200 bg-white p-6 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            سندات القبض والدفع
+          </h1>
+          <p className="text-sm text-gray-600">إدارة جميع السندات بسهولة.</p>
+        </div>
 
         <button
           onClick={() => navigate('/cash-vouchers/new')}
-          className="bg-primary text-white px-4 py-2 flex justify-between items-center gap-3 rounded"
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-medium text-white transition-colors hover:bg-primary/90"
         >
-          <Plus size={16} /> إضافة سند
+          <Plus size={16} />
+          إضافة سند جديد
         </button>
       </div>
-
       <CashVoucherFilters filters={filters} setFilters={setFilters} />
 
-      <Table columns={columns} data={vouchers} loading={isLoading} onRowClick={(row) => navigate(`/cash-vouchers/${row.voucherID || row.id}`)} />
+      <Table
+        columns={columns}
+        data={vouchers}
+        loading={isLoading}
+        onRowClick={(row) =>
+          navigate(`/cash-vouchers/${row.voucherID || row.id}`)
+        }
+      />
 
       <Pagination
         currentPage={currentPage}

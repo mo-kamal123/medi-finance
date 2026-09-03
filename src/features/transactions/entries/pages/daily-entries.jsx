@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import PageLoader from '../../../../shared/ui/page-loader';
 import Pagination from '../../../../shared/ui/pagination';
 import Table from '../../../../shared/ui/table';
+import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import { toast } from '../../../../shared/lib/toast';
 import { formatCurrency, formatDate } from '../../../../shared/utils/formatters';
 import JournalEntryFilters from '../components/journal-entry-filters';
@@ -187,7 +188,9 @@ const DailyEntriesPage = () => {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm sm:flex-row sm:items-center">
+      <Breadcrumb items={[{ label: 'القيود اليومية' }]} />
+
+      <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-gray-200 bg-white p-6 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">القيود اليومية</h1>
           <p className="text-sm text-gray-600">
@@ -206,7 +209,7 @@ const DailyEntriesPage = () => {
 
       <JournalEntryFilters filters={filters} setFilters={setFilters} />
 
-      <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl bg-white">
         <Table columns={columns} data={entries} loading={isLoading} onRowClick={(row) => navigate(`/entries/${row.journalEntryID}`)} />
       </div>
 

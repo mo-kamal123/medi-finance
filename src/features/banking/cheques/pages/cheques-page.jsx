@@ -7,13 +7,13 @@ import Pagination from '../../../../shared/ui/pagination';
 import Table from '../../../../shared/ui/table';
 import { matchesSearch, paginateItems } from '../../../../shared/utils/list-utils';
 import { formatDate } from '../../../../shared/utils/formatters';
-import { usePendingCheques, useChequeStatuses } from '../hooks/cheques.queries';
+import { useCheques, useChequeStatuses } from '../hooks/cheques.queries';
 import { useDeleteCheque } from '../hooks/cheques.mutations';
 
 const transactionTypeOptions = [
   { value: '', label: 'كل المعاملات' },
-  { value: '1', label: 'قبض' },
-  { value: '2', label: 'صرف' },
+  { value: 'RECEIPT', label: 'قبض' },
+  { value: 'PAYMENT', label: 'صرف' },
 ];
 
 const ChequesPage = () => {
@@ -23,27 +23,29 @@ const ChequesPage = () => {
   const [search, setSearch] = useState('');
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const { data = [], isLoading } = usePendingCheques(
+  const { data = [], isLoading } = useCheques(
     Object.assign(
       {},
       status ? { status } : {},
       transactionType ? { transactionType } : {}
     )
   );
-  const { data: statuses = [] } = useChequeStatuses();
+  const { data: receiptStatuses = [] } = useChequeStatuses(0);
+  const { data: paymentStatuses = [] } = useChequeStatuses(1);
   const { mutate: deleteCheque } = useDeleteCheque();
 
   const statusOptions = useMemo(() => {
     const opts = [{ value: '', label: 'كل الحالات' }];
-    if (Array.isArray(statuses) && statuses.length > 0) {
-      statuses.forEach((s) => {
-        const value = s.Name || s.name || String(s.id ?? s.Id ?? s);
-        const label = s.NameAr || s.nameAr || s.Name || s.name || s;
-        opts.push({ value, label });
-      });
-    }
+    const seen = new Set();
+    [...receiptStatuses, ...paymentStatuses].forEach((s) => {
+      const value = s.Name || s.name || String(s.id ?? s.Id ?? s);
+      if (seen.has(value)) return;
+      seen.add(value);
+      const label = s.NameAr || s.nameAr || s.Name || s.name || s;
+      opts.push({ value, label });
+    });
     return opts;
-  }, [statuses]);
+  }, [receiptStatuses, paymentStatuses]);
 
   const filteredCheques = useMemo(
     () =>
@@ -52,11 +54,12 @@ const ChequesPage = () => {
           cheque,
           [
             'chequeNumber',
-            'customerName',
-            'supplierName',
-            'bankName',
+            'customerNameAr',
+            'supplierNameAr',
+            'partyNameAr',
+            'bankNameAr',
             'status',
-            'statusAlert',
+            'statusNameAr',
           ],
           search
         )
@@ -78,17 +81,20 @@ const ChequesPage = () => {
       render: (row) => formatDate(row.chequeDate),
     },
     { header: 'القيمة', key: 'amount' },
-    { header: 'العميل/المورد', key: 'customerName' },
-    { header: 'البنك', key: 'bankName' },
+    {
+      header: 'العميل/المورد',
+      key: 'partyNameAr',
+      type: 'custom',
+      render: (row) => row.partyNameAr || row.customerNameAr || row.supplierNameAr || '-',
+    },
+    { header: 'البنك', key: 'bankNameAr' },
     {
       header: 'تاريخ الاستلام',
       key: 'receiptDate',
       type: 'custom',
       render: (row) => formatDate(row.receiptDate),
     },
-    { header: 'الحالة', key: 'status' },
-    { header: 'أيام الانتظار', key: 'daysPending' },
-    { header: 'تنبيه', key: 'statusAlert' },
+    { header: 'الحالة', key: 'statusNameAr' },
     {
       header: 'الإجراءات',
       key: 'actions',

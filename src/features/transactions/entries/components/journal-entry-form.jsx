@@ -5,6 +5,7 @@ import {
   ExternalLink,
   Plus,
   RotateCcw,
+  Search,
   Trash2,
   X,
 } from 'lucide-react';
@@ -17,12 +18,12 @@ import DateInput from '../../../../shared/ui/date-input';
 import { toast } from '../../../../shared/lib/toast';
 import { useCurrencies } from '../../commercial-papers/hooks/commercial-papers.queries';
 import {
-  useCustomers,
   useFinancialPeriods,
-  useSuppliers,
 } from '../../invoices/hooks/invoices.queries';
-import useCostTree from '../../../accounting/tree/cost-tree/hooks/use-cost-tree';
 import AccountSearchSelect from './account-search-select';
+import PartySearchSelect from '../../../../shared/ui/party-search-select';
+import CostCenterSearchSelect from '../../../../shared/ui/cost-center-search-select';
+import CurrencyExchangeInput from './currency-exchange-input';
 import { journalEntrySchema } from '../validation/journal-entry.validation';
 import {
   useCreateJournalEntry,
@@ -33,13 +34,10 @@ import {
 import { getInvoiceForCashVoucher } from '../../cash-vouchers/api/cash-vouchers.api';
 import { useJournalEntryStatuses } from '../hooks/entries.queries';
 import {
-  buildCostCenterOptions,
   buildJournalEntryPayload,
-  buildPartyOptions,
   isJournalEntryPosted,
   isJournalEntryReversed,
   JOURNAL_TYPES,
-  withCurrentOption,
   journalEntryInputClass,
   journalEntryFlexInputClass,
 } from '../utils/journal-entry.utils';
@@ -99,7 +97,7 @@ const mapEntryToForm = (entry) => {
       : '',
     statusID: entry.statusID != null ? String(entry.statusID) : '0',
     currencyID: entry.currencyID ? String(entry.currencyID) : '',
-    exchangeRate: entry.exchangeRate != null ? String(entry.exchangeRate) : '',
+    exchangeRate: entry.exchangeRate != null ? String(entry.exchangeRate) : '1',
     details: entry.details?.length
       ? entry.details.map(mapDetail)
       : [createDetailRow(), createDetailRow()],
@@ -126,19 +124,11 @@ const JournalEntryForm = ({
   const updateMutation = useUpdateJournalEntry();
   const postMutation = usePostJournalEntry();
   const reverseMutation = useReverseJournalEntry();
-  const { data: costTree = [] } = useCostTree();
   const { data: currencies = [] } = useCurrencies();
   const { data: financialPeriods = [] } = useFinancialPeriods();
-  const { data: customers = [] } = useCustomers();
-  const { data: suppliers = [] } = useSuppliers();
   const { data: statuses = [] } = useJournalEntryStatuses();
   const isEditMode = mode === 'edit';
   const entryId = defaultValues?.journalEntryID || defaultValues?.id;
-
-  const costCenterOptions = useMemo(
-    () => buildCostCenterOptions(costTree),
-    [costTree]
-  );
   const currencyOptions = useMemo(
     () =>
       currencies.map((c) => ({
@@ -159,30 +149,13 @@ const JournalEntryForm = ({
     () => statuses.map((s) => ({ value: String(s.id), label: s.name })),
     [statuses]
   );
-  const customerOptions = useMemo(
-    () =>
-      buildPartyOptions(customers, {
-        idKey: 'customerID',
-        nameArKey: 'customerNameAr',
-        nameEnKey: 'customerNameEn',
-      }),
-    [customers]
-  );
-  const supplierOptions = useMemo(
-    () =>
-      buildPartyOptions(suppliers, {
-        idKey: 'supplierID',
-        nameArKey: 'supplierNameAr',
-        nameEnKey: 'supplierNameEn',
-      }),
-    [suppliers]
-  );
 
   const {
     register,
     control,
     handleSubmit,
     reset,
+    getValues,
     setValue,
     setError,
     formState: { errors },
@@ -197,6 +170,7 @@ const JournalEntryForm = ({
   });
   const watchedDetails = useWatch({ control, name: 'details' }) || [];
   const watchedStatusID = useWatch({ control, name: 'statusID' });
+  const watchedExchangeRate = useWatch({ control, name: 'exchangeRate' });
 
   // Reset form when switching to an existing entry
   useEffect(() => {
@@ -204,6 +178,21 @@ const JournalEntryForm = ({
       reset(mapEntryToForm(defaultValues));
     }
   }, [isEditMode, defaultValues?.journalEntryID, defaultValues?.modifiedAt]);
+
+  // Default currency to EGP when currencies load
+  useEffect(() => {
+    if (!isEditMode && currencies.length > 0 && !getValues('currencyID')) {
+      const egp = currencies.find(
+        (c) =>
+          c.currencyCode?.toUpperCase() === 'EGP' ||
+          c.currencyNameAr?.includes('جنيه')
+      );
+      if (egp) {
+        setValue('currencyID', String(egp.currencyID));
+        setValue('exchangeRate', '1');
+      }
+    }
+  }, [currencies, isEditMode]);
 
   const totalDebit = useMemo(
     () => watchedDetails.reduce((s, r) => s + (Number(r?.debitAmount) || 0), 0),
@@ -239,11 +228,11 @@ const JournalEntryForm = ({
   };
 
   // Mutual exclusion: selecting a customer clears supplier
-  const handleCustomerChange = (index, value) => {
+  const handleCustomerChange = (index, value, entityName) => {
     setValue(`details.${index}.customerID`, value);
     setValue(
       `details.${index}.customerNameAr`,
-      value ? customerOptions.find((o) => o.value === value)?.label || '' : ''
+      value ? entityName || '' : ''
     );
     if (value) {
       setValue(`details.${index}.supplierID`, '');
@@ -252,11 +241,11 @@ const JournalEntryForm = ({
   };
 
   // Mutual exclusion: selecting a supplier clears customer
-  const handleSupplierChange = (index, value) => {
+  const handleSupplierChange = (index, value, entityName) => {
     setValue(`details.${index}.supplierID`, value);
     setValue(
       `details.${index}.supplierNameAr`,
-      value ? supplierOptions.find((o) => o.value === value)?.label || '' : ''
+      value ? entityName || '' : ''
     );
     if (value) {
       setValue(`details.${index}.customerID`, '');
@@ -373,12 +362,8 @@ const JournalEntryForm = ({
     <div className="min-w-0 w-full max-w-full space-y-4 md:space-y-6">
       {/* Header */}
       {!viewOnly ? (
-        <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between md:p-6">
+        <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 md:flex-row md:items-center md:justify-between md:p-6">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
-            <ArrowLeft
-              className="cursor-pointer text-gray-500 hover:text-gray-800"
-              onClick={() => navigate(-1)}
-            />
             <div>
               <h1 className="text-xl font-bold md:text-2xl">
                 {isEditMode ? 'تعديل قيد يومي' : 'إنشاء قيد يومي'}
@@ -445,61 +430,11 @@ const JournalEntryForm = ({
         </div>
       ) : null}
 
-      {/* Read-only entry meta (edit mode) */}
-      {isEditMode && defaultValues.journalEntryNumber && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {/* Journal Entry Number */}
-          <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm transition hover:shadow-md">
-            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-blue-600">
-              رقم القيد
-            </p>
-            <p className="text-2xl font-bold text-gray-900">
-              {defaultValues.journalEntryNumber}
-            </p>
-          </div>
-
-          {/* Debit / Credit */}
-          <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm transition hover:shadow-md">
-            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-emerald-600">
-              إجمالي المدين / الدائن
-            </p>
-            <p className="text-lg font-bold text-gray-900">
-              {Number(defaultValues.totalDebit || 0).toFixed(2)}
-              <span className="mx-2 text-gray-400">/</span>
-              {Number(defaultValues.totalCredit || 0).toFixed(2)}
-            </p>
-          </div>
-
-          {/* Currency */}
-          <div className="rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm transition hover:shadow-md">
-            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-amber-600">
-              العملة
-            </p>
-            <p className="text-lg font-semibold text-gray-900">
-              {defaultValues.currencyNameAr ||
-                defaultValues.currencyCode ||
-                '-'}
-            </p>
-          </div>
-
-          {/* Financial Period */}
-          <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-5 shadow-sm transition hover:shadow-md">
-            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-violet-600">
-              الفترة المالية
-            </p>
-            <p className="text-lg font-semibold text-gray-900">
-              {defaultValues.financialPeriodNameAr ||
-                defaultValues.financialPeriodNameEn ||
-                '-'}
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* Form */}
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:space-y-6 md:p-6"
+        className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 md:space-y-6 md:p-6"
       >
         {/* Header fields */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -589,26 +524,15 @@ const JournalEntryForm = ({
             name="currencyID"
             control={control}
             render={({ field }) => (
-              <FormInput
-                as="select"
-                label="العملة"
-                value={field.value ?? ''}
-                onChange={field.onChange}
-              >
-                <option value="">اختر</option>
-                {currencyOptions.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </FormInput>
+              <CurrencyExchangeInput
+                currencyValue={field.value ?? ''}
+                exchangeRateValue={watchedExchangeRate ?? ''}
+                onCurrencyChange={field.onChange}
+                onExchangeRateChange={(e) => setValue('exchangeRate', e.target.value)}
+                currencyOptions={currencyOptions}
+                disabled={readOnly}
+              />
             )}
-          />
-
-          <FormInput
-            type="number"
-            label="سعر الصرف"
-            {...register('exchangeRate')}
           />
         </div>
 
@@ -650,18 +574,26 @@ const JournalEntryForm = ({
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <DetailField label="رقم الفاتوره">
-                      <div className="flex items-center gap-2">
+                      <div className="relative">
                         <input
                           type="text"
                           {...register(`details.${index}.invoiceNumber`)}
-                          className={journalEntryFlexInputClass}
+                          readOnly={readOnly}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleLoadInvoiceDetails(index);
+                            }
+                          }}
+                          className={`${journalEntryFlexInputClass} !pl-10`}
                         />
                         <button
                           type="button"
                           onClick={() => handleLoadInvoiceDetails(index)}
-                          className="shrink-0 rounded-lg bg-primary px-3 py-2 text-sm text-white hover:bg-primary/90"
+                          disabled={readOnly}
+                          className="absolute left-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md bg-main text-white disabled:opacity-50"
                         >
-                          جلب
+                          <Search size={14} />
                         </button>
                       </div>
                     </DetailField>
@@ -687,18 +619,10 @@ const JournalEntryForm = ({
                         name={`details.${index}.costCenterID`}
                         control={control}
                         render={({ field: f }) => (
-                          <FormInput
-                            as="select"
+                          <CostCenterSearchSelect
                             value={f.value ?? ''}
                             onChange={f.onChange}
-                          >
-                            <option value="">اختر مركز التكلفة</option>
-                            {costCenterOptions.map((o) => (
-                              <option key={o.value} value={o.value}>
-                                {o.label}
-                              </option>
-                            ))}
-                          </FormInput>
+                          />
                         )}
                       />
                     </DetailField>
@@ -708,26 +632,13 @@ const JournalEntryForm = ({
                         name={`details.${index}.customerID`}
                         control={control}
                         render={({ field: f }) => (
-                          <FormInput
-                            as="select"
+                          <PartySearchSelect
+                            type="customer"
                             value={f.value ?? ''}
                             onChange={(e) =>
-                              handleCustomerChange(index, e.target.value)
+                              handleCustomerChange(index, e.target.value, e.target.entityName)
                             }
-                          >
-                            <option value="">اختر العميل</option>
-                            {withCurrentOption(
-                              customerOptions,
-                              f.value,
-                              watchedDetails[index]?.customerNameAr ||
-                                customerOptions.find((o) => o.value === f.value)?.label ||
-                                ''
-                            ).map((o) => (
-                              <option key={o.value} value={o.value}>
-                                {o.label}
-                              </option>
-                            ))}
-                          </FormInput>
+                          />
                         )}
                       />
                     </DetailField>
@@ -737,26 +648,13 @@ const JournalEntryForm = ({
                         name={`details.${index}.supplierID`}
                         control={control}
                         render={({ field: f }) => (
-                          <FormInput
-                            as="select"
+                          <PartySearchSelect
+                            type="supplier"
                             value={f.value ?? ''}
                             onChange={(e) =>
-                              handleSupplierChange(index, e.target.value)
+                              handleSupplierChange(index, e.target.value, e.target.entityName)
                             }
-                          >
-                            <option value="">اختر المورد</option>
-                            {withCurrentOption(
-                              supplierOptions,
-                              f.value,
-                              watchedDetails[index]?.supplierNameAr ||
-                                supplierOptions.find((o) => o.value === f.value)?.label ||
-                                ''
-                            ).map((o) => (
-                              <option key={o.value} value={o.value}>
-                                {o.label}
-                              </option>
-                            ))}
-                          </FormInput>
+                          />
                         )}
                       />
                     </DetailField>
@@ -866,7 +764,7 @@ const JournalEntryForm = ({
                       key={field.id}
                       className="align-top border border-gray-200"
                     >
-                      <td className="min-w-[120px] p-2">
+                      <td className="min-w-30 p-2">
                         <Controller
                           name={`details.${index}.debitAmount`}
                           control={control}
@@ -893,7 +791,7 @@ const JournalEntryForm = ({
                         ) : null}
                       </td>
 
-                      <td className="min-w-[120px] p-2">
+                      <td className="min-w-30 p-2">
                         <Controller
                           name={`details.${index}.creditAmount`}
                           control={control}
@@ -915,7 +813,7 @@ const JournalEntryForm = ({
                         />
                       </td>
 
-                      <td className="min-w-[280px] p-2">
+                      <td className="min-w-70 p-2">
                         <Controller
                           name={`details.${index}.accountID`}
                           control={control}
@@ -930,95 +828,61 @@ const JournalEntryForm = ({
                         />
                       </td>
 
-                      <td className="min-w-[200px] p-2">
+                      <td className="min-w-60 p-2">
                         <Controller
                           name={`details.${index}.costCenterID`}
                           control={control}
                           render={({ field: f }) => (
-                            <FormInput
-                              as="select"
+                            <CostCenterSearchSelect
                               value={f.value ?? ''}
                               onChange={f.onChange}
                               disabled={readOnly}
-                            >
-                              <option value="">اختر مركز التكلفة</option>
-                              {costCenterOptions.map((o) => (
-                                <option key={o.value} value={o.value}>
-                                  {o.label}
-                                </option>
-                              ))}
-                            </FormInput>
+                            />
                           )}
                         />
                       </td>
 
-                      <td className="min-w-[200px] p-2">
+                      <td className="min-w-60 p-2">
                         <Controller
                           name={`details.${index}.customerID`}
                           control={control}
                           render={({ field: f }) => (
-                            <FormInput
-                              as="select"
+                            <PartySearchSelect
+                              type="customer"
                               value={f.value ?? ''}
                               onChange={(e) =>
-                                handleCustomerChange(index, e.target.value)
+                                handleCustomerChange(index, e.target.value, e.target.entityName)
                               }
                               disabled={
                                 readOnly ||
                                 Boolean(watchedDetails[index]?.supplierID)
                               }
-                            >
-                              <option value="">اختر العميل</option>
-                              {withCurrentOption(
-                                customerOptions,
-                                f.value,
-                                watchedDetails[index]?.customerNameAr ||
-                                  customerOptions.find((o) => o.value === f.value)?.label ||
-                                  ''
-                              ).map((o) => (
-                                <option key={o.value} value={o.value}>
-                                  {o.label}
-                                </option>
-                              ))}
-                            </FormInput>
+                            />
                           )}
                         />
                       </td>
 
-                      <td className="min-w-[200px] p-2">
+                      <td className="min-w-60 p-2">
                         <Controller
                           name={`details.${index}.supplierID`}
                           control={control}
                           render={({ field: f }) => (
-                            <FormInput
-                              as="select"
+                            <PartySearchSelect
+                              type="supplier"
                               value={f.value ?? ''}
                               onChange={(e) =>
-                                handleSupplierChange(index, e.target.value)
+                                handleSupplierChange(index, e.target.value, e.target.entityName)
                               }
                               disabled={
                                 readOnly ||
                                 Boolean(watchedDetails[index]?.customerID)
                               }
-                            >
-                              <option value="">اختر المورد</option>
-                              {withCurrentOption(
-                                supplierOptions,
-                                f.value,
-                                watchedDetails[index]?.supplierNameAr ||
-                                  supplierOptions.find((o) => o.value === f.value)?.label ||
-                                  ''
-                              ).map((o) => (
-                                <option key={o.value} value={o.value}>
-                                  {o.label}
-                                </option>
-                              ))}
-                            </FormInput>
+                            />
                           )}
                         />
                       </td>
 
-                      <td className="min-w-[180px] p-2">
+                      <td className="min-w-45 p-2">
                         <input
                           type="text"
                           {...register(`details.${index}.description`)}
@@ -1027,7 +891,7 @@ const JournalEntryForm = ({
                         />
                       </td>
 
-                      <td className="min-w-[160px] p-2">
+                      <td className="min-w-40 p-2">
                         <Controller
                           name={`details.${index}.recordDate`}
                           control={control}
@@ -1041,7 +905,7 @@ const JournalEntryForm = ({
                         />
                       </td>
 
-                      <td className="min-w-[160px] p-2">
+                      <td className="min-w-40 p-2">
                         <input
                           type="text"
                           {...register(`details.${index}.documentNumber`)}
@@ -1050,21 +914,27 @@ const JournalEntryForm = ({
                         />
                       </td>
 
-                      <td className="min-w-[220px] p-2">
-                        <div className="flex items-center gap-2">
+                      <td className="min-w-55 p-2">
+                        <div className="relative">
                           <input
                             type="text"
                             {...register(`details.${index}.invoiceNumber`)}
                             readOnly={readOnly}
-                            className={journalEntryFlexInputClass}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleLoadInvoiceDetails(index);
+                              }
+                            }}
+                            className={`${journalEntryFlexInputClass} pl-10!`}
                           />
                           {!readOnly ? (
                             <button
                               type="button"
                               onClick={() => handleLoadInvoiceDetails(index)}
-                              className="shrink-0 rounded-lg bg-primary px-3 py-2 text-sm text-white hover:bg-primary/90"
+                              className="absolute left-5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md bg-main text-white"
                             >
-                              جلب
+                              <Search size={14} />
                             </button>
                           ) : null}
                         </div>

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building2, BookOpen, Receipt, Wallet, ArrowUpLeft } from 'lucide-react';
+import { ArrowLeft, Building2, BookOpen, Receipt, Wallet, Banknote, ArrowUpLeft } from 'lucide-react';
 import PageLoader from '../../../../shared/ui/page-loader';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import BankAccountsPanel from '../components/bank-accounts-panel';
+import BankChequesPanel from '../components/bank-cheques-panel';
 import BankForm from '../components/bank-form';
 import BankTransactionsPanel from '../components/bank-transactions-panel';
 import { useBank } from '../hooks/banks.queries';
@@ -11,6 +12,7 @@ import { useBank } from '../hooks/banks.queries';
 const TABS = [
   { key: 'info', label: 'معلومات البنك', icon: Building2 },
   { key: 'accounts', label: 'حسابات البنك', icon: Wallet },
+  { key: 'cheques', label: 'الشيكات', icon: Banknote },
   { key: 'transactions', label: 'معاملات البنك', icon: Receipt },
 ];
 
@@ -101,6 +103,9 @@ const BankDetails = () => {
           )}
           {activeTab === 'accounts' && (
             <BankAccountsPanel bankId={id} />
+          )}
+          {activeTab === 'cheques' && (
+            <BankChequesPanel />
           )}
           {activeTab === 'transactions' && (
             <BankTransactionsPanel bankId={id} />
