@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, RotateCcw, Search, SlidersHorizontal } from 'lucide-react';
 import DateInput from '../../../../shared/ui/date-input';
 import FormInput from '../../../../shared/ui/input';
 import SearchableSelect from '../../../../shared/ui/searchable-select';
+import FilterBar from '../../../../shared/ui/filter-bar';
 import { useDebounce } from '../../../../shared/lib/use-debounce';
 import { useFinancialPeriods } from '../../invoices/hooks/invoices.queries';
 import useAccountsTree from '../../../accounting/tree/accouts-tree/hooks/use-accounts-tree';
@@ -33,7 +33,6 @@ const JournalEntryFilters = ({
   hiddenFields = {},
   className = '',
 }) => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [localEntryNumber, setLocalEntryNumber] = useState(
     filters.journalEntryNumber || ''
   );
@@ -147,159 +146,122 @@ const JournalEntryFilters = ({
       ...DEFAULT_JOURNAL_ENTRY_FILTERS,
       pageSize: prev.pageSize,
     }));
-    setShowAdvanced(false);
   };
 
-  const hasPrimaryFilters =
-    visibleFields.journalEntryNumber ||
-    visibleFields.referenceNumber ||
-    visibleFields.journalType ||
-    visibleFields.status;
+  const primaryFilters = [];
 
-  const hasAdvancedFilters =
-    visibleFields.fromDate ||
-    visibleFields.toDate ||
-    visibleFields.financialPeriodId ||
-    visibleFields.accountId;
+  if (visibleFields.journalEntryNumber) {
+    primaryFilters.push(
+      <FormInput
+        key="entryNumber"
+        label="رقم القيد"
+        value={localEntryNumber}
+        onChange={(event) => setLocalEntryNumber(event.target.value)}
+        placeholder="ابحث برقم القيد"
+        autoFocus
+      />
+    );
+  }
+
+  if (visibleFields.referenceNumber) {
+    primaryFilters.push(
+      <FormInput
+        key="refNumber"
+        label="رقم المرجع"
+        value={localRefNumber}
+        onChange={(event) => setLocalRefNumber(event.target.value)}
+        placeholder="رقم المرجع"
+      />
+    );
+  }
+
+  if (visibleFields.journalType) {
+    primaryFilters.push(
+      <SearchableSelect
+        key="type"
+        label="نوع القيد"
+        value={filters.journalType || ''}
+        onChange={(event) => handleChange('journalType', event.target.value)}
+        placeholder="كل الأنواع"
+        options={journalTypeOptions}
+      />
+    );
+  }
+
+  if (visibleFields.status) {
+    primaryFilters.push(
+      <SearchableSelect
+        key="status"
+        label="الحالة"
+        value={filters.status || ''}
+        onChange={(event) => handleChange('status', event.target.value)}
+        placeholder="كل الحالات"
+        options={statusOptions}
+      />
+    );
+  }
+
+  const extraFilters = [];
+
+  if (visibleFields.fromDate) {
+    extraFilters.push(
+      <DateInput
+        key="from"
+        label="من تاريخ"
+        value={filters.fromDate || ''}
+        onChange={(event) => handleChange('fromDate', event.target.value)}
+      />
+    );
+  }
+
+  if (visibleFields.toDate) {
+    extraFilters.push(
+      <DateInput
+        key="to"
+        label="إلى تاريخ"
+        value={filters.toDate || ''}
+        onChange={(event) => handleChange('toDate', event.target.value)}
+      />
+    );
+  }
+
+  if (visibleFields.financialPeriodId) {
+    extraFilters.push(
+      <SearchableSelect
+        key="period"
+        label="الفترة المالية"
+        value={filters.financialPeriodId || ''}
+        onChange={(event) =>
+          handleChange('financialPeriodId', event.target.value)
+        }
+        placeholder="كل الفترات"
+        options={periodOptions}
+      />
+    );
+  }
+
+  if (visibleFields.accountId) {
+    extraFilters.push(
+      <SearchableSelect
+        key="account"
+        label="الحساب"
+        value={filters.accountId || ''}
+        onChange={(event) => handleChange('accountId', event.target.value)}
+        placeholder="كل الحسابات"
+        options={accountOptions}
+      />
+    );
+  }
 
   return (
-    <div
-      className={`space-y-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm ${className}`}
-    >
-      {hasPrimaryFilters ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {visibleFields.journalEntryNumber ? (
-            <div className="relative">
-              {/* <Search
-                size={18}
-                className="pointer-events-none absolute right-3 top-[38px] -translate-y-1/2 text-gray-400"
-              /> */}
-              <FormInput
-                label="رقم القيد"
-                value={localEntryNumber}
-                onChange={(event) =>
-                  setLocalEntryNumber(event.target.value)
-                }
-                placeholder="ابحث برقم القيد"
-                autoFocus
-              />
-            </div>
-          ) : null}
-
-          {visibleFields.referenceNumber ? (
-            <FormInput
-              label="رقم المرجع"
-              value={localRefNumber}
-              onChange={(event) =>
-                setLocalRefNumber(event.target.value)
-              }
-              placeholder="رقم المرجع"
-            />
-          ) : null}
-
-          {visibleFields.journalType ? (
-            <SearchableSelect
-              label="نوع القيد"
-              value={filters.journalType || ''}
-              onChange={(event) =>
-                handleChange('journalType', event.target.value)
-              }
-              placeholder="كل الأنواع"
-              options={journalTypeOptions}
-            />
-          ) : null}
-
-          {visibleFields.status ? (
-            <SearchableSelect
-              label="الحالة"
-              value={filters.status || ''}
-              onChange={(event) => handleChange('status', event.target.value)}
-              placeholder="كل الحالات"
-              options={statusOptions}
-            />
-          ) : null}
-        </div>
-      ) : null}
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {hasAdvancedFilters ? (
-          <button
-            type="button"
-            onClick={() => setShowAdvanced((prev) => !prev)}
-            className="inline-flex items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-primary/80"
-          >
-            <SlidersHorizontal size={16} />
-            <span>فلاتر إضافية</span>
-            {advancedFilterCount > 0 ? (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
-                {advancedFilterCount}
-              </span>
-            ) : null}
-            <ChevronDown
-              size={16}
-              className={`transition-transform ${showAdvanced ? 'rotate-180' : ''}`}
-            />
-          </button>
-        ) : (
-          <span />
-        )}
-
-        {activeFilterCount > 0 ? (
-          <button
-            type="button"
-            onClick={handleReset}
-            className="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
-          >
-            <RotateCcw size={16} />
-            مسح الفلاتر
-          </button>
-        ) : null}
-      </div>
-
-      {showAdvanced && hasAdvancedFilters ? (
-        <div className="grid grid-cols-1 gap-4 border-t border-gray-100 pt-4 md:grid-cols-2 xl:grid-cols-4">
-          {visibleFields.fromDate ? (
-            <DateInput
-              label="من تاريخ"
-              value={filters.fromDate || ''}
-              onChange={(event) => handleChange('fromDate', event.target.value)}
-            />
-          ) : null}
-
-          {visibleFields.toDate ? (
-            <DateInput
-              label="إلى تاريخ"
-              value={filters.toDate || ''}
-              onChange={(event) => handleChange('toDate', event.target.value)}
-            />
-          ) : null}
-
-          {visibleFields.financialPeriodId ? (
-            <SearchableSelect
-              label="الفترة المالية"
-              value={filters.financialPeriodId || ''}
-              onChange={(event) =>
-                handleChange('financialPeriodId', event.target.value)
-              }
-              placeholder="كل الفترات"
-              options={periodOptions}
-            />
-          ) : null}
-
-          {visibleFields.accountId ? (
-            <SearchableSelect
-              label="الحساب"
-              value={filters.accountId || ''}
-              onChange={(event) =>
-                handleChange('accountId', event.target.value)
-              }
-              placeholder="كل الحسابات"
-              options={accountOptions}
-            />
-          ) : null}
-        </div>
-      ) : null}
-    </div>
+    <FilterBar
+      className={className}
+      primaryFilters={primaryFilters}
+      extraFilters={extraFilters}
+      onReset={handleReset}
+      activeCount={activeFilterCount}
+      extraCount={advancedFilterCount}
+    />
   );
 };
 

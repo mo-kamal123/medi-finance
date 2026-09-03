@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
 import PageLoader from '../../../../shared/ui/page-loader';
+import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import JournalEntryForm from '../components/journal-entry-form';
 import { useJournalEntry } from '../hooks/entries.queries';
 
@@ -19,7 +20,19 @@ const ViewJournalEntryPage = () => {
     );
   }
 
-  return <JournalEntryForm defaultValues={data} mode="edit" />;
+  return (
+    <div className="space-y-6 p-6">
+      <Breadcrumb
+        items={[
+          { label: 'القيود اليومية', to: '/entries' },
+          {
+            label: data.journalEntryNumber || `قيد ${id}`,
+          },
+        ]}
+      />
+      <JournalEntryForm defaultValues={data} mode="edit" />
+    </div>
+  );
 };
 
 export default ViewJournalEntryPage;

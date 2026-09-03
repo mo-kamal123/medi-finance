@@ -2,20 +2,23 @@
 
 export const chequeSchema = z
   .object({
+    chequeType: z.string().min(1, 'نوع الشيك مطلوب'),
     customerID: z.string().optional().default(''),
     supplierID: z.string().optional().default(''),
     chequeNumber: z.string().min(1, 'رقم الشيك مطلوب'),
     chequeDate: z.string().min(1, 'تاريخ الشيك مطلوب'),
     receiptDate: z.string().optional().default(''),
     dueDate: z.string().optional().default(''),
-    voucherDate: z.string().optional().default(''),
     amount: z.coerce.number().min(0.01, 'القيمة مطلوبة'),
     currencyID: z.string().optional().default(''),
     exchangeRate: z.coerce.number().optional().default(1),
     bankID: z.string().min(1, 'البنك مطلوب'),
+    bankBranchName: z.string().optional().default(''),
+    cardNumber: z.string().optional().default(''),
     underDeliveryAccountID: z.string().optional().default(''),
     collectionAccountID: z.string().optional().default(''),
     counterAccountID: z.string().optional().default(''),
+    costCenterID: z.string().optional().default(''),
     invoiceID: z.string().optional().default(''),
     statusID: z.string().optional().default(''),
     isNonCashable: z.boolean().optional().default(false),
@@ -23,21 +26,21 @@ export const chequeSchema = z
     hasAttachmentPage: z.boolean().optional().default(false),
     beneficiaryName: z.string().optional().default(''),
     branchName: z.string().optional().default(''),
-    bankBranchName: z.string().optional().default(''),
-    cardNumber: z.string().optional().default(''),
     notes: z.string().optional().default(''),
   })
   .superRefine((data, ctx) => {
-    if (!data.customerID && !data.supplierID) {
+    if (data.chequeType === '0' && !data.customerID) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['customerID'],
-        message: 'يجب اختيار عميل أو مورد',
+        message: 'يجب اختيار عميل',
       });
+    }
+    if (data.chequeType === '1' && !data.supplierID) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['supplierID'],
-        message: 'يجب اختيار عميل أو مورد',
+        message: 'يجب اختيار مورد',
       });
     }
   });
