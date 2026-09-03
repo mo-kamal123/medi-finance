@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const padDatePart = (value) => String(value).padStart(2, '0');
@@ -109,13 +110,38 @@ const DateInput = ({ label, value, onChange, error, required, readOnly, ...props
     });
   };
 
+  const [calendarStyle, setCalendarStyle] = useState(null);
+
   useEffect(() => {
     setDisplayValue(formatDateInputDisplay(value));
     setVisibleMonth(toLocalDate(value));
   }, [value]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      setCalendarStyle(null);
+      return;
+    }
+
+    const updatePosition = () => {
+      if (!wrapperRef.current) return;
+      const rect = wrapperRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUp = spaceBelow < 340;
+
+      setCalendarStyle({
+        position: 'fixed',
+        ...(openUp
+          ? { bottom: window.innerHeight - rect.top + 4 }
+          : { top: rect.bottom + 4 }),
+        left: Math.max(rect.left, 16),
+        zIndex: 9999,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
 
     const handlePointerDown = (event) => {
       if (!wrapperRef.current?.contains(event.target)) {
@@ -126,6 +152,8 @@ const DateInput = ({ label, value, onChange, error, required, readOnly, ...props
     document.addEventListener('mousedown', handlePointerDown);
 
     return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
       document.removeEventListener('mousedown', handlePointerDown);
     };
   }, [isOpen]);
@@ -218,71 +246,78 @@ const DateInput = ({ label, value, onChange, error, required, readOnly, ...props
         )}
       </div>
 
-      {isOpen ? (
-        <div className="absolute z-50 mt-2 w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
-          <div className="mb-3 flex items-center justify-between">
-            <button
-              type="button"
-              className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
-              onClick={() => moveMonth(-1)}
-              aria-label="Previous month"
+      {isOpen && calendarStyle
+        ? createPortal(
+            <div
+              style={calendarStyle}
+              onMouseDown={(e) => e.stopPropagation()}
+              className="w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-xl"
             >
-              <ChevronRight size={18} />
-            </button>
-
-            <span className="text-sm font-semibold text-gray-800">
-              {getMonthLabel(visibleMonth)}
-            </span>
-
-            <button
-              type="button"
-              className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
-              onClick={() => moveMonth(1)}
-              aria-label="Next month"
-            >
-              <ChevronLeft size={18} />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-gray-500">
-            {WEEK_DAYS.map((day) => (
-              <span key={day}>{day}</span>
-            ))}
-          </div>
-
-          <div className="mt-2 grid grid-cols-7 gap-1">
-            {getCalendarDays(visibleMonth).map((date, index) => {
-              const dateValue = date ? toDateInputValue(date) : '';
-              const isSelected = dateValue && dateValue === selectedValue;
-
-              return date ? (
+              <div className="mb-3 flex items-center justify-between">
                 <button
-                  key={dateValue}
                   type="button"
-                  className={`h-9 rounded-lg text-sm transition ${
-                    isSelected
-                      ? 'bg-primary text-white'
-                      : 'text-gray-700 hover:bg-primary/10 hover:text-primary'
-                  }`}
-                  onClick={() => handleSelectDate(date)}
+                  className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
+                  onClick={() => moveMonth(-1)}
+                  aria-label="Previous month"
                 >
-                  {date.getDate()}
+                  <ChevronRight size={18} />
                 </button>
-              ) : (
-                <span key={`empty-${index}`} />
-              );
-            })}
-          </div>
 
-          <button
-            type="button"
-            onClick={handleSelectToday}
-            className="mt-3 w-full rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-sm text-primary transition hover:bg-primary/10"
-          >
-            اليوم
-          </button>
-        </div>
-      ) : null}
+                <span className="text-sm font-semibold text-gray-800">
+                  {getMonthLabel(visibleMonth)}
+                </span>
+
+                <button
+                  type="button"
+                  className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
+                  onClick={() => moveMonth(1)}
+                  aria-label="Next month"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-gray-500">
+                {WEEK_DAYS.map((day) => (
+                  <span key={day}>{day}</span>
+                ))}
+              </div>
+
+              <div className="mt-2 grid grid-cols-7 gap-1">
+                {getCalendarDays(visibleMonth).map((date, index) => {
+                  const dateValue = date ? toDateInputValue(date) : '';
+                  const isSelected = dateValue && dateValue === selectedValue;
+
+                  return date ? (
+                    <button
+                      key={dateValue}
+                      type="button"
+                      className={`h-9 rounded-lg text-sm transition ${
+                        isSelected
+                          ? 'bg-primary text-white'
+                          : 'text-gray-700 hover:bg-primary/10 hover:text-primary'
+                      }`}
+                      onClick={() => handleSelectDate(date)}
+                    >
+                      {date.getDate()}
+                    </button>
+                  ) : (
+                    <span key={`empty-${index}`} />
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSelectToday}
+                className="mt-3 w-full rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-sm text-primary transition hover:bg-primary/10"
+              >
+                اليوم
+              </button>
+            </div>,
+            document.body
+          )
+        : null}
 
       {error ? <p className="mt-1 text-sm text-red-500">{error}</p> : null}
     </div>

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building2, BookOpen, Receipt, Wallet, ArrowUpLeft } from 'lucide-react';
+import { ArrowLeft, Building2, BookOpen, Receipt, Wallet, Banknote, ArrowUpLeft } from 'lucide-react';
 import PageLoader from '../../../../shared/ui/page-loader';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import BankAccountsPanel from '../components/bank-accounts-panel';
+import BankChequesPanel from '../components/bank-cheques-panel';
 import BankForm from '../components/bank-form';
 import BankTransactionsPanel from '../components/bank-transactions-panel';
 import { useBank } from '../hooks/banks.queries';
@@ -11,6 +12,7 @@ import { useBank } from '../hooks/banks.queries';
 const TABS = [
   { key: 'info', label: 'معلومات البنك', icon: Building2 },
   { key: 'accounts', label: 'حسابات البنك', icon: Wallet },
+  { key: 'cheques', label: 'الشيكات', icon: Banknote },
   { key: 'transactions', label: 'معاملات البنك', icon: Receipt },
 ];
 
@@ -52,9 +54,9 @@ const BankDetails = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {data.bankID && (
+              {data.accountID && (
                 <button
-                  onClick={() => navigate(`/general-ledger?accountId=${data.bankID}`)}
+                  onClick={() => navigate(`/general-ledger?accountId=${data.accountID}`)}
                   className="flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/30"
                 >
                   <BookOpen size={16} />
@@ -101,6 +103,9 @@ const BankDetails = () => {
           )}
           {activeTab === 'accounts' && (
             <BankAccountsPanel bankId={id} />
+          )}
+          {activeTab === 'cheques' && (
+            <BankChequesPanel />
           )}
           {activeTab === 'transactions' && (
             <BankTransactionsPanel bankId={id} />

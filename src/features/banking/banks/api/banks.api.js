@@ -17,78 +17,6 @@ const extractArray = (data) => {
   return found || [];
 };
 
-const STATIC_BANKS = [
-  {
-    bankID: 1,
-    bankCode: 'NCB',
-    bankNameAr: 'البنك الأهلي السعودي',
-    bankNameEn: 'National Commercial Bank',
-    swiftCode: 'NCBKSAJE',
-    phone: '+966-11-2525252',
-    email: 'info@aljazirahcapital.com',
-    website: 'https://www.aljazirahcapital.com',
-    addressAr: 'شارع التحلية، العليا، الرياض',
-    addressEn: 'Olaya Street, Al Olaya, Riyadh',
-    isActive: true,
-    accountID: 101,
-    accountCount: 3,
-  },
-];
-
-const STATIC_BANK_ACCOUNTS = [
-  {
-    bankAccountID: 1,
-    bankID: 1,
-    accountNumber: 'SA4420000001234567890123',
-    accountNumberWithBranch: 'SA4420000001234567890123 - فرع العليا',
-    accountNameAr: 'الحساب الرئيسي - ريال',
-    accountNameEn: 'Main Account - SAR',
-    currencyID: 1,
-    currencyNameAr: 'ريال سعودي',
-    currencyCode: 'SAR',
-    currentBalance: 1250000.00,
-    isActive: true,
-    branchName: 'فرع العليا',
-    iban: 'SA4420000001234567890123',
-    minBalance: 10000,
-    isDefault: true,
-  },
-  {
-    bankAccountID: 2,
-    bankID: 1,
-    accountNumber: 'SA4420000009876543210987',
-    accountNumberWithBranch: 'SA4420000009876543210987 - فرع الدمام',
-    accountNameAr: 'حساب العملة الأجنبية',
-    accountNameEn: 'Foreign Currency Account',
-    currencyID: 2,
-    currencyNameAr: 'دولار أمريكي',
-    currencyCode: 'USD',
-    currentBalance: 85000.50,
-    isActive: true,
-    branchName: 'فرع الدمام',
-    iban: 'SA4420000009876543210987',
-    minBalance: 5000,
-    isDefault: false,
-  },
-  {
-    bankAccountID: 3,
-    bankID: 1,
-    accountNumber: 'SA4420000005556667778889',
-    accountNumberWithBranch: 'SA4420000005556667778889 - فرع جدة',
-    accountNameAr: 'حساب الرواتب',
-    accountNameEn: 'Payroll Account',
-    currencyID: 1,
-    currencyNameAr: 'ريال سعودي',
-    currencyCode: 'SAR',
-    currentBalance: 320000.00,
-    isActive: false,
-    branchName: 'فرع جدة',
-    iban: 'SA4420000005556667778889',
-    minBalance: 0,
-    isDefault: false,
-  },
-];
-
 export const getAllBanks = async (params) => {
   try {
     const { data } = await axiosInstance.get('/Banks', {
@@ -98,10 +26,9 @@ export const getAllBanks = async (params) => {
         ...params,
       },
     });
-    const list = extractArray(data);
-    return list.length > 0 ? list : STATIC_BANKS;
+    return extractArray(data);
   } catch {
-    return STATIC_BANKS;
+    return [];
   }
 };
 
@@ -110,7 +37,7 @@ export const getBankById = async (id) => {
     const { data } = await axiosInstance.get(`/Banks/${id}`);
     return data;
   } catch {
-    return STATIC_BANKS.find((b) => b.bankID === Number(id)) || null;
+    return null;
   }
 };
 
@@ -125,20 +52,15 @@ export const updateBank = async ({ id, ...payload }) => {
 };
 
 export const getBankAccounts = async (bankId, params = {}) => {
-  try {
-    const { data } = await axiosInstance.get('/BankAccounts', {
-      params: {
-        pageNumber: 1,
-        pageSize: 20,
-        bankId,
-        ...params,
-      },
-    });
-    const list = extractArray(data);
-    return list.length > 0 ? list : STATIC_BANK_ACCOUNTS.filter((a) => a.bankID === Number(bankId));
-  } catch {
-    return STATIC_BANK_ACCOUNTS.filter((a) => a.bankID === Number(bankId));
-  }
+  const { data } = await axiosInstance.get('/BankAccounts', {
+    params: {
+      pageNumber: 1,
+      pageSize: 20,
+      bankId,
+      ...params,
+    },
+  });
+  return extractArray(data);
 };
 
 export const getBankAccountById = async (id) => {
@@ -183,62 +105,9 @@ const normalizePaged = (data, fallbackPageSize = 20) => {
   };
 };
 
-const STATIC_BANK_TRANSACTIONS = [
-  {
-    transactionID: 1,
-    bankAccountID: 123,
-    bankAccountName: '120402010000-بنك مصر',
-    transactionNumber: 'TXN000001',
-    transactionDate: '2026-08-23T00:00:00',
-    transactionType: 'Receipt',
-    transactionTypeName: 'Receipt',
-    direction: 'In',
-    directionName: 'وارد',
-    amount: 5000.0,
-    currencyID: 1,
-    currencyName: 'جنيه مصري',
-    exchangeRate: 1.0,
-    localAmount: 5000.0,
-    descriptionAr: 'سند قبض رقم 105',
-    referenceNumber: 'CV-000105',
-    sourceType: 'CashVoucher',
-    sourceTypeName: 'CashVoucher',
-    sourceId: 105,
-    chequeNumber: null,
-    status: 'Posted',
-    statusName: 'Posted',
-    isReconciled: false,
-    reconciledDate: null,
-    reconciledBy: null,
-    journalEntryID: 342,
-    financialPeriodID: 1,
-    bankTransferID: null,
-    createdBy: 'admin',
-    createdAt: '2026-08-23T12:00:00',
-    modifiedBy: null,
-    modifiedAt: null,
-    approvedBy: 'admin',
-    approvedAt: '2026-08-23T12:00:01',
-    cancelledBy: null,
-    cancelledAt: null,
-    cancelReason: null,
-  },
-];
-
 export const getBankTransactions = async (params = {}) => {
-  const fallback = {
-    items: STATIC_BANK_TRANSACTIONS,
-    totalCount: STATIC_BANK_TRANSACTIONS.length,
-    pageNumber: Number(params.pageNumber ?? 1) || 1,
-    pageSize: Number(params.pageSize ?? 20) || 20,
-  };
-  try {
-    const { data } = await axiosInstance.get('/bank-transactions', { params });
-    const normalized = normalizePaged(data, fallback.pageSize);
-    return normalized.items.length > 0 ? normalized : fallback;
-  } catch {
-    return fallback;
-  }
+  const { data } = await axiosInstance.get('/bank-transactions', { params });
+  return normalizePaged(data, params.pageSize ?? 20);
 };
 
 export const getBankTransactionFilterOptions = async (type) => {

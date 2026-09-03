@@ -5,7 +5,6 @@ import {
   getChequeBanks,
   getChequeCustomers,
   getChequeStatuses,
-  getPendingCheques,
   getSupplierList,
   getCurrencies,
 } from '../api/cheques.api';
@@ -27,17 +26,10 @@ export const useCheque = (id) => {
   });
 };
 
-export const useChequeStatuses = () => {
+export const useChequeStatuses = (type) => {
   return useQuery({
-    queryKey: chequesKeys.statuses(),
-    queryFn: getChequeStatuses,
-  });
-};
-
-export const usePendingCheques = (params) => {
-  return useQuery({
-    queryKey: chequesKeys.pending(params),
-    queryFn: () => getPendingCheques(params),
+    queryKey: chequesKeys.statuses(type),
+    queryFn: () => getChequeStatuses(type),
   });
 };
 

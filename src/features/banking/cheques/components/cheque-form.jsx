@@ -1,20 +1,18 @@
 ﻿import { useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import FormInput from '../../../../shared/ui/input';
 import DateInput from '../../../../shared/ui/date-input';
 import NormalSelect from '../../../../shared/ui/NormalSelect';
 import AccountSearchSelect from '../../../transactions/entries/components/account-search-select';
+import CostCenterSearchSelect from '../../../../shared/ui/cost-center-search-select';
+import PartySearchSelect from '../../../../shared/ui/party-search-select';
 import InvoiceSearch from './invoice-search';
 import { useCreateCheque } from '../hooks/cheques.mutations';
 import {
   useChequeBanks,
-  useChequeCustomers,
-  useChequeSuppliers,
   useChequeCurrencies,
-  useChequeStatuses,
 } from '../hooks/cheques.queries';
 import { chequeSchema } from '../validation/cheque.validation';
 
@@ -23,76 +21,99 @@ const toDateValue = (value) => {
   return String(value).split('T')[0];
 };
 
-const getInitialValues = (defaultValues) => ({
-  chequeNumber: defaultValues?.chequeNumber ?? '',
-  chequeDate: toDateValue(defaultValues?.chequeDate),
-  receiptDate: toDateValue(defaultValues?.receiptDate),
-  dueDate: toDateValue(defaultValues?.dueDate),
-  voucherDate: toDateValue(defaultValues?.voucherDate),
-  amount: defaultValues?.amount ?? '',
-  currencyID: defaultValues?.currencyID ? String(defaultValues.currencyID) : '',
-  exchangeRate: defaultValues?.exchangeRate ?? 1,
-  customerID: defaultValues?.customerID ? String(defaultValues.customerID) : '',
-  supplierID: defaultValues?.supplierID ? String(defaultValues.supplierID) : '',
-  bankID: defaultValues?.bankID ? String(defaultValues.bankID) : '',
-  underDeliveryAccountID: defaultValues?.underDeliveryAccountID
-    ? String(defaultValues.underDeliveryAccountID)
-    : '',
-  collectionAccountID: defaultValues?.collectionAccountID
-    ? String(defaultValues.collectionAccountID)
-    : '',
-  counterAccountID: defaultValues?.counterAccountID
-    ? String(defaultValues.counterAccountID)
-    : '',
-  invoiceID: defaultValues?.invoiceID ? String(defaultValues.invoiceID) : '',
-  invoiceNumber: defaultValues?.invoiceNumber ?? '',
-  isNonCashable: defaultValues?.isNonCashable ?? false,
-  isBearerOnly: defaultValues?.isBearerOnly ?? false,
-  hasAttachmentPage: defaultValues?.hasAttachmentPage ?? false,
-  beneficiaryName: defaultValues?.beneficiaryName ?? '',
-  statusID: defaultValues?.statusID ? String(defaultValues.statusID) : '',
-  branchName: defaultValues?.branchName ?? '',
-  bankBranchName: defaultValues?.bankBranchName ?? '',
-  cardNumber: defaultValues?.cardNumber ?? '',
-  notes: defaultValues?.notes ?? '',
-});
+const getInitialValues = (defaultValues) => {
+  const rawType = String(defaultValues?.transactionType ?? '');
+  const derivedChequeType =
+    rawType === 'PAYMENT' || rawType === '1'
+      ? '1'
+      : rawType === 'RECEIPT' || rawType === '0'
+        ? '0'
+        : defaultValues?.chequeType != null
+          ? String(defaultValues.chequeType)
+          : '0';
+
+  return {
+    chequeType: derivedChequeType,
+    chequeNumber: defaultValues?.chequeNumber ?? '',
+    chequeDate: toDateValue(defaultValues?.chequeDate),
+    receiptDate: toDateValue(defaultValues?.receiptDate),
+    dueDate: toDateValue(defaultValues?.dueDate),
+    voucherDate: toDateValue(defaultValues?.voucherDate),
+    amount: defaultValues?.amount ?? '',
+    currencyID: defaultValues?.currencyID ? String(defaultValues.currencyID) : '',
+    exchangeRate: defaultValues?.exchangeRate ?? 1,
+    customerID: defaultValues?.customerID
+      ? String(defaultValues.customerID)
+      : defaultValues?.clientID
+        ? String(defaultValues.clientID)
+        : '',
+    supplierID: defaultValues?.supplierID
+      ? String(defaultValues.supplierID)
+      : defaultValues?.providerID
+        ? String(defaultValues.providerID)
+        : '',
+    bankID: defaultValues?.bankID ? String(defaultValues.bankID) : '',
+    bankBranchName: defaultValues?.bankBranchName ?? '',
+    cardNumber: defaultValues?.cardNumber ?? '',
+    underDeliveryAccountID: defaultValues?.underDeliveryAccountID
+      ? String(defaultValues.underDeliveryAccountID)
+      : '',
+    collectionAccountID: defaultValues?.collectionAccountID
+      ? String(defaultValues.collectionAccountID)
+      : '',
+    counterAccountID: defaultValues?.counterAccountID
+      ? String(defaultValues.counterAccountID)
+      : '',
+    costCenterID: defaultValues?.costCenterID
+      ? String(defaultValues.costCenterID)
+      : '',
+    invoiceID: defaultValues?.invoiceID ? String(defaultValues.invoiceID) : '',
+    invoiceNumber: defaultValues?.invoiceNumber ?? '',
+    isNonCashable: defaultValues?.isNonCashable ?? false,
+    isBearerOnly: defaultValues?.isBearerOnly ?? false,
+    hasAttachmentPage: defaultValues?.hasAttachmentPage ?? false,
+    beneficiaryName: defaultValues?.beneficiaryName ?? '',
+    statusID: defaultValues?.statusID ? String(defaultValues.statusID) : '',
+    branchName: defaultValues?.branchName ?? '',
+    notes: defaultValues?.notes ?? '',
+  };
+};
 
 const buildPayload = (data) => ({
-  customerID: data.customerID ? Number(data.customerID) : null,
-  supplierID: data.supplierID ? Number(data.supplierID) : null,
+  customerID: 0,
+  supplierID: 0,
+  clientID: data.customerID ? Number(data.customerID) : 0,
+  providerID: data.supplierID ? Number(data.supplierID) : 0,
+  type: Number(data.chequeType),
   chequeNumber: data.chequeNumber,
-  chequeDate: new Date(data.chequeDate).toISOString(),
+  dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
   receiptDate: data.receiptDate
     ? new Date(data.receiptDate).toISOString()
     : null,
-  dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
-  voucherDate: data.voucherDate
-    ? new Date(data.voucherDate).toISOString()
-    : null,
   amount: Number(data.amount),
-  currencyID: data.currencyID ? Number(data.currencyID) : null,
+  currencyID: data.currencyID ? Number(data.currencyID) : 0,
   exchangeRate: Number(data.exchangeRate) || 1,
   bankID: Number(data.bankID),
-  underDeliveryAccountID: data.underDeliveryAccountID
-    ? Number(data.underDeliveryAccountID)
-    : null,
+  bankBranchName: data.bankBranchName || '',
+  cardNumber: data.cardNumber || '',
   collectionAccountID: data.collectionAccountID
     ? Number(data.collectionAccountID)
-    : null,
+    : 0,
   counterAccountID: data.counterAccountID
     ? Number(data.counterAccountID)
-    : null,
-  invoiceID: data.invoiceID ? Number(data.invoiceID) : null,
-  invoiceNumber: data.invoiceNumber || '',
+    : 0,
+  costCenterID: data.costCenterID ? Number(data.costCenterID) : 0,
+  invoiceID: data.invoiceID ? Number(data.invoiceID) : 0,
+  underDeliveryAccountID: data.underDeliveryAccountID
+    ? Number(data.underDeliveryAccountID)
+    : 0,
   isNonCashable: Boolean(data.isNonCashable),
   isBearerOnly: Boolean(data.isBearerOnly),
   hasAttachmentPage: Boolean(data.hasAttachmentPage),
   beneficiaryName: data.beneficiaryName || '',
   branchName: data.branchName || '',
-  bankBranchName: data.bankBranchName || '',
-  cardNumber: data.cardNumber || '',
   notes: data.notes || '',
-  user: 'ms',
+  cashVoucherID: 0,
 });
 
 const SectionHeader = ({ title }) => (
@@ -112,14 +133,6 @@ const toOptions = (list, valueKey, labelKey) => {
       label: item[labelKey] ?? '',
     })),
   ];
-};
-
-const withFallbackOption = (options, fallback) => {
-  if (!fallback?.value || options.some((option) => option.value === fallback.value)) {
-    return options;
-  }
-
-  return [options[0], fallback, ...options.slice(1)];
 };
 
 const getInvoiceParty = (invoice) => {
@@ -153,15 +166,11 @@ const getInvoiceParty = (invoice) => {
   return null;
 };
 
-const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, onStatusChange, isStatusUpdating, activeTab }) => {
+const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activeTab }) => {
   const navigate = useNavigate();
   const createMutation = useCreateCheque();
-  const [invoiceParty, setInvoiceParty] = useState(null);
-  const { data: customers = [] } = useChequeCustomers();
-  const { data: suppliers = [] } = useChequeSuppliers();
   const { data: banks = [] } = useChequeBanks();
   const { data: currencies = [] } = useChequeCurrencies();
-  const { data: statuses = [] } = useChequeStatuses();
   const isViewMode = mode === 'view';
 
   const formDefaults = useMemo(
@@ -181,27 +190,10 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, onSta
     resolver: zodResolver(chequeSchema),
   });
 
-  const customerID = watch('customerID');
-  const supplierID = watch('supplierID');
+  const chequeType = watch('chequeType');
 
-  const customerOptions = withFallbackOption(
-    toOptions(customers, 'customerID', 'customerNameAr'),
-    invoiceParty?.type === 'customer' ? invoiceParty : null
-  );
-  const supplierOptions = withFallbackOption(
-    toOptions(suppliers, 'supplierID', 'supplierNameAr'),
-    invoiceParty?.type === 'supplier' ? invoiceParty : null
-  );
   const bankOptions = toOptions(banks, 'bankID', 'bankNameAr');
   const currencyOptions = toOptions(currencies, 'currencyID', 'currencyNameAr');
-  const statusOptions = useMemo(
-    () =>
-      (Array.isArray(statuses) ? statuses : []).map((s) => ({
-        value: String(s.id ?? s.Id ?? s.statusID ?? s.statusId),
-        label: s.NameAr || s.nameAr || s.Name || s.name || '',
-      })),
-    [statuses]
-  );
 
   const handleFormSubmit = (data) => {
     const payload = buildPayload(data);
@@ -254,122 +246,132 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, onSta
 
   const isTabMode = !!activeTab;
 
-  const renderInfoTab = () => (
-    <>
-      <SectionHeader title="بيانات الشيك الأساسية" />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormInput
-          label="رقم الشيك"
-          required
-          {...register('chequeNumber')}
-          error={errors.chequeNumber?.message}
-          readOnly={isViewMode}
-        />
-        <FormInput
-          type="number"
-          label="القيمة"
-          required
-          {...register('amount')}
-          error={errors.amount?.message}
-          readOnly={isViewMode}
-        />
-        {renderDate('chequeDate', 'تاريخ الشيك', true)}
-        {renderDate('receiptDate', 'تاريخ الاستلام')}
-        {renderDate('dueDate', 'تاريخ الاستحقاق')}
-        {renderDate('voucherDate', 'تاريخ القيد')}
-        {renderSelect('statusID', 'الحالة', [
-          { value: '', label: 'اختر الحالة' },
-          ...statusOptions,
-        ], {
-          onChange: (val) => onStatusChange?.(val),
-          disabled: isStatusUpdating,
-        })}
-      </div>
+  const renderInfoTab = () => {
+    const isReceipt = chequeType === '0';
+    const partyField = isReceipt ? 'customerID' : 'supplierID';
+    const partyLabel = isReceipt ? 'العميل' : 'المورد';
 
-      <SectionHeader title="بيانات إضافية" />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormInput
-          label="اسم المستفيد"
-          {...register('beneficiaryName')}
-          readOnly={isViewMode}
-        />
-        <FormInput
-          label="فرع الشركة"
-          {...register('branchName')}
-          readOnly={isViewMode}
-        />
-        <FormInput
-          label="فرع البنك"
-          {...register('bankBranchName')}
-          readOnly={isViewMode}
-        />
-        <FormInput
-          label="رقم الكارت"
-          {...register('cardNumber')}
-          readOnly={isViewMode}
-        />
-      </div>
-    </>
-  );
+    return (
+      <>
+        <SectionHeader title="بيانات الشيك الأساسية" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <FormInput
+            label="رقم الشيك"
+            required
+            {...register('chequeNumber')}
+            error={errors.chequeNumber?.message}
+            readOnly={isViewMode}
+          />
+          <FormInput
+            type="number"
+            label="القيمة"
+            required
+            {...register('amount')}
+            error={errors.amount?.message}
+            readOnly={isViewMode}
+          />
+          {renderSelect('chequeType', 'نوع الشيك', [
+            { value: '0', label: 'شيك قبض' },
+            { value: '1', label: 'شيك صرف' },
+          ], {
+            required: true,
+            onChange: () => {
+              setValue('customerID', '');
+              setValue('supplierID', '');
+            },
+          })}
+          {renderDate('chequeDate', 'تاريخ الشيك', true)}
+          {renderDate('receiptDate', 'تاريخ الاستلام')}
+          {renderDate('dueDate', 'تاريخ الاستحقاق')}
+        </div>
 
-  const renderPartyTab = () => (
-    <>
-      <SectionHeader title="بيانات العميل والبنك والعملة" />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {renderSelect('customerID', 'العميل', customerOptions, {
-          onChange: (val) => val && setValue('supplierID', ''),
-          disabled: !!supplierID,
-        })}
-        {renderSelect('supplierID', 'المورد', supplierOptions, {
-          onChange: (val) => val && setValue('customerID', ''),
-          disabled: !!customerID,
-        })}
-        {renderSelect('bankID', 'البنك', bankOptions, { required: true })}
-        {renderSelect('currencyID', 'العملة', currencyOptions)}
-        <FormInput
-          type="number"
-          step="0.01"
-          label="سعر الصرف"
-          {...register('exchangeRate')}
-          error={errors.exchangeRate?.message}
-          readOnly={isViewMode}
-        />
-        <div>
-          <label className="mb-1 block font-medium text-gray-700">
-            الفاتورة
-          </label>
+        <SectionHeader title="العميل والبنك والعملة" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Controller
-            name="invoiceID"
+            name={partyField}
             control={control}
             render={({ field }) => (
-              <InvoiceSearch
-                value={field.value ?? ''}
-                onChange={field.onChange}
-                displayValue={formDefaults.invoiceNumber}
-                onInvoiceSelect={(invoice) => {
-                  const party = getInvoiceParty(invoice);
-                  setValue('invoiceNumber', invoice.invoiceNumber || '');
-                  setInvoiceParty(party);
-                  if (invoice.netAmount)
-                    setValue('amount', invoice.netAmount);
-                  if (party?.type === 'customer') {
-                    setValue('customerID', party.value);
-                    setValue('supplierID', '');
-                  }
-                  if (party?.type === 'supplier') {
-                    setValue('supplierID', party.value);
-                    setValue('customerID', '');
-                  }
-                }}
-                disabled={isViewMode}
-                error={errors.invoiceID?.message}
-              />
+              <div>
+                <label className="mb-1 block font-medium text-gray-700">
+                  {partyLabel} <span className="text-red-500">*</span>
+                </label>
+                <PartySearchSelect
+                  type={isReceipt ? 'customer' : 'supplier'}
+                  value={field.value ?? ''}
+                  onChange={(e) => {
+                    field.onChange(e.target.value);
+                    if (isReceipt) {
+                      setValue('supplierID', '');
+                    } else {
+                      setValue('customerID', '');
+                    }
+                  }}
+                  error={errors[partyField]?.message}
+                  disabled={isViewMode}
+                />
+              </div>
             )}
           />
+          {renderSelect('bankID', 'البنك', bankOptions, { required: true })}
+          {renderSelect('currencyID', 'العملة', currencyOptions)}
+          <FormInput
+            type="number"
+            step="0.01"
+            label="سعر الصرف"
+            {...register('exchangeRate')}
+            error={errors.exchangeRate?.message}
+            readOnly={isViewMode}
+          />
+          <div>
+            <label className="mb-1 block font-medium text-gray-700">
+              الفاتورة
+            </label>
+            <Controller
+              name="invoiceID"
+              control={control}
+              render={({ field }) => (
+                <InvoiceSearch
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  displayValue={formDefaults.invoiceNumber}
+                  onInvoiceSelect={(invoice) => {
+                    const party = getInvoiceParty(invoice);
+                    setValue('invoiceNumber', invoice.invoiceNumber || '');
+                    if (invoice.netAmount)
+                      setValue('amount', invoice.netAmount);
+                    if (party?.type === 'customer') {
+                      setValue('customerID', party.value);
+                      setValue('supplierID', '');
+                    }
+                    if (party?.type === 'supplier') {
+                      setValue('supplierID', party.value);
+                      setValue('customerID', '');
+                    }
+                  }}
+                  disabled={isViewMode}
+                  error={errors.invoiceID?.message}
+                />
+              )}
+            />
+          </div>
         </div>
-      </div>
-    </>
-  );
+
+        <SectionHeader title="بيانات إضافية" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormInput
+            label="اسم المستفيد"
+            {...register('beneficiaryName')}
+            readOnly={isViewMode}
+          />
+          <FormInput
+            label="فرع الشركة"
+            {...register('branchName')}
+            readOnly={isViewMode}
+          />
+        </div>
+      </>
+    );
+  };
 
   const renderAccountsTab = () => (
     <>
@@ -426,6 +428,23 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, onSta
             )}
           />
         </div>
+        <div>
+          <label className="mb-1 block font-medium text-gray-700">
+            مركز التكلفة
+          </label>
+          <Controller
+            name="costCenterID"
+            control={control}
+            render={({ field }) => (
+              <CostCenterSearchSelect
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                disabled={isViewMode}
+                error={errors.costCenterID?.message}
+              />
+            )}
+          />
+        </div>
       </div>
     </>
   );
@@ -477,7 +496,6 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, onSta
       return (
         <>
           {renderInfoTab()}
-          {renderPartyTab()}
           {renderAccountsTab()}
           {renderSettingsTab()}
         </>
@@ -486,8 +504,6 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, onSta
     switch (activeTab) {
       case 'info':
         return renderInfoTab();
-      case 'party':
-        return renderPartyTab();
       case 'accounts':
         return renderAccountsTab();
       case 'settings':

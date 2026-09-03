@@ -1,11 +1,10 @@
 ﻿import { useState } from 'react';
-import { CalendarDays, CreditCard, FileText, Settings } from 'lucide-react';
+import { CalendarDays, FileText, Settings } from 'lucide-react';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import ChequeForm from '../components/cheque-form';
 
 const TABS = [
   { key: 'info', label: 'بيانات الشيك', icon: FileText },
-  { key: 'party', label: 'العميل والبنك', icon: CreditCard },
   { key: 'accounts', label: 'الحسابات', icon: CalendarDays },
   { key: 'settings', label: 'الخصائص والملاحظات', icon: Settings },
 ];

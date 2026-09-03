@@ -102,13 +102,13 @@ export const getInvoiceTypes = async () => {
   return normalizeInvoicesResponse(response.data);
 };
 
-export const getSuppliers = async () => {
-  const response = await axiosInstance.get('/suppliers');
+export const getCustomers = async () => {
+  const response = await axiosInstance.get('/customers');
   return normalizeInvoicesResponse(response.data);
 };
 
-export const getCustomers = async () => {
-  const response = await axiosInstance.get('/customers');
+export const getSuppliers = async () => {
+  const response = await axiosInstance.get('/suppliers');
   return normalizeInvoicesResponse(response.data);
 };
 
