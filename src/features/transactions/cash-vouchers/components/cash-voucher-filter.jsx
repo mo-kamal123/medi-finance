@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react';
+import { Search } from 'lucide-react';
 import DateInput from '../../../../shared/ui/date-input';
 import FormInput from '../../../../shared/ui/input';
 import SearchableSelect from '../../../../shared/ui/searchable-select';
@@ -80,9 +81,10 @@ const CashVoucherFilters = ({ filters, setFilters }) => {
     <FormInput
       key="search"
       label="بحث"
+      icon={Search}
       value={localSearchTerm}
       onChange={(event) => setLocalSearchTerm(event.target.value)}
-      placeholder="ابحث برقم السند أو الفاتورة أو الطرف"
+      placeholder="ابحث برقم السند"
       autoFocus
     />,
     <SearchableSelect

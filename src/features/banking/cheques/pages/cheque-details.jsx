@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   CalendarDays,
+  Check,
   ChevronDown,
   CreditCard,
   FileText,
@@ -257,7 +258,7 @@ const ChequeDetails = () => {
               <button
                 type="button"
                 onClick={() => setEntriesOpen(true)}
-                className="flex items-center gap-2 rounded-xl bg-white/20 px-3 py-2 text-base font-medium text-white transition-colors hover:bg-white/30 disabled:opacity-60"
+                className="flex items-center gap-2 rounded-xl bg-white/20 px-3 py-1.5 text-base font-semibold text-white transition-colors hover:bg-white/30 disabled:opacity-60"
               >
                 <ListChecks size={16} />
                 القيود
@@ -268,36 +269,62 @@ const ChequeDetails = () => {
                   type="button"
                   onClick={() => setStatusMenuOpen((prev) => !prev)}
                   disabled={isStatusUpdating}
-                  className="flex items-center gap-2 rounded-xl bg-white/20 px-2 py-1 text-base font-medium text-white transition-colors hover:bg-white/30 disabled:opacity-60"
+                  className="group flex items-center gap-2 rounded-xl bg-white/20 px-3 py-2 text-base font-semibold text-white transition-colors hover:bg-white/30 disabled:opacity-60"
                 >
                   {isStatusUpdating ? (
                     <RefreshCw size={16} className="animate-spin" />
-                  ) : null}
-                  <span
-                    className={`inline-flex items-center rounded-lg p-1 font-semibold ${statusClass(currentStatusLabel)}`}
-                  >
-                    {currentStatusLabel}
-                  </span>
-                  <ChevronDown size={16} />
+                  ) : (
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${statusClass(currentStatusLabel)}`}
+                    >
+                      {currentStatusLabel}
+                    </span>
+                  )}
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform duration-200 ${statusMenuOpen ? 'rotate-180' : ''}`}
+                  />
                 </button>
                 <Dropdown
                   isOpen={statusMenuOpen}
                   onClose={() => setStatusMenuOpen(false)}
                   anchorRef={statusBtnRef}
                 >
+                  <div className="border-b border-gray-100 px-3 py-2">
+                    <p className="text-xs font-semibold text-gray-500">
+                      تغيير الحالة
+                    </p>
+                  </div>
                   {statusOptions.length > 0 ? (
-                    statusOptions.map((option, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => handleStatusChange(option.value)}
-                        className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                      >
-                        {option.label}
-                      </button>
-                    ))
+                    <div className="py-1">
+                      {statusOptions.map((option, i) => {
+                        const isActive =
+                          String(option.value) ===
+                          String(data?.statusID ?? data?.status ?? '');
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => handleStatusChange(option.value)}
+                            className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                              isActive
+                                ? 'bg-primary/10 text-primary'
+                                : 'text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
+                            <span
+                              className={`h-2 w-2 rounded-full ${statusClass(option.label)}`}
+                            />
+                            {option.label}
+                            {isActive ? (
+                              <Check size={14} className="mr-auto" />
+                            ) : null}
+                          </button>
+                        );
+                      })}
+                    </div>
                   ) : (
-                    <div className="px-3 py-2 text-sm text-gray-500">
+                    <div className="px-3 py-3 text-sm text-gray-500">
                       لا توجد حالات
                     </div>
                   )}
@@ -308,7 +335,7 @@ const ChequeDetails = () => {
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
+      <div className="rounded-xl border border-gray-200 bg-white">
         <div className="flex gap-1 overflow-x-auto border-b border-gray-100 px-4 pt-3">
           {TABS.map((tab) => {
             const Icon = tab.icon;

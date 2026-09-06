@@ -11,6 +11,7 @@ const FormInput = ({
   containerClass = '',
   inputClass = '',
   className = '',
+  placeholder = 'ادخل قيمة',
   required,
   ...props
 }) => {
@@ -22,12 +23,13 @@ const FormInput = ({
     border
     rounded-lg
     focus:outline-none
-    focus:ring-2
     transition
+    hover:border-primary/40
+    placeholder:text-sm
     ${
       error
-        ? 'border-red-400 focus:ring-red-200'
-        : 'border-gray-200 focus:ring-primary/20 focus:border-primary'
+        ? 'border-red-400 '
+        : 'border-gray-200 focus:border-primary/40'
     }
     ${inputClass}
     ${className}
@@ -36,7 +38,7 @@ const FormInput = ({
   return (
     <div className={`w-full ${containerClass}`}>
       {label && (
-        <label className="block mb-1 font-medium text-gray-700">
+        <label className="block mb-1 font-medium text-gray-700 text-[15px]">
           {label}
           {required ? <span className="text-red-500 mr-1"> *</span> : null}
         </label>
@@ -51,7 +53,7 @@ const FormInput = ({
         )}
 
         {as === 'textarea' ? (
-          <textarea {...props} className={baseClasses + ' min-h-[100px]'} />
+          <textarea {...props} className={baseClasses + ' min-h-25'} />
         ) : as === 'select' ? (
           <SearchableSelect
             {...props}
@@ -67,7 +69,7 @@ const FormInput = ({
               }))}
           />
         ) : (
-          <input {...props} type={type} className={baseClasses} />
+          <input {...props} type={type} className={baseClasses} placeholder={placeholder}/>
         )}
         {error && (
           <p className="mt-1 text-sm text-red-500">{error}</p>
