@@ -139,12 +139,10 @@ const AccountsTree = () => {
     <div className="space-y-6">
       <Breadcrumb items={[{ label: 'شجرة الحسابات' }]} />
       {/* Header */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <div className="bg-white rounded-xl p-6  border border-gray-200">
         <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">
-              شجرة الحسابات
-            </h1>
+          <div className="flex flex-col gap-1">
+            <h1 className="text-xl font-bold md:text-2xl">شجرة الحسابات</h1>
             <p className="text-gray-600 text-sm">
               عرض وإدارة جميع الحسابات المحاسبية
             </p>
@@ -169,18 +167,24 @@ const AccountsTree = () => {
 
         {/* Statistics */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 ">
             <div className="flex items-center justify-between">
-            <div className="mt-3 text-lg font-medium text-gray-600 mb-1">إجمالي الحسابات</div>
+              <div className="mt-3 text-lg font-medium text-gray-600 mb-1">
+                إجمالي الحسابات
+              </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-gray-600">
                 <FolderTree size={20} />
               </div>
             </div>
-            <div className="text-3xl font-bold text-gray-900">{stats.total}</div>
+            <div className="text-3xl font-bold text-gray-900">
+              {stats.total}
+            </div>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 ">
             <div className="flex items-center justify-between">
-            <div className="mt-3 text-lg font-medium text-emerald-600 mb-1">نشطة</div>
+              <div className="mt-3 text-lg font-medium text-emerald-600 mb-1">
+                نشطة
+              </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
                 <CheckCircle size={20} />
               </div>
@@ -189,9 +193,11 @@ const AccountsTree = () => {
               {stats.active}
             </div>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 ">
             <div className="flex items-center justify-between">
-            <div className="mt-3 text-lg font-medium text-red-600 mb-1">غير نشطة</div>
+              <div className="mt-3 text-lg font-medium text-red-600 mb-1">
+                غير نشطة
+              </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 text-red-600">
                 <XCircle size={20} />
               </div>
@@ -200,9 +206,11 @@ const AccountsTree = () => {
               {stats.total - stats.active}
             </div>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 ">
             <div className="flex items-center justify-between">
-            <div className="mt-3 text-lg font-medium text-primary mb-1">أنواع الحسابات</div>
+              <div className="mt-3 text-lg font-medium text-primary mb-1">
+                أنواع الحسابات
+              </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <Layers size={20} />
               </div>
@@ -226,8 +234,8 @@ const AccountsTree = () => {
       </div>
 
       {/* Tree View */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        {/* <div className="p-4 border-b border-gray-100 bg-gray-50">
+      <div className="bg-white rounded-xl  border border-gray-200 overflow-hidden">
+        {/* <div className="p-4 border-b border-gray-200 bg-gray-50">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">عرض الشجرة</h2>
             <button
@@ -272,7 +280,7 @@ const AccountsTree = () => {
                 {searchResults.map((account) => (
                   <div
                     key={getAccountId(account)}
-                    className="grid items-center border-b border-gray-100 py-4 px-3 hover:bg-gray-50 transition-colors"
+                    className="grid items-center border-b border-gray-200 py-4 px-3 hover:bg-gray-50 transition-colors"
                     style={{ gridTemplateColumns: GRID_COLUMNS }}
                   >
                     <div className="flex items-center gap-2 min-w-0">
@@ -284,7 +292,9 @@ const AccountsTree = () => {
                     <span className="text-sm font-mono text-gray-500 truncate">
                       {account.accountCode}
                     </span>
-                    <span className={`text-sm font-medium ${account.isActive !== false ? 'text-emerald-600' : 'text-red-500'}`}>
+                    <span
+                      className={`text-sm font-medium ${account.isActive !== false ? 'text-emerald-600' : 'text-red-500'}`}
+                    >
                       {account.isActive !== false ? 'نشط' : 'غير نشط'}
                     </span>
                     {account.lockedInJournal ? (
@@ -295,7 +305,10 @@ const AccountsTree = () => {
                     ) : (
                       <span className="text-sm text-gray-300">-</span>
                     )}
-                    <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+                    <div
+                      className="flex justify-end"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <AccountActionsMenu node={account} actions={actions} />
                     </div>
                   </div>

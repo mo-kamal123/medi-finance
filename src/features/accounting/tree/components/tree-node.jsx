@@ -91,7 +91,7 @@ const TreeNode = ({
           ) : (
             <FileText size={18} className="text-gray-400 shrink-0" />
           )}
-          <span className="text-base font-semibold text-gray-900 truncate">
+          <span className="text-base font-medium text-gray-900 truncate">
             {getLabel(node)}
           </span>
         </div>

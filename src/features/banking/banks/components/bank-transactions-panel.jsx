@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
-import { ArrowDownLeft, ArrowUpRight, ChevronDown, RotateCcw, Search, SlidersHorizontal } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, Search } from 'lucide-react';
 import Pagination from '../../../../shared/ui/pagination';
 import SearchableSelect from '../../../../shared/ui/searchable-select';
 import DateInput from '../../../../shared/ui/date-input';
+import FormInput from '../../../../shared/ui/input';
+import FilterBar from '../../../../shared/ui/filter-bar';
 import { useDebounce } from '../../../../shared/lib/use-debounce';
 import { formatCurrency, formatDate } from '../../../../shared/utils/formatters';
 import {
@@ -12,6 +14,7 @@ import {
 } from '../hooks/banks.queries';
 
 const EMPTY_FILTERS = {
+  searchTerm: '',
   bankAccountId: '',
   transactionType: '',
   direction: '',
@@ -37,7 +40,7 @@ const STATUS_LABELS = {
   Cancelled: 'ملغاة',
 };
 
-const ADVANCED_KEYS = ['direction', 'status', 'sourceType', 'fromDate', 'toDate', 'minAmount', 'maxAmount'];
+const ADVANCED_KEYS = ['bankAccountId', 'transactionType', 'direction', 'status', 'sourceType', 'fromDate', 'toDate', 'minAmount', 'maxAmount'];
 
 const buildParams = (filters, searchTerm, pageNumber, pageSize) => {
   const params = { bankId: filters.bankId, pageNumber, pageSize };
@@ -57,16 +60,13 @@ const toOptions = (list = []) =>
 
 const BankTransactionsPanel = ({ bankId }) => {
   const [filters, setFilters] = useState(EMPTY_FILTERS);
-  const [searchTerm, setSearchTerm] = useState('');
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const debouncedSearch = useDebounce(searchTerm, 500);
+  const debouncedSearch = useDebounce(filters.searchTerm, 500);
 
   const { data: accountsRes = [] } = useBankAccounts(bankId);
   const { data: types } = useBankTransactionFilterOptions('transaction-types');
-  const { data: directions } = useBankTransactionFilterOptions('directions');
   const { data: statuses } = useBankTransactionFilterOptions('statuses');
   const { data: sourceTypes } = useBankTransactionFilterOptions('source-types');
 
@@ -83,13 +83,13 @@ const BankTransactionsPanel = ({ bankId }) => {
     [accountsRes]
   );
 
-  const advancedFilterCount = useMemo(
-    () => ADVANCED_KEYS.filter((k) => filters[k] !== '').length,
+  const activeFilterCount = useMemo(
+    () => Object.values(filters).filter((v) => v !== '').length,
     [filters]
   );
 
-  const activeFilterCount = useMemo(
-    () => Object.values(filters).filter((v) => v !== '').length,
+  const extraFilterCount = useMemo(
+    () => ADVANCED_KEYS.filter((k) => filters[k] !== '').length,
     [filters]
   );
 
@@ -110,9 +110,8 @@ const BankTransactionsPanel = ({ bankId }) => {
   const totalCount = response?.totalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
-  const updateFilter = (key) => (value) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-    setPageNumber(1);
+  const handleChange = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value, pageNumber: 1 }));
   };
 
   const handleReset = () => {
@@ -120,126 +119,97 @@ const BankTransactionsPanel = ({ bankId }) => {
     setPageNumber(1);
   };
 
-  return (
-    <section className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">معاملات البنك</h2>
-          <p className="mt-1 text-sm text-gray-500">
-            سجل المعاملات المالية للبنك{totalCount ? ` (${totalCount} معاملة)` : ''}
-          </p>
-        </div>
+  const primaryFilters = [
+    <FormInput
+      key="search"
+      label="بحث"
+      icon={Search}
+      value={filters.searchTerm}
+      onChange={(event) => handleChange('searchTerm', event.target.value)}
+      placeholder="ابحث برقم المعاملة أو الوصف أو المرجع"
+      autoFocus
+    />,
+    <SearchableSelect
+      key="bankAccountId"
+      label="الحساب البنكي"
+      value={filters.bankAccountId || ''}
+      onChange={(event) => handleChange('bankAccountId', event.target.value)}
+      options={accountOptions}
+      placeholder="كل الحسابات"
+    />,
+    <SearchableSelect
+      key="transactionType"
+      label="نوع المعاملة"
+      value={filters.transactionType || ''}
+      onChange={(event) => handleChange('transactionType', event.target.value)}
+      options={toOptions(types)}
+      placeholder="كل الأنواع"
+    />,
+    <SearchableSelect
+      key="direction"
+      label="الاتجاه"
+      value={filters.direction || ''}
+      onChange={(event) => handleChange('direction', event.target.value)}
+      options={[
+        { value: 'In', label: 'وارد' },
+        { value: 'Out', label: 'صادر' },
+      ]}
+      placeholder="الكل"
+    />,
+  ];
 
-        <div className="relative w-full sm:w-72">
-          <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(event) => {
-              setSearchTerm(event.target.value);
-              setPageNumber(1);
-            }}
-            placeholder="بحث في المعاملات..."
-            className="w-full rounded-lg border border-gray-200 px-9 py-2 text-sm outline-none focus:border-primary"
-          />
-        </div>
+  const extraFilters = [
+    <SearchableSelect
+      key="status"
+      label="الحالة"
+      value={filters.status || ''}
+      onChange={(event) => handleChange('status', event.target.value)}
+      options={toOptions(statuses)}
+      placeholder="كل الحالات"
+    />,
+    <SearchableSelect
+      key="sourceType"
+      label="المصدر"
+      value={filters.sourceType || ''}
+      onChange={(event) => handleChange('sourceType', event.target.value)}
+      options={toOptions(sourceTypes)}
+      placeholder="كل المصادر"
+    />,
+    <DateInput
+      key="fromDate"
+      label="من تاريخ"
+      value={filters.fromDate || ''}
+      onChange={(event) => handleChange('fromDate', event.target.value)}
+    />,
+    <DateInput
+      key="toDate"
+      label="إلى تاريخ"
+      value={filters.toDate || ''}
+      onChange={(event) => handleChange('toDate', event.target.value)}
+    />,
+  ];
+
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="mb-4">
+        <h2 className="text-xl font-bold text-gray-900">معاملات البنك</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          سجل المعاملات المالية للبنك{totalCount ? ` (${totalCount} معاملة)` : ''}
+        </p>
       </div>
 
-      {/* Filters */}
-      <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <SearchableSelect
-            label="الحساب البنكي"
-            value={filters.bankAccountId}
-            onChange={(event) => updateFilter('bankAccountId')(event.target.value)}
-            options={accountOptions}
-            placeholder="كل الحسابات"
-          />
-          <SearchableSelect
-            label="نوع المعاملة"
-            value={filters.transactionType}
-            onChange={(event) => updateFilter('transactionType')(event.target.value)}
-            options={toOptions(types)}
-            placeholder="كل الأنواع"
-          />
-          <SearchableSelect
-            label="الاتجاه"
-            value={filters.direction}
-            onChange={(event) => updateFilter('direction')(event.target.value)}
-            options={[
-              { value: 'In', label: 'وارد' },
-              { value: 'Out', label: 'صادر' },
-            ]}
-            placeholder="الكل"
-          />
-        </div>
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <button
-            type="button"
-            onClick={() => setShowAdvanced((prev) => !prev)}
-            className="inline-flex items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-primary/80"
-          >
-            <SlidersHorizontal size={16} />
-            <span>فلاتر إضافية</span>
-            {advancedFilterCount > 0 ? (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
-                {advancedFilterCount}
-              </span>
-            ) : null}
-            <ChevronDown
-              size={16}
-              className={`transition-transform ${showAdvanced ? 'rotate-180' : ''}`}
-            />
-          </button>
-
-          {activeFilterCount > 0 || debouncedSearch ? (
-            <button
-              type="button"
-              onClick={() => {
-                handleReset();
-                setSearchTerm('');
-              }}
-              className="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
-            >
-              <RotateCcw size={16} />
-              مسح الفلاتر
-            </button>
-          ) : null}
-        </div>
-
-        {showAdvanced ? (
-          <div className="grid grid-cols-1 gap-4 border-t border-gray-200 pt-4 sm:grid-cols-2 xl:grid-cols-4">
-            <SearchableSelect
-              label="الحالة"
-              value={filters.status}
-              onChange={(event) => updateFilter('status')(event.target.value)}
-              options={toOptions(statuses)}
-              placeholder="كل الحالات"
-            />
-            <SearchableSelect
-              label="المصدر"
-              value={filters.sourceType}
-              onChange={(event) => updateFilter('sourceType')(event.target.value)}
-              options={toOptions(sourceTypes)}
-              placeholder="كل المصادر"
-            />
-            <DateInput
-              label="من تاريخ"
-              value={filters.fromDate || ''}
-              onChange={(event) => updateFilter('fromDate')(event.target.value)}
-            />
-            <DateInput
-              label="إلى تاريخ"
-              value={filters.toDate || ''}
-              onChange={(event) => updateFilter('toDate')(event.target.value)}
-            />
-          </div>
-        ) : null}
+      <div className="mb-4">
+        <FilterBar
+          primaryFilters={primaryFilters}
+          extraFilters={extraFilters}
+          onReset={handleReset}
+          activeCount={activeFilterCount}
+          extraCount={extraFilterCount}
+        />
       </div>
 
       {/* Table */}
-      <div className="relative overflow-x-auto rounded-xl border border-gray-200">
+      <div className="relative mb-4 overflow-x-auto rounded-xl border border-gray-200">
         {isFetching && !isLoading ? (
           <div className="absolute inset-x-0 top-0 h-0.5 animate-pulse bg-primary/60" />
         ) : null}

@@ -17,7 +17,7 @@ const Navbar = () => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 shadow-lg px-4 sm:px-6 h-16 flex items-center justify-between">
+    <header className="bg-white border-b border-gray-200 shadow-2xl px-4 sm:px-6 h-16 flex items-center justify-between">
       {/* welcome section */}
       <div className="flex items-center gap-3">
         <CircleChevronRight

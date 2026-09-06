@@ -13,12 +13,12 @@ const CurrencyExchangeInput = ({
 }) => {
   return (
     <div className="space-y-1">
-      <label className="text-sm font-medium text-gray-700">
+      <label className="text-[15px] font-medium text-gray-700">
         العملة وسعر الصرف
       </label>
       <div
         className={cn(
-          'flex items-center overflow-hidden rounded-xl border bg-white transition-all',
+          'flex items-center overflow-hidden rounded-xl border mt-2 bg-white transition-all',
           error || currencyError
             ? 'border-red-400 ring-2 ring-red-100'
             : 'border-gray-200'
@@ -40,7 +40,7 @@ const CurrencyExchangeInput = ({
         />
 
         {/* Currency dropdown */}
-        <div className="relative w-[150px] shrink-0 border-l border-gray-200">
+        <div className="relative w-37.5 shrink-0 border-l border-gray-200">
           <SearchableSelect
             options={currencyOptions}
             value={currencyValue ?? ''}
@@ -52,7 +52,7 @@ const CurrencyExchangeInput = ({
             className={cn(
               '!min-h-0 !rounded-none !border-0 !bg-gray-50/80 !py-0 !pr-0 !pl-0 hover:!bg-gray-100'
             )}
-            inputClass="!min-h-0 !rounded-none !border-0 !bg-gray-50/80 !py-2.5 !pl-2 !pr-3 !text-sm !font-semibold !text-gray-700"
+            inputClass="!min-h-0 !rounded-none !border-0 !bg-gray-50/80 !py-2.5 !pl-2 !pr-3 !text-sm !text-gray-700"
             containerClass="!w-auto"
           />
         </div>
