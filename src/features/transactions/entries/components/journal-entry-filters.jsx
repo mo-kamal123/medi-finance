@@ -15,6 +15,7 @@ import {
   buildAccountOptions,
   JOURNAL_TYPES,
 } from '../utils/journal-entry.utils';
+import { Search } from 'lucide-react';
 
 const FILTER_FIELDS = {
   journalEntryNumber: true,
@@ -154,6 +155,7 @@ const JournalEntryFilters = ({
     primaryFilters.push(
       <FormInput
         key="entryNumber"
+        icon={Search}
         label="رقم القيد"
         value={localEntryNumber}
         onChange={(event) => setLocalEntryNumber(event.target.value)}

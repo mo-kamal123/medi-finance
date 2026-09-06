@@ -210,7 +210,7 @@ const DateInput = ({ label, value, onChange, error, required, readOnly, ...props
   return (
     <div ref={wrapperRef} className="relative w-full">
       {label ? (
-        <label className="mb-1 block font-medium text-gray-700">
+        <label className="mb-1 block font-medium text-gray-700 text-[15px]">
           {label}
           {required ? <span className="text-red-500 mr-1"> *</span> : null}
         </label>
@@ -225,12 +225,12 @@ const DateInput = ({ label, value, onChange, error, required, readOnly, ...props
           value={displayValue}
           onChange={handleChange}
           readOnly={readOnly}
-          className={`w-full rounded-lg border px-4 py-2 transition focus:outline-none focus:ring-2 ${
+          className={`w-full rounded-lg border px-4 py-2.25 focus:outline-none hover:hover:border-primary/40 transition-all  ${
             readOnly ? 'pl-4 bg-gray-50 text-gray-600 cursor-default' : 'pl-11'
           } ${
             error
-              ? 'border-red-400 focus:ring-red-200'
-              : 'border-gray-200 focus:border-primary focus:ring-primary/20'
+              ? 'border-red-400'
+              : 'border-gray-200 focus:border-primary/40'
           } ${props.className || ''}`}
         />
 

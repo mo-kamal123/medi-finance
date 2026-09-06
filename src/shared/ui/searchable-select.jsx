@@ -235,7 +235,7 @@ const SearchableSelect = forwardRef(
         {label ? (
           <label
             htmlFor={fieldId}
-            className="mb-1 block font-medium text-gray-700"
+            className="mb-1 block font-medium text-gray-700 text-[15px]"
           >
             {label}
             {required ? <span className="text-red-500 mr-1"> *</span> : null}
@@ -273,10 +273,12 @@ const SearchableSelect = forwardRef(
               setIsOpen((prev) => !prev);
             }}
             className={cn(
-              'flex min-h-[44px] w-full items-center justify-between gap-3 rounded-xl border bg-white px-4 py-2 text-right transition',
+              'flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border bg-white px-4 py-2 text-right transition',
               error
                 ? 'border-red-400'
-                : 'border-gray-200 hover:border-primary/40',
+                : isOpen
+                  ? 'border-primary/40 focus:border-primary/40'
+                  : 'border-gray-200 hover:border-primary/40',
               disabled && 'cursor-not-allowed bg-gray-100 text-gray-400',
               className,
               inputClass

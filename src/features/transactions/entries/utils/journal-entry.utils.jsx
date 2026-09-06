@@ -1,9 +1,86 @@
 import { buildTree } from '../../../accounting/tree/utils/buildTree';
+import { formatCurrency, formatDate } from '../../../../shared/utils/formatters';
+import { Plus } from 'lucide-react';
+import JournalEntryActions from '../components/journal-entry-actions';
 
 export const JOURNAL_TYPES = [
   { value: 'DailyEntry', label: 'قيد يومية' },
   { value: 'ManualEntry', label: 'قيد تسوية' },
   { value: 'ClosingEntry', label: 'قيد إقفال' },
+];
+
+export const entriesCols = [
+  {
+    header: 'رقم القيد',
+    key: 'journalEntryNumber',
+  },
+  {
+    header: 'التاريخ',
+    key: 'entryDate',
+    type: 'custom',
+    render: (row) => formatDate(row.entryDate),
+  },
+  {
+    header: 'النوع',
+    key: 'journalType',
+    type: 'custom',
+    render: (row) => getJournalTypeLabel(row.journalType),
+  },
+  {
+    header: 'مدين',
+    key: 'totalDebit',
+    type: 'custom',
+    render: (row) => (
+      <span className="font-medium text-green-600">
+        {formatCurrency(row.totalDebit)}
+      </span>
+    ),
+  },
+  {
+    header: 'دائن',
+    key: 'totalCredit',
+    type: 'custom',
+    render: (row) => (
+      <span className="font-medium text-red-600">
+        {formatCurrency(row.totalCredit)}
+      </span>
+    ),
+  },
+  {
+    header: 'الوصف',
+    key: 'description',
+    type: 'custom',
+    render: (row) => getJournalEntryDescription(row),
+  },
+  {
+    header: 'الفترة المالية',
+    key: 'financialPeriodNameAr',
+    type: 'custom',
+    render: (row) =>
+      row.financialPeriodNameAr || row.financialPeriodNameEn || '-',
+  },
+  {
+    header: 'الحالة',
+    key: 'statusName',
+    type: 'custom',
+    render: (row) => {
+      const statusMeta = getJournalEntryStatusMeta(row);
+
+      return (
+        <span
+          className={`rounded-full px-2 py-1 text-xs ${statusMeta.badgeClass}`}
+        >
+          {statusMeta.label}
+        </span>
+      );
+    },
+  },
+  {
+    header: 'الإجراءات',
+    key: 'actions',
+    type: 'custom',
+    render: (row) => <JournalEntryActions entry={row} />,
+  },
 ];
 
 const JOURNAL_TYPE_LABELS = Object.fromEntries(
@@ -69,10 +146,10 @@ const toNullableApiNumber = (value) => {
 };
 
 export const journalEntryInputClass =
-  'w-full rounded-lg border border-gray-200 px-3 py-2 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500';
+  'w-full rounded-lg border border-gray-200 px-3 py-2 transition hover:border-primary/40 focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500';
 
 export const journalEntryFlexInputClass =
-  'min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500';
+  'min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2 transition hover:border-primary/40 focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500';
 
 export const normalizeTreeCollection = (value) => {
   if (Array.isArray(value)) return value;

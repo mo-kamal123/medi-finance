@@ -364,7 +364,7 @@ const JournalEntryForm = ({
       {!viewOnly ? (
         <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 md:flex-row md:items-center md:justify-between md:p-6">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
-            <div>
+            <div className='flex flex-col gap-1'>
               <h1 className="text-xl font-bold md:text-2xl">
                 {isEditMode ? 'تعديل قيد يومي' : 'إنشاء قيد يومي'}
               </h1>

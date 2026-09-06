@@ -116,10 +116,8 @@ const CashVouchersPage = () => {
       <Breadcrumb items={[{ label: 'سندات القبض والدفع' }]} />
 
       <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-gray-200 bg-white p-6 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            سندات القبض والدفع
-          </h1>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl font-bold md:text-2xl">سندات القبض والدفع</h1>
           <p className="text-sm text-gray-600">إدارة جميع السندات بسهولة.</p>
         </div>
 

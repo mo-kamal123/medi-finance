@@ -1,6 +1,7 @@
 ﻿import { useMemo, useState } from 'react';
 import { Eye, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import FormInput from '../../../../shared/ui/input';
 import NormalSelect from '../../../../shared/ui/NormalSelect';
 import Pagination from '../../../../shared/ui/pagination';
@@ -126,15 +127,17 @@ const ChequesPage = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
+      <Breadcrumb items={[{ label: 'الشيكات' }]} />
+
+      <div className="flex justify-between items-center bg-white rounded-xl p-6 border border-gray-200">
         <div>
-          <h1 className="text-xl font-bold">الشيكات</h1>
-          <p className="text-sm text-gray-500">إدارة ومتابعة الشيكات</p>
+          <h1 className="text-2xl font-bold">الشيكات</h1>
+          <p className="text-sm text-gray-600">إدارة ومتابعة الشيكات</p>
         </div>
 
         <button
           onClick={() => navigate('/cheques/new')}
-          className="bg-primary text-white px-4 py-2 flex justify-between items-center gap-3 rounded"
+          className="bg-primary text-white px-4 py-2 flex justify-between items-center gap-3 rounded-lg hover:bg-primary/90"
         >
           <Plus size={16} /> إضافة شيك
         </button>

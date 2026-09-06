@@ -79,7 +79,7 @@ const Table = ({
         ? createPortal(
             <>
               <div
-                className="fixed inset-0 z-[9998]"
+                className="fixed inset-0 z-9998"
                 onClick={closePicker}
               />
               <div

@@ -185,7 +185,7 @@ const PartySearchSelect = ({
           disabled={disabled}
           dir="rtl"
           className={cn(
-            'w-full rounded-lg border py-2 pr-10 outline-none transition-colors',
+            'w-full rounded-lg border py-2 pr-10 placeholder:text-sm outline-none transition-colors',
             displayEntity ? 'pl-8' : 'pl-3',
             error ? 'border-red-500' : 'border-gray-200',
             disabled ? 'cursor-not-allowed bg-gray-100' : 'bg-white'
@@ -207,7 +207,7 @@ const PartySearchSelect = ({
             <div
               ref={portalRef}
               style={dropdownStyle}
-              className="overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg"
+              className="overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-md"
             >
               {debouncedSearch.length === 0 ? (
                 <div className="p-3 text-sm text-gray-500">
