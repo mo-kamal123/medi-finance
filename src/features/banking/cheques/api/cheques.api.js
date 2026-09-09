@@ -52,7 +52,7 @@ export const getChequeStatuses = async (type) => {
 };
 
 export const updateChequeStatus = async ({ id, ...payload }) => {
-  const { data } = await axiosInstance.put(`/cheques/${id}/status`, payload);
+  const { data } = await axiosInstance.patch(`/cheques/${id}/status`, payload);
   return data;
 };
 
