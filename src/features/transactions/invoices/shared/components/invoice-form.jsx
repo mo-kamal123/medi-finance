@@ -135,7 +135,7 @@ const InvoiceForm = ({
   return (
     <form
       onSubmit={handleFormSubmit}
-      className="bg-white shadow-lg rounded-2xl p-8 space-y-8"
+      className="space-y-8"
     >
       {/* Header fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
