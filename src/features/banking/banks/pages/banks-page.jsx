@@ -56,7 +56,7 @@ const BanksPage = () => {
       key: 'actions',
       type: 'custom',
       render: (row) => (
-        <div className="flex gap-2 justify-center">
+        <div className="flex gap-4 justify-center">
           <button
             onClick={() => navigate(`/banks/${row.bankID}`)}
             className="text-blue-600 hover:text-blue-800"
@@ -80,11 +80,11 @@ const BanksPage = () => {
   ];
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="py-6 pr-6 pl-2 space-y-4">
       <Breadcrumb items={[{ label: 'البنوك' }]} />
 
       <div className="flex justify-between items-center bg-white rounded-xl p-6 border border-gray-200">
-        <div>
+      <div className='flex flex-col gap-1'>
           <h1 className="text-2xl font-bold">البنوك</h1>
           <p className="text-sm text-gray-600">إدارة بيانات البنوك</p>
         </div>
@@ -97,7 +97,7 @@ const BanksPage = () => {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
         <FormInput
           label="بحث"
           value={search}
@@ -108,6 +108,19 @@ const BanksPage = () => {
           placeholder="اسم البنك أو الكود"
         />
 
+        <FormInput
+          as="select"
+          label="الحالة"
+          value={isActive}
+          onChange={(event) => {
+            setIsActive(event.target.value);
+            setPageNumber(1);
+          }}
+        >
+          <option value="">كل الحالات</option>
+          <option value="true">نشط</option>
+          <option value="false">غير نشط</option>
+        </FormInput>
         <FormInput
           as="select"
           label="الحالة"

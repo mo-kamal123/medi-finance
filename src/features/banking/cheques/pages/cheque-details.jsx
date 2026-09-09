@@ -230,7 +230,7 @@ const ChequeDetails = () => {
       />
 
       {/* Header */}
-      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl">
         <div className="bg-linear-to-r from-primary to-primary/80 px-6 py-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-4">

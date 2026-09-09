@@ -4,7 +4,7 @@ import DateInput from '../../../../../shared/ui/date-input';
 import FormInput from '../../../../../shared/ui/input';
 import PageLoader from '../../../../../shared/ui/page-loader';
 import { formatCurrency } from '../../../../../shared/utils/formatters';
-import { useFinancialPeriods } from '../../../../transactions/invoices/hooks/invoices.queries';
+import { useFinancialPeriods } from '../../../../transactions/invoices/shared/hooks/invoices.queries';
 import { useBalanceSheet } from '../hooks/balance-sheet.queries';
 import { useBalanceSheetExport } from '../hooks/use-balance-sheet-export';
 

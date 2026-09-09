@@ -80,7 +80,7 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm"
+      className="rounded-xl border border-gray-200 bg-white p-6"
     >
       <div className="space-y-6">
         <div className="flex items-center justify-between">

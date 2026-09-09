@@ -5,7 +5,7 @@ const PageLoader = ({ label = 'جاري التحميل...', className = '' }) =>
   return (
     <div
       className={cn(
-        'flex min-h-[240px] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-gray-200 bg-white/80 p-8 text-center text-gray-600',
+        'flex min-h-60 w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-gray-200 bg-white/80 p-8 text-center text-gray-600',
         className
       )}
     >

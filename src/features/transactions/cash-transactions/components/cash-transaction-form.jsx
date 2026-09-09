@@ -5,7 +5,7 @@ import FormInput from '../../../../shared/ui/input';
 import SearchableSelect from '../../../../shared/ui/searchable-select';
 import useAccountsTree from '../../../accounting/tree/accouts-tree/hooks/use-accounts-tree';
 import useCostTree from '../../../accounting/tree/cost-tree/hooks/use-cost-tree';
-import { useFinancialPeriods } from '../../invoices/hooks/invoices.queries';
+import { useFinancialPeriods } from '../../invoices/shared/hooks/invoices.queries';
 import { useCurrencies } from '../../commercial-papers/hooks/commercial-papers.queries';
 import {
   useCreateCashTransaction,

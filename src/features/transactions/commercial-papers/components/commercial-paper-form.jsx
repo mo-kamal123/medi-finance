@@ -9,7 +9,7 @@ import { useBanks } from '../hooks/commercial-papers.queries';
 import {
   useCustomers,
   useSuppliers,
-} from '../../invoices/hooks/invoices.queries';
+} from '../../invoices/shared/hooks/invoices.queries';
 import FormInput from '../../../../shared/ui/input';
 
 const toDateInputValue = (value) => {

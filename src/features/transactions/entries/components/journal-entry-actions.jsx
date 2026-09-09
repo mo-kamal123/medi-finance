@@ -11,6 +11,7 @@ import {
 } from '../utils/journal-entry.utils';
 
 const JournalEntryActions = ({ entry }) => {
+  // Mutations for posting and reversing the current journal entry
   const postMutation = usePostJournalEntry();
   const reverseMutation = useReverseJournalEntry();
 
@@ -22,6 +23,7 @@ const JournalEntryActions = ({ entry }) => {
   const isPosted = isJournalEntryPosted(entry);
   const isReversed = isJournalEntryReversed(entry);
 
+  // Post the entry after guarding against already posted/reversed states
   const handlePostEntry = () => {
     if (isJournalEntryPosted(entry)) {
       toast.info('تم ترحيل هذا القيد بالفعل');
@@ -36,6 +38,7 @@ const JournalEntryActions = ({ entry }) => {
     postMutation.mutate({ id: entry.journalEntryID, postedBy: 'ms' });
   };
 
+  // Reverse the entry after guarding against already reversed/not posted states
   const handleReverseEntry = () => {
     if (isJournalEntryReversed(entry)) {
       toast.info('تم عكس هذا القيد بالفعل');

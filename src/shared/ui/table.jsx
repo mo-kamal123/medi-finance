@@ -128,7 +128,7 @@ const Table = ({
         : null}
 
       <div className="overflow-x-auto rounded-xl bg-white">
-        <table className="w-max min-w-full table-auto border-collapse text-sm">
+        <table className="w-full table-auto border-collapse text-sm">
         <thead className="bg-primary text-white">
           <tr>
             {visibleColumns.map((col, index) => (

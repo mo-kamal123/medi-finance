@@ -1,0 +1,52 @@
+// New customer invoice page.
+
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useCreateInvoice } from '../shared/hooks/invoices.mutations';
+import InvoiceForm from '../shared/components/invoice-form';
+
+const type = 'customer';
+const redirectPath = '/customers-invoices';
+
+const NewCustomerInvoice = () => {
+  const navigate = useNavigate();
+  const createInvoiceMutation = useCreateInvoice();
+
+  const handleCreate = async (data) => {
+    try {
+      await createInvoiceMutation.mutateAsync(data);
+      navigate(redirectPath);
+    } catch (error) {
+      console.error('Error creating invoice:', error);
+    }
+  };
+
+  const typeLabel = 'عميل';
+
+  return (
+    <div className="space-y-8 p-6 md:p-10 bg-gray-50 min-h-screen">
+      <div className="flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+        <ArrowLeft
+          className="cursor-pointer text-gray-500 hover:text-gray-800"
+          onClick={() => navigate(redirectPath)}
+        />
+        <div>
+          <h1 className="text-2xl font-bold">
+            إنشاء فاتورة جديدة - {typeLabel}
+          </h1>
+          <p className="text-sm text-gray-600">
+            إضافة فاتورة {typeLabel} جديدة إلى النظام
+          </p>
+        </div>
+      </div>
+
+      <InvoiceForm
+        invoiceType={type}
+        onSubmit={handleCreate}
+        isLoading={createInvoiceMutation.isPending}
+      />
+    </div>
+  );
+};
+
+export default NewCustomerInvoice;
