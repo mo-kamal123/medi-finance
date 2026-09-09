@@ -8,6 +8,7 @@ import useDailyEntries from '../hooks/use-daily-entries';
 import { entriesCols } from '../utils/journal-entry.utils';
 
 const DailyEntriesPage = () => {
+  // All page state, data fetching, and handlers live in this hook
   const {
     entries,
     totalPages,

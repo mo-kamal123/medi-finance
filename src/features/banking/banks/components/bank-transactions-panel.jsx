@@ -190,7 +190,7 @@ const BankTransactionsPanel = ({ bankId }) => {
   ];
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <section className="rounded-xl border border-gray-200 bg-white p-6">
       <div className="mb-4">
         <h2 className="text-xl font-bold text-gray-900">معاملات البنك</h2>
         <p className="mt-1 text-sm text-gray-500">

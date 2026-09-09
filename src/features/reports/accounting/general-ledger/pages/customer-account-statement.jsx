@@ -1,5 +1,5 @@
 import { Users } from 'lucide-react';
-import { useCustomers } from '../../../../transactions/invoices/hooks/invoices.queries';
+import { useCustomers } from '../../../../transactions/invoices/shared/hooks/invoices.queries';
 import PartyAccountStatement from '../components/party-account-statement';
 
 const CustomerAccountStatementPage = () => (

@@ -35,12 +35,14 @@ const CustomersPage = () => {
   return (
     <div className="space-y-4 p-6">
       <Breadcrumb items={[{ label: 'العملاء' }]} />
-      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-gray-200 bg-white p-6">
+      <div className='flex flex-col gap-1'>
         <h1 className="text-2xl font-bold">العملاء</h1>
         <p className="text-sm text-gray-600">إدارة جميع العملاء</p>
       </div>
+      </div>
 
-      <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      <div className="rounded-xl border border-gray-200 bg-white p-4">
         <FormInput
           label="بحث"
           value={search}

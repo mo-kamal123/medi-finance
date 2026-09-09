@@ -43,7 +43,7 @@ const BankAccountsPanel = ({ bankId }) => {
   };
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <section className="rounded-xl border border-gray-200 bg-white p-6">
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-xl font-bold text-gray-900">حسابات البنك</h2>
@@ -62,7 +62,7 @@ const BankAccountsPanel = ({ bankId }) => {
       </div>
 
       {isLoading ? (
-        <PageLoader label="جاري تحميل حسابات البنك..." className="min-h-[160px]" />
+        <PageLoader label="جاري تحميل حسابات البنك..." className="min-h-40" />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-gray-200">
           <table className="min-w-full border-collapse text-sm">
@@ -85,7 +85,10 @@ const BankAccountsPanel = ({ bankId }) => {
                   >
                     <td className="p-3">{account.accountNumber || '-'}</td>
                     <td className="p-3">
-                      {account.accountNumberWithBranch || account.accountNameAr || account.accountNameEn || '-'}
+                      {account.accountNumberWithBranch ||
+                        account.accountNameAr ||
+                        account.accountNameEn ||
+                        '-'}
                     </td>
                     <td className="p-3">
                       {account.currencyNameAr ||
@@ -95,20 +98,22 @@ const BankAccountsPanel = ({ bankId }) => {
                     </td>
                     <td className="p-3">{account.currentBalance ?? '-'}</td>
                     <td className="p-3">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        account.isActive
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-red-100 text-red-700'
-                      }`}>
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          account.isActive
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-red-100 text-red-700'
+                        }`}
+                      >
                         {account.isActive ? 'نشط' : 'غير نشط'}
                       </span>
                     </td>
                     <td className="p-3">
-                      <div className="flex gap-2 justify-center">
+                      <div className="flex gap-4 justify-center">
                         <button
                           type="button"
                           onClick={() => openEditModal(account.bankAccountID)}
-                          className="text-blue-600 hover:text-blue-800"
+                          className="text-amber-600 hover:text-amber-600"
                           title="تعديل"
                         >
                           <Edit3 size={18} />

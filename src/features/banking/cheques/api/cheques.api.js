@@ -1,6 +1,6 @@
 ﻿import { axiosInstance } from '../../../../app/api/axiosInstance';
 
-import { getInvoiceByNumber } from '../../../transactions/invoices/api/invoices-api';
+import { getInvoiceByNumber } from '../../../transactions/invoices/shared/api/invoices-api';
 
 const extractArray = (data) => {
   if (Array.isArray(data)) return data;
