@@ -41,9 +41,10 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
   const hasCustomer = Boolean(row.customerID);
   const hasSupplier = Boolean(row.supplierID);
 
+  const newLocal = "min-w-50 p-2";
   return (
     <tr className="align-top border border-gray-200">
-      <td className="min-w-[120px] p-2">
+      <td className="min-w-30 p-2">
         <input
           type="number"
           value={row.debitAmount}
@@ -58,7 +59,7 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
         ) : null}
       </td>
 
-      <td className="min-w-[120px] p-2">
+      <td className="min-w-30 p-2">
         <input
           type="number"
           value={row.creditAmount}
@@ -73,7 +74,7 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
         ) : null}
       </td>
 
-      <td className="min-w-[220px] p-2">
+      <td className="min-w-55 p-2">
         <FormInput
           as="select"
           value={row.accountID}
@@ -92,7 +93,7 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
         </FormInput>
       </td>
 
-      <td className="min-w-[200px] p-2">
+      <td className="min-w-50 p-2">
         <FormInput
           as="select"
           value={row.costCenterID}
@@ -110,7 +111,7 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
         </FormInput>
       </td>
 
-      <td className="min-w-[200px] p-2">
+      <td className="min-w-50 p-2">
         <FormInput
           as="select"
           value={row.customerID}
@@ -128,7 +129,7 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
         </FormInput>
       </td>
 
-      <td className="min-w-[200px] p-2">
+      <td className={newLocal}>
         <FormInput
           as="select"
           value={row.supplierID}
@@ -146,7 +147,7 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
         </FormInput>
       </td>
 
-      <td className="min-w-[180px] p-2">
+      <td className="min-w-45 p-2">
         <input
           type="text"
           value={row.description}
@@ -158,7 +159,7 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
         />
       </td>
 
-      <td className="min-w-[160px] p-2">
+      <td className="min-w-40 p-2">
         <DateInput
           value={row.recordDate}
           onChange={(event) =>
@@ -168,7 +169,7 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
         />
       </td>
 
-      <td className="min-w-[160px] p-2">
+      <td className="min-w-40 p-2">
         <input
           type="text"
           value={row.documentNumber}
@@ -180,7 +181,7 @@ const JournalEntryDetailRow = memo(function JournalEntryDetailRow({
         />
       </td>
 
-      <td className="min-w-[220px] p-2">
+      <td className="min-w-55 p-2">
         <div className="flex items-center gap-2">
           <input
             type="text"

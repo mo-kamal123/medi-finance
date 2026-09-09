@@ -101,7 +101,7 @@ const ChequesPage = () => {
       key: 'actions',
       type: 'custom',
       render: (row) => (
-        <div className="flex gap-2 justify-center">
+        <div className="flex gap-4 justify-center">
           <button
             onClick={() => navigate(`/cheques/${row.chequeID}`)}
             className="text-blue-600 hover:text-blue-800"
@@ -126,18 +126,18 @@ const ChequesPage = () => {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-4">
       <Breadcrumb items={[{ label: 'الشيكات' }]} />
 
       <div className="flex justify-between items-center bg-white rounded-xl p-6 border border-gray-200">
-        <div>
+        <div className='flex flex-col gap-1'>
           <h1 className="text-2xl font-bold">الشيكات</h1>
           <p className="text-sm text-gray-600">إدارة ومتابعة الشيكات</p>
         </div>
 
         <button
           onClick={() => navigate('/cheques/new')}
-          className="bg-primary text-white px-4 py-2 flex justify-between items-center gap-3 rounded-lg hover:bg-primary/90"
+          className="bg-primary text-white px-2 py-2 flex justify-between items-center gap-3 rounded-lg hover:bg-primary/90"
         >
           <Plus size={16} /> إضافة شيك
         </button>

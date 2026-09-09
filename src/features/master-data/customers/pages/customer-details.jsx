@@ -90,7 +90,7 @@ const CustomerDetails = () => {
           { label: customer.clientName || 'تفاصيل العميل' },
         ]}
       />
-      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl">
         <div className="bg-linear-to-r from-primary to-primary/80 px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -117,7 +117,7 @@ const CustomerDetails = () => {
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
+      <div className="rounded-xl border border-gray-200 bg-white">
         <div className="flex gap-1 overflow-x-auto border-b border-gray-100 px-4 pt-3">
           {TABS.map((tab) => {
             const Icon = tab.icon;
@@ -156,7 +156,7 @@ const CustomerDetails = () => {
 
           {activeTab === 'contacts' && (
             <div className="space-y-4">
-              <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <div className="overflow-x-auto rounded-lg">
                 <table className="w-full border-collapse text-base">
                   <thead>
                     <tr className="bg-gray-100 text-gray-700">
@@ -209,7 +209,7 @@ const CustomerDetails = () => {
 
           {activeTab === 'branches' && (
             <div className="space-y-4">
-              <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <div className="overflow-x-auto rounded-lg">
                 <table className="w-full border-collapse text-base">
                   <thead>
                     <tr className="bg-gray-100 text-gray-700">

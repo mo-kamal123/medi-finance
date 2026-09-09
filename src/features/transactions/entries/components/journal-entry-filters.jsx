@@ -4,7 +4,7 @@ import FormInput from '../../../../shared/ui/input';
 import SearchableSelect from '../../../../shared/ui/searchable-select';
 import FilterBar from '../../../../shared/ui/filter-bar';
 import { useDebounce } from '../../../../shared/lib/use-debounce';
-import { useFinancialPeriods } from '../../invoices/hooks/invoices.queries';
+import { useFinancialPeriods } from '../../invoices/shared/hooks/invoices.queries';
 import useAccountsTree from '../../../accounting/tree/accouts-tree/hooks/use-accounts-tree';
 import { useJournalEntryStatuses } from '../hooks/entries.queries';
 import {

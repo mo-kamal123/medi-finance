@@ -81,11 +81,8 @@ const getInitialValues = (defaultValues) => {
 };
 
 const buildPayload = (data) => ({
-  customerID: 0,
-  supplierID: 0,
-  clientID: data.customerID ? Number(data.customerID) : 0,
-  providerID: data.supplierID ? Number(data.supplierID) : 0,
-  type: Number(data.chequeType),
+  customerID: data.customerID ? Number(data.customerID) : null,
+  supplierID: data.supplierID ? Number(data.supplierID) : null,
   chequeNumber: data.chequeNumber,
   dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
   receiptDate: data.receiptDate
@@ -95,8 +92,6 @@ const buildPayload = (data) => ({
   currencyID: data.currencyID ? Number(data.currencyID) : 0,
   exchangeRate: Number(data.exchangeRate) || 1,
   bankID: Number(data.bankID),
-  bankBranchName: data.bankBranchName || '',
-  cardNumber: data.cardNumber || '',
   collectionAccountID: data.collectionAccountID
     ? Number(data.collectionAccountID)
     : 0,
@@ -108,20 +103,19 @@ const buildPayload = (data) => ({
   underDeliveryAccountID: data.underDeliveryAccountID
     ? Number(data.underDeliveryAccountID)
     : 0,
-  isNonCashable: Boolean(data.isNonCashable),
   isBearerOnly: Boolean(data.isBearerOnly),
-  hasAttachmentPage: Boolean(data.hasAttachmentPage),
+  bankAccountID: 0,
   beneficiaryName: data.beneficiaryName || '',
   branchName: data.branchName || '',
   notes: data.notes || '',
+  type: Number(data.chequeType),
   cashVoucherID: 0,
 });
 
 const SectionHeader = ({ title }) => (
-  <div className="flex items-center gap-1 mb-8">
-    <p className='text-base font-semibold '>-</p>
+  <div className="flex items-center gap-2 mb-8">
+    <p className='text-lg font-bold'>-</p>
     <h3 className="text-base font-bold text-gray-700 whitespace-nowrap">{title}</h3>
-    <div className="h-px flex-1 bg-linear-to-l from-gray-200 to-gray-200" />
   </div>
 );
 

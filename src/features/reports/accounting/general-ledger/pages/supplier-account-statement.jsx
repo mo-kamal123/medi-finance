@@ -1,5 +1,5 @@
 import { UserCheck } from 'lucide-react';
-import { useSuppliers } from '../../../../transactions/invoices/hooks/invoices.queries';
+import { useSuppliers } from '../../../../transactions/invoices/shared/hooks/invoices.queries';
 import PartyAccountStatement from '../components/party-account-statement';
 
 const SupplierAccountStatementPage = () => (

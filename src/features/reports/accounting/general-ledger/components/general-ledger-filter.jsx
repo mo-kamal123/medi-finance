@@ -4,7 +4,7 @@ import DateInput from '../../../../../shared/ui/date-input';
 import SearchableSelect from '../../../../../shared/ui/searchable-select';
 import AccountSearchSelect from '../../../../transactions/entries/components/account-search-select';
 import useCostTree from '../../../../accounting/tree/cost-tree/hooks/use-cost-tree';
-import { useFinancialPeriods, useSuppliers, useCustomers } from '../../../../transactions/invoices/hooks/invoices.queries';
+import { useFinancialPeriods, useSuppliers, useCustomers } from '../../../../transactions/invoices/shared/hooks/invoices.queries';
 import { useCurrencies } from '../../../../transactions/commercial-papers/hooks/commercial-papers.queries';
 import {
   buildCostCenterOptions,

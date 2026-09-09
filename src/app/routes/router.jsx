@@ -11,7 +11,7 @@ import cashVouchersRoutes from '../../features/transactions/cash-vouchers/routes
 import { customersRoutes } from '../../features/master-data/customers/routes/routes';
 import { entriesRoutes } from '../../features/transactions/entries/routes/routes';
 import { generalLedgerRoutes } from '../../features/reports/accounting/general-ledger/routes/routes';
-import InvoicesRoutes from '../../features/transactions/invoices/routes/routes';
+import InvoicesRoutes from '../../features/transactions/invoices/shared/routes/routes';
 import { suppliersRoutes } from '../../features/master-data/suppliers/routes/routes';
 import { accountsTreeRoutes } from '../../features/accounting/tree/accouts-tree/routes/routes';
 import costCenterRoutes from '../../features/accounting/tree/cost-tree/routes/routes';

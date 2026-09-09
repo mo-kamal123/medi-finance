@@ -6,7 +6,7 @@ import Pagination from '../../../../../shared/ui/pagination';
 import Table from '../../../../../shared/ui/table';
 import PageLoader from '../../../../../shared/ui/page-loader';
 import { formatCurrency, formatDate } from '../../../../../shared/utils/formatters';
-import { useCustomers, useSuppliers } from '../../../../transactions/invoices/hooks/invoices.queries';
+import { useCustomers, useSuppliers } from '../../../../transactions/invoices/shared/hooks/invoices.queries';
 import {
   useAgingReport,
   useProviderClasses,

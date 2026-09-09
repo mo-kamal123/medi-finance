@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
 import PageLoader from '../../../../shared/ui/page-loader';
+import NotFound from '../../../../shared/ui/not-found';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import JournalEntryForm from '../components/journal-entry-form';
 import { useJournalEntry } from '../hooks/entries.queries';
@@ -14,9 +15,7 @@ const ViewJournalEntryPage = () => {
 
   if (isError || !data) {
     return (
-      <div className="p-6 text-center text-gray-600">
-        تعذر تحميل بيانات القيد اليومي.
-      </div>
+      <NotFound label="تعذر تحميل بيانات القيد اليومي." />
     );
   }
 

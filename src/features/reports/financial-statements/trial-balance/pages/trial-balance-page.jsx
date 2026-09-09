@@ -9,7 +9,7 @@ import {
 import DateInput from '../../../../../shared/ui/date-input';
 import FormInput from '../../../../../shared/ui/input';
 import { formatCurrency } from '../../../../../shared/utils/formatters';
-import { useFinancialPeriods } from '../../../../transactions/invoices/hooks/invoices.queries';
+import { useFinancialPeriods } from '../../../../transactions/invoices/shared/hooks/invoices.queries';
 import { useTrialBalanceRoots } from '../hooks/trial-balance.queries';
 import { getTrialBalanceChildren } from '../api/trial-balance.api';
 import { useTrialBalanceExport } from '../hooks/use-trial-balance-export';

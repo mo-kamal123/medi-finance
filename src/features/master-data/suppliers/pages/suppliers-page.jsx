@@ -49,7 +49,7 @@ const BooleanBadge = ({ value }) =>
       نعم
     </span>
   ) : (
-    <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500">
+    <span className="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-500">
       لا
     </span>
   );
@@ -210,11 +210,13 @@ const SuppliersPage = () => {
   return (
     <div className="space-y-4 p-6">
       <Breadcrumb items={[{ label: 'الموردين' }]} />
-        <div className='rounded-xl border border-gray-100 bg-white p-6 shadow-sm'>
-          <h1 className="text-2xl font-bold">الموردين</h1>
-          <p className="text-sm text-gray-600">إدارة جميع الموردين</p>
+        <div className='rounded-xl border border-gray-200 bg-white p-6'>
+          <div className='flex flex-col gap-1'>
+            <h1 className="text-2xl font-bold">الموردين</h1>
+            <p className="text-sm text-gray-600">إدارة جميع الموردين</p>
+          </div>
         </div>
-      <div className="rounded-xl border flex flex-col gap-7 border-gray-100 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border flex flex-col gap-7 border-gray-200 bg-white p-6">
 
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
