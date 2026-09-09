@@ -24,27 +24,25 @@ const NewCustomerInvoice = () => {
   const typeLabel = 'عميل';
 
   return (
-    <div className="space-y-8 p-6 md:p-10 bg-gray-50 min-h-screen">
-      <div className="flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-        <ArrowLeft
-          className="cursor-pointer text-gray-500 hover:text-gray-800"
-          onClick={() => navigate(redirectPath)}
-        />
-        <div>
+    <div className="space-y-6 p-6">
+      <div className="rounded-xl border border-gray-200 bg-white">
+        <div className="px-8 py-6 border-b border-gray-200">
           <h1 className="text-2xl font-bold">
             إنشاء فاتورة جديدة - {typeLabel}
           </h1>
-          <p className="text-sm text-gray-600">
+          <p className="mt-0.5 text-gray-500">
             إضافة فاتورة {typeLabel} جديدة إلى النظام
           </p>
         </div>
-      </div>
 
-      <InvoiceForm
-        invoiceType={type}
-        onSubmit={handleCreate}
-        isLoading={createInvoiceMutation.isPending}
-      />
+        <div className="p-6">
+          <InvoiceForm
+            invoiceType={type}
+            onSubmit={handleCreate}
+            isLoading={createInvoiceMutation.isPending}
+          />
+        </div>
+      </div>
     </div>
   );
 };
