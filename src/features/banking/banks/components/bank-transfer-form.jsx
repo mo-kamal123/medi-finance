@@ -146,7 +146,7 @@ const BankTransferForm = ({ bankId }) => {
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Controller
           name="transferType"
           control={control}
@@ -182,30 +182,26 @@ const BankTransferForm = ({ bankId }) => {
         />
 
         {watchedTransferType === 'internal' && (
-          <>
-            <Controller
-              name="toBankID"
-              control={control}
-              render={({ field }) => (
-                <NormalSelect
-                  label="البنك الوجهة"
-                  value={field.value}
-                  onChange={(e) => {
-                    field.onChange(e.target.value);
-                    setToBankID(e.target.value);
-                  }}
-                  error={errors.toBankID?.message}
-                  required
-                  options={bankOptions}
-                />
-              )}
-            />
-          </>
+          <Controller
+            name="toBankID"
+            control={control}
+            render={({ field }) => (
+              <NormalSelect
+                label="البنك الوجهة"
+                value={field.value}
+                onChange={(e) => {
+                  field.onChange(e.target.value);
+                  setToBankID(e.target.value);
+                }}
+                error={errors.toBankID?.message}
+                required
+                options={bankOptions}
+              />
+            )}
+          />
         )}
-      </div>
 
-      {watchedTransferType === 'internal' && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {watchedTransferType === 'internal' && (
           <Controller
             name="toAccountID"
             control={control}
@@ -221,11 +217,9 @@ const BankTransferForm = ({ bankId }) => {
               />
             )}
           />
-        </div>
-      )}
+        )}
 
-      {watchedTransferType === 'external' && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {watchedTransferType === 'external' && (
           <Controller
             name="partyType"
             control={control}
@@ -243,7 +237,9 @@ const BankTransferForm = ({ bankId }) => {
               />
             )}
           />
+        )}
 
+        {watchedTransferType === 'external' && (
           <div>
             <label className="mb-1 block font-medium text-gray-700 text-[15px]">
               {partyType === 'customer' ? 'العميل' : 'المورد'} <span className="text-red-500 mr-1">*</span>
@@ -261,10 +257,8 @@ const BankTransferForm = ({ bankId }) => {
               )}
             />
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Controller
           name="amount"
           control={control}
@@ -280,6 +274,7 @@ const BankTransferForm = ({ bankId }) => {
             />
           )}
         />
+
       </div>
 
       <Controller
