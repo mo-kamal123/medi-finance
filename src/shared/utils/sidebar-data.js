@@ -83,6 +83,22 @@ export const links = [
       icon: BarChart3,
       sub: [
         {
+          // banking reports
+          name: 'التقارير البنكية',
+          icon: Landmark,
+          sub: [
+            { name: 'كشف حساب بنك', link: '/bank-statement', icon: FileText },
+            { name: 'حركات البنوك', link: '/bank-transactions', icon: Receipt },
+            { name: 'أرصدة البنوك', link: '/bank-balances', icon: Wallet },
+            { name: 'مطابقة البنوك', link: '/bank-reconciliation', icon: FileCheck },
+            { name: 'التحويلات البنكية', link: '/bank-transfers', icon: Link2 },
+            { name: 'تقرير الشيكات', link: '/cheques-report', icon: CreditCard },
+            { name: 'ملخص الشيكات', link: '/cheques-summary', icon: Banknote },
+            { name: 'الشيكات المعلقة', link: '/outstanding-cheques', icon: FileClock },
+            { name: 'التدفقات النقدية', link: '/cash-flow', icon: Wallet },
+          ],
+        },
+        {
           // financial-statements
           name: 'القوائم المالية',
           icon: Scale,
