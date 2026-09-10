@@ -18,7 +18,7 @@ const Sidebar = () => {
       `}
     >
       <div
-        className={`${openSidebar ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300 flex flex-col flex-1`}
+        className={`${openSidebar ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300 flex flex-col flex-1 min-h-0 overflow-hidden`}
       >
         <div className="mb-4 flex shrink-0 items-center justify-start gap-2 px-2">
           <img src={logo} alt="logo" className="w-100" />
