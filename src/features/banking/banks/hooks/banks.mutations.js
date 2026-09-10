@@ -6,6 +6,7 @@ import {
   createBankAccount,
   updateBankAccount,
   deleteBankAccount,
+  createBankTransfer,
 } from '../api/banks.api';
 import { banksKeys } from './banks.keys';
 import { getErrorMessage, toast } from '../../../../shared/lib/toast';
@@ -101,6 +102,21 @@ export const useDeleteBankAccount = (bankId) => {
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'تعذر حذف حساب البنك'));
+    },
+  });
+};
+
+export const useCreateBankTransfer = (bankId) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createBankTransfer,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: banksKeys.all });
+      toast.success('تم تنفيذ التحويل بنجاح');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'تعذر تنفيذ التحويل'));
     },
   });
 };

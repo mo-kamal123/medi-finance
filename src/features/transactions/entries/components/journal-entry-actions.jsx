@@ -24,7 +24,8 @@ const JournalEntryActions = ({ entry }) => {
   const isReversed = isJournalEntryReversed(entry);
 
   // Post the entry after guarding against already posted/reversed states
-  const handlePostEntry = () => {
+  const handlePostEntry = (e) => {
+    e.stopPropagation();
     if (isJournalEntryPosted(entry)) {
       toast.info('تم ترحيل هذا القيد بالفعل');
       return;
@@ -39,7 +40,8 @@ const JournalEntryActions = ({ entry }) => {
   };
 
   // Reverse the entry after guarding against already reversed/not posted states
-  const handleReverseEntry = () => {
+  const handleReverseEntry = (e) => {
+    e.stopPropagation();
     if (isJournalEntryReversed(entry)) {
       toast.info('تم عكس هذا القيد بالفعل');
       return;

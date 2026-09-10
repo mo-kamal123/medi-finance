@@ -17,6 +17,41 @@ const transactionTypeOptions = [
   { value: 'PAYMENT', label: 'صرف' },
 ];
 
+const statusClass = (statusName) => {
+  const normalized = String(statusName || '').trim().toLowerCase();
+  if (
+    normalized.includes('مرتجع') ||
+    normalized.includes('return') ||
+    normalized.includes('bounce') ||
+    normalized.includes('refus')
+  ) {
+    return 'bg-red-100 text-red-700';
+  }
+  if (
+    normalized.includes('محصل') ||
+    normalized.includes('collect') ||
+    normalized === 'collected'
+  ) {
+    return 'bg-emerald-100 text-emerald-700';
+  }
+  if (
+    normalized.includes('متردد') ||
+    normalized.includes('نقد') ||
+    normalized.includes('reten')
+  ) {
+    return 'bg-amber-100 text-amber-700';
+  }
+  if (
+    normalized.includes('استلام') ||
+    normalized.includes('receiv') ||
+    normalized.includes('تحصيل') ||
+    normalized.includes('collect')
+  ) {
+    return 'bg-sky-100 text-sky-700';
+  }
+  return 'bg-gray-100 text-gray-700';
+};
+
 const ChequesPage = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState('');
@@ -95,7 +130,21 @@ const ChequesPage = () => {
       type: 'custom',
       render: (row) => formatDate(row.receiptDate),
     },
-    { header: 'الحالة', key: 'statusNameAr' },
+    {
+      header: 'الحالة',
+      key: 'statusNameAr',
+      type: 'custom',
+      render: (row) => {
+        const label = row.statusNameAr || row.status || '-';
+        return (
+          <span
+            className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusClass(label)}`}
+          >
+            {label}
+          </span>
+        );
+      },
+    },
     {
       header: 'الإجراءات',
       key: 'actions',

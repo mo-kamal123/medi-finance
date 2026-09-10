@@ -114,3 +114,8 @@ export const getBankTransactionFilterOptions = async (type) => {
   const { data } = await axiosInstance.get(`/bank-transactions/${type}`);
   return extractArray(data);
 };
+
+export const createBankTransfer = async (payload) => {
+  const { data } = await axiosInstance.post('/bank-transfers', payload);
+  return data;
+};
