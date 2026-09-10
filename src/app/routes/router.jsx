@@ -17,6 +17,15 @@ import { accountsTreeRoutes } from '../../features/accounting/tree/accouts-tree/
 import costCenterRoutes from '../../features/accounting/tree/cost-tree/routes/routes';
 import { linkAccountCostRoutes } from '../../features/accounting/tree/link-account-cost/routes/routes';
 import { trialBalanceRoutes } from '../../features/reports/financial-statements/trial-balance/routes/routes';
+import { bankStatementRoutes } from '../../features/reports/banking/bank-statement/routes/routes';
+import { bankTransactionsRoutes } from '../../features/reports/banking/bank-transactions/routes/routes';
+import { bankBalancesRoutes } from '../../features/reports/banking/bank-balances/routes/routes';
+import { bankReconciliationRoutes } from '../../features/reports/banking/bank-reconciliation/routes/routes';
+import { bankTransfersRoutes } from '../../features/reports/banking/bank-transfers/routes/routes';
+import { bankChequesRoutes } from '../../features/reports/banking/bank-cheques/routes/routes';
+import { bankChequesSummaryRoutes } from '../../features/reports/banking/bank-cheques-summary/routes/routes';
+import { outstandingChequesRoutes } from '../../features/reports/banking/outstanding-cheques/routes/routes';
+import { cashFlowRoutes } from '../../features/reports/banking/cash-flow/routes/routes';
 import { lazyPage } from '../../shared/lib/lazy-page';
 
 export const router = createBrowserRouter([
@@ -59,6 +68,15 @@ export const router = createBrowserRouter([
       ...CommercialPapersRoutes,
       ...chequesRoutes,
       ...banksRoutes,
+      ...bankStatementRoutes,
+      ...bankTransactionsRoutes,
+      ...bankBalancesRoutes,
+      ...bankReconciliationRoutes,
+      ...bankTransfersRoutes,
+      ...bankChequesRoutes,
+      ...bankChequesSummaryRoutes,
+      ...outstandingChequesRoutes,
+      ...cashFlowRoutes,
     ],
   },
 ]);

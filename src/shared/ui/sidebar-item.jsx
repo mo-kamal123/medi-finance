@@ -17,7 +17,9 @@ const SidebarItem = ({ item, openSidebar, depth = 0, isOpen: controlledOpen, onT
     if (!el || !scroller) return;
     const rect = el.getBoundingClientRect();
     const sRect = scroller.getBoundingClientRect();
-    if (rect.bottom > sRect.bottom - 8) {
+    if (rect.top < sRect.top + 8) {
+      scroller.scrollBy({ top: rect.top - sRect.top - 8, behavior: 'smooth' });
+    } else if (rect.bottom > sRect.bottom - 8) {
       scroller.scrollBy({ top: rect.bottom - sRect.bottom + 64, behavior: 'smooth' });
     }
   }, [isOpen, openSidebar]);
