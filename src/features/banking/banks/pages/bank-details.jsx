@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building2, BookOpen, Receipt, Wallet, Banknote, ArrowUpLeft } from 'lucide-react';
+import { ArrowLeft, Building2, BookOpen, Receipt, Wallet, Banknote, ArrowUpLeft, ArrowLeftRight } from 'lucide-react';
 import PageLoader from '../../../../shared/ui/page-loader';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import BankAccountsPanel from '../components/bank-accounts-panel';
 import BankChequesPanel from '../components/bank-cheques-panel';
 import BankForm from '../components/bank-form';
 import BankTransactionsPanel from '../components/bank-transactions-panel';
+import BankTransferForm from '../components/bank-transfer-form';
 import { useBank } from '../hooks/banks.queries';
 
 const TABS = [
@@ -14,6 +15,7 @@ const TABS = [
   { key: 'accounts', label: 'حسابات البنك', icon: Wallet },
   { key: 'cheques', label: 'الشيكات', icon: Banknote },
   { key: 'transactions', label: 'معاملات البنك', icon: Receipt },
+  { key: 'transfer', label: 'تحويل', icon: ArrowLeftRight },
 ];
 
 const BankDetails = () => {
@@ -109,6 +111,9 @@ const BankDetails = () => {
           )}
           {activeTab === 'transactions' && (
             <BankTransactionsPanel bankId={id} />
+          )}
+          {activeTab === 'transfer' && (
+            <BankTransferForm bankId={id} />
           )}
         </div>
       </div>
