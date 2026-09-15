@@ -17,39 +17,35 @@ const transactionTypeOptions = [
   { value: 'PAYMENT', label: 'صرف' },
 ];
 
-const statusClass = (statusName) => {
-  const normalized = String(statusName || '').trim().toLowerCase();
-  if (
-    normalized.includes('مرتجع') ||
-    normalized.includes('return') ||
-    normalized.includes('bounce') ||
-    normalized.includes('refus')
-  ) {
-    return 'bg-red-100 text-red-700';
-  }
-  if (
-    normalized.includes('محصل') ||
-    normalized.includes('collect') ||
-    normalized === 'collected'
-  ) {
-    return 'bg-emerald-100 text-emerald-700';
-  }
-  if (
-    normalized.includes('متردد') ||
-    normalized.includes('نقد') ||
-    normalized.includes('reten')
-  ) {
-    return 'bg-amber-100 text-amber-700';
-  }
-  if (
-    normalized.includes('استلام') ||
-    normalized.includes('receiv') ||
-    normalized.includes('تحصيل') ||
-    normalized.includes('collect')
-  ) {
-    return 'bg-sky-100 text-sky-700';
-  }
-  return 'bg-gray-100 text-gray-700';
+const STATUS_PALETTE = [
+  'bg-sky-100 text-sky-700',
+  'bg-amber-100 text-amber-700',
+  'bg-emerald-100 text-emerald-700',
+  'bg-rose-100 text-rose-700',
+  'bg-violet-100 text-violet-700',
+  'bg-teal-100 text-teal-700',
+  'bg-indigo-100 text-indigo-700',
+  'bg-orange-100 text-orange-700',
+  'bg-cyan-100 text-cyan-700',
+  'bg-lime-100 text-lime-700',
+  'bg-fuchsia-100 text-fuchsia-700',
+  'bg-blue-100 text-blue-700',
+];
+
+const STATUS_STYLES = {
+  'تم الاستلام': 'bg-sky-100 text-sky-700',
+  'تحت التحصيل': 'bg-amber-100 text-amber-700',
+  'تم التحصيل': 'bg-emerald-100 text-emerald-700',
+  مرفوض: 'bg-rose-100 text-rose-700',
+  مرتد: 'bg-orange-100 text-orange-700',
+};
+
+const getStatusStyle = (statusName) => {
+  const key = String(statusName || '').trim().toLowerCase();
+  if (!key) return 'bg-gray-100 text-gray-700';
+  if (STATUS_STYLES[key]) return STATUS_STYLES[key];
+  const hash = [...key].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  return STATUS_PALETTE[hash % STATUS_PALETTE.length];
 };
 
 const ChequesPage = () => {
@@ -116,12 +112,12 @@ const ChequesPage = () => {
       type: 'custom',
       render: (row) => formatDate(row.chequeDate),
     },
-    { header: 'القيمة', key: 'amount' },
+    { header: 'القيمة', key: 'amount', type: 'custom', render: (row) => <span className='font-bold text-main'>{row.amount ?? 0}</span> },
     {
       header: 'العميل/المورد',
       key: 'partyNameAr',
       type: 'custom',
-      render: (row) => row.partyNameAr || row.customerNameAr || row.supplierNameAr || '-',
+      render: (row) => row.partyName || row.customerNameAr || row.supplierNameAr || '-',
     },
     { header: 'البنك', key: 'bankNameAr' },
     {
@@ -138,7 +134,7 @@ const ChequesPage = () => {
         const label = row.statusNameAr || row.status || '-';
         return (
           <span
-            className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusClass(label)}`}
+            className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${getStatusStyle(label)}`}
           >
             {label}
           </span>

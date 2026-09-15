@@ -5,16 +5,21 @@ import {
   RotateCcw,
   ArrowDownLeft,
   ArrowUpRight,
+  ExternalLink,
 } from 'lucide-react';
 import DateInput from '../../../../../shared/ui/date-input';
 import SearchableSelect from '../../../../../shared/ui/searchable-select';
 import Pagination from '../../../../../shared/ui/pagination';
 import Table from '../../../../../shared/ui/table';
 import PageLoader from '../../../../../shared/ui/page-loader';
-import { formatCurrency, formatDate } from '../../../../../shared/utils/formatters';
+import {
+  formatCurrency,
+  formatDate,
+} from '../../../../../shared/utils/formatters';
 import { useAllBankAccounts } from '../../../../banking/banks/hooks/banks.queries';
 import { useBankTransactionsReport } from '../hooks/bank-transactions.queries';
 import { useBankTransactionsReportExport } from '../hooks/use-bank-transactions-report-export';
+import { useNavigate } from 'react-router-dom';
 
 const DEFAULT_FILTERS = {
   bankAccountId: '',
@@ -87,7 +92,7 @@ const getStatusBadge = (status, statusName) => (
 const BankTransactionsReportPage = () => {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const { handleExport, isExporting } = useBankTransactionsReportExport();
-
+  const navigate = useNavigate();
   const { data: accountsResponse = [] } = useAllBankAccounts();
 
   const bankAccountOptions = useMemo(() => {
@@ -148,7 +153,18 @@ const BankTransactionsReportPage = () => {
   const columns = useMemo(
     () => [
       { header: 'رقم المعاملة', key: 'transactionNumber' },
-      { header: 'الحساب البنكي', key: 'bankAccountName' },
+      {
+        header: 'الحساب البنكي',
+        key: 'bankAccountName',
+        render: (row) => {
+          return (
+            <span className="inline-flex w-full items-center gap-2 whitespace-nowrap">
+              {row.bankNameAr || row.bankName || '-'}
+              {row.accountNumber ? `(${row.accountNumber})` : ''}
+            </span>
+          );
+        },
+      },
       {
         header: 'التاريخ',
         key: 'transactionDate',
@@ -173,7 +189,8 @@ const BankTransactionsReportPage = () => {
         type: 'custom',
         render: (row) => {
           const isOut =
-            row.direction === 'Out' || Number(row.localAmount ?? row.amount) < 0;
+            row.direction === 'Out' ||
+            Number(row.localAmount ?? row.amount) < 0;
           return (
             <span
               className={`inline-flex items-center gap-1 font-semibold ${
@@ -181,20 +198,12 @@ const BankTransactionsReportPage = () => {
               }`}
               dir="ltr"
             >
-              {isOut ? (
-                <ArrowUpRight size={14} />
-              ) : (
-                <ArrowDownLeft size={14} />
-              )}
+              {isOut ? <ArrowUpRight size={14} /> : <ArrowDownLeft size={14} />}
               {formatCurrency(Math.abs(Number(row.localAmount ?? row.amount)))}
-              <span className="text-xs font-normal text-gray-400">
-                {row.currencyName}
-              </span>
             </span>
           );
         },
       },
-      { header: 'البيان', key: 'descriptionAr' },
       {
         header: 'المرجع',
         key: 'referenceNumber',
@@ -220,26 +229,31 @@ const BankTransactionsReportPage = () => {
         render: (row) => getStatusBadge(row.status, row.statusName),
       },
       {
-        header: 'مطابق',
-        key: 'isReconciled',
-        type: 'custom',
-        render: (row) => (
-          <span
-            className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-              row.isReconciled
-                ? 'bg-emerald-100 text-emerald-700'
-                : 'bg-gray-100 text-gray-600'
-            }`}
-          >
-            {row.isReconciled ? 'نعم' : 'لا'}
-          </span>
-        ),
-      },
-      {
         header: 'القيد اليومي',
         key: 'journalEntryNumber',
         type: 'custom',
-        render: (row) => row.journalEntryNumber || '-',
+        render: (row) => {
+          const entryId = row.journalEntryID ?? row.journalEntryId;
+          if (!row.journalEntryNumber && !entryId) return '-';
+          return (
+            <span
+              className="inline-flex items-center gap-2 whitespace-nowrap"
+              dir="ltr"
+            >
+              {entryId ? (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/entries/${entryId}`)}
+                  title="عرض تفاصيل القيد"
+                  className="text-main inline-flex cursor-pointer font-semibold justify-center items-center gap-2"
+                >
+                  <ExternalLink size={15} />
+                  {row.journalEntryNumber || `قيد ${entryId}`}
+                </button>
+              ) : null}
+            </span>
+          );
+        },
       },
     ],
     []
@@ -247,7 +261,7 @@ const BankTransactionsReportPage = () => {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6 ">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <FileText size={24} />
@@ -270,12 +284,14 @@ const BankTransactionsReportPage = () => {
         </button>
       </div>
 
-      <div className="space-y-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 ">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5 ">
           <SearchableSelect
             label="الحساب البنكي"
             value={filters.bankAccountId || ''}
-            onChange={(event) => handleChange('bankAccountId', event.target.value)}
+            onChange={(event) =>
+              handleChange('bankAccountId', event.target.value)
+            }
             placeholder="اختر الحساب البنكي..."
             options={bankAccountOptions}
           />
@@ -325,7 +341,7 @@ const BankTransactionsReportPage = () => {
         <PageLoader label="جاري تحميل حركات البنوك..." />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-xl">
             <Table
               columns={columns}
               data={transactions}

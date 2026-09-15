@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { ArrowDownLeft, ArrowUpRight, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowDownLeft, ArrowUpRight, ExternalLink, Search } from 'lucide-react';
 import Pagination from '../../../../shared/ui/pagination';
 import SearchableSelect from '../../../../shared/ui/searchable-select';
 import DateInput from '../../../../shared/ui/date-input';
@@ -27,7 +28,7 @@ const EMPTY_FILTERS = {
 };
 
 const STATUS_STYLES = {
-  Draft: 'bg-gray-100 text-gray-700',
+  Draft: 'bg-amber-100 text-amber-700',
   Posted: 'bg-emerald-100 text-emerald-700',
   Reconciled: 'bg-sky-100 text-sky-700',
   Cancelled: 'bg-red-100 text-red-700',
@@ -59,6 +60,7 @@ const toOptions = (list = []) =>
   }));
 
 const BankTransactionsPanel = ({ bankId }) => {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -221,7 +223,6 @@ const BankTransactionsPanel = ({ bankId }) => {
               <th className="whitespace-nowrap p-3 text-right font-semibold">الحساب البنكي</th>
               <th className="whitespace-nowrap p-3 text-right font-semibold">النوع</th>
               <th className="whitespace-nowrap p-3 text-right font-semibold">المبلغ</th>
-              <th className="whitespace-nowrap p-3 text-right font-semibold">الوصف</th>
               <th className="whitespace-nowrap p-3 text-right font-semibold">المرجع</th>
               <th className="whitespace-nowrap p-3 text-right font-semibold">المصدر</th>
               <th className="whitespace-nowrap p-3 text-right font-semibold">الحالة</th>
@@ -269,14 +270,10 @@ const BankTransactionsPanel = ({ bankId }) => {
                       >
                         {isOut ? <ArrowUpRight size={14} /> : <ArrowDownLeft size={14} />}
                         {formatCurrency(Math.abs(Number(tx.localAmount ?? tx.amount)))}
-                        <span className="text-xs font-normal text-gray-400">
-                          {tx.currencyName}
-                        </span>
+
                       </span>
                     </td>
-                    <td className="max-w-60 truncate p-3" title={tx.descriptionAr}>
-                      {tx.descriptionAr || '-'}
-                    </td>
+
                     <td className="whitespace-nowrap p-3">{tx.referenceNumber || '-'}</td>
                     <td className="whitespace-nowrap p-3">
                       {tx.sourceTypeName || tx.sourceType || '-'}
@@ -291,7 +288,25 @@ const BankTransactionsPanel = ({ bankId }) => {
                       </span>
                     </td>
                     <td className="whitespace-nowrap p-3">
-                      {tx.journalEntryID ? `JE-${tx.journalEntryID}` : '-'}
+                      {(() => {
+                        const entryId = tx.journalEntryID ?? tx.journalEntryId;
+                        if (!tx.journalEntryNumber && !entryId) return '-';
+                        return (
+                          <span className="inline-flex items-center gap-2" dir="ltr">
+                            {entryId ? (
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/entries/${entryId}`)}
+                                title="عرض تفاصيل القيد"
+                                className="text-main inline-flex cursor-pointer font-semibold justify-center items-center gap-2"
+                              >
+                                <ExternalLink size={15} />
+                                {tx.journalEntryNumber || `قيد ${entryId}`}
+                              </button>
+                            ) : null}
+                          </span>
+                        );
+                      })()}
                     </td>
                   </tr>
                 );

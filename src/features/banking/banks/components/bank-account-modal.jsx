@@ -1,8 +1,9 @@
 import { useEffect, useMemo } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
 import FormInput from '../../../../shared/ui/input';
+import Toggle from '../../../../shared/ui/toggle';
 import { useCurrencies } from '../../../transactions/commercial-papers/hooks/commercial-papers.queries';
 import { useCreateBankAccount, useUpdateBankAccount } from '../hooks/banks.mutations';
 import { bankAccountSchema } from '../validation/bank-account.validation';
@@ -16,8 +17,8 @@ const getInitialValues = (account = {}, isEditMode) => ({
     accountNameEn: account.accountNameEn ?? '',
   } : {}),
   currencyID: account.currencyID ? String(account.currencyID) : '',
-  ...(isEditMode ? {} : { openingBalance: account.openingBalance ?? 0 }),
-  minBalance: account.minBalance ?? 0,
+  ...(isEditMode ? {} : { openingBalance: account.openingBalance ?? '' }),
+  minBalance: account.minBalance ?? '',
   isActive: account.isActive ?? true,
   isDefault: account.isDefault ?? false,
 });
@@ -44,6 +45,8 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
     values: formDefaults,
     resolver: zodResolver(bankAccountSchema),
   });
+
+  const isActive = useWatch({ control, name: 'isActive' });
 
   useEffect(() => {
     if (!isOpen) {
@@ -76,7 +79,7 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
       currencyID: Number(data.currencyID),
       minBalance: Number(data.minBalance) || 0,
       isActive: Boolean(data.isActive),
-      isDefault: Boolean(data.isDefault),
+      isDefault: Boolean(data.isActive) && Boolean(data.isDefault),
     };
 
     if (isEditMode) {
@@ -89,13 +92,22 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-4 p-6 text-right max-h-[90vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-4 p-6 text-right max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-gray-900">
             {isEditMode ? 'تعديل حساب البنك' : 'إضافة حساب بنك'}
           </h3>
-          <button onClick={onClose} className="rounded-lg p-2 text-gray-500 hover:bg-gray-100">
+          <button
+            onClick={onClose}
+            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
+          >
             <X size={20} />
           </button>
         </div>
@@ -104,6 +116,7 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput
               label="رقم الحساب"
+              placeholder="مثال: 123456789"
               {...register('accountNumber')}
               error={errors.accountNumber?.message}
               required
@@ -111,31 +124,11 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
 
             <FormInput
               label="الفرع"
+              placeholder="مثال: فرع وسط البلد"
               {...register('branch')}
               error={errors.branch?.message}
+              required
             />
-
-            <FormInput
-              label="IBAN"
-              {...register('iban')}
-              error={errors.iban?.message}
-            />
-
-            {isEditMode && (
-              <>
-                <FormInput
-                  label="اسم الحساب بالعربية"
-                  {...register('accountNameAr')}
-                  error={errors.accountNameAr?.message}
-                />
-                <FormInput
-                  label="اسم الحساب بالإنجليزية"
-                  {...register('accountNameEn')}
-                  error={errors.accountNameEn?.message}
-                />
-              </>
-            )}
-
             <Controller
               name="currencyID"
               control={control}
@@ -143,12 +136,12 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
                 <FormInput
                   as="select"
                   label="العملة"
+                  placeholder="اختر العملة"
                   error={errors.currencyID?.message}
                   value={field.value}
                   onChange={field.onChange}
                   required
                 >
-                  <option value="">اختر العملة</option>
                   {currencyOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
@@ -157,11 +150,36 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
                 </FormInput>
               )}
             />
+            <FormInput
+              label="IBAN"
+              placeholder="مثال: EG380019000500000000263180002"
+              {...register('iban')}
+              error={errors.iban?.message}
+            />
+
+            {isEditMode && (
+              <>
+                <FormInput
+                  label="اسم الحساب بالعربية"
+                  placeholder="مثال: الحساب الجاري"
+                  {...register('accountNameAr')}
+                  error={errors.accountNameAr?.message}
+                />
+                <FormInput
+                  label="اسم الحساب بالإنجليزية"
+                  placeholder="مثال: Current Account"
+                  {...register('accountNameEn')}
+                  error={errors.accountNameEn?.message}
+                />
+              </>
+            )}
 
             {!isEditMode && (
               <FormInput
                 type="number"
+                min="0"
                 label="الرصيد الافتتاحي"
+                placeholder="مثال: 1000"
                 {...register('openingBalance')}
                 error={errors.openingBalance?.message}
               />
@@ -169,21 +187,21 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
 
             <FormInput
               type="number"
+              min="0"
               label="الحد الأدنى للرصيد"
+              placeholder="مثال: 500"
               {...register('minBalance')}
               error={errors.minBalance?.message}
             />
           </div>
 
-          <div className="flex flex-wrap gap-4">
-            <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
-              <input type="checkbox" {...register('isActive')} />
-              <span>نشط</span>
-            </label>
-            <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
-              <input type="checkbox" {...register('isDefault')} />
-              <span>افتراضي</span>
-            </label>
+          <div className="flex flex-wrap gap-6">
+            <Toggle label="نشط" {...register('isActive')} />
+            <Toggle
+              label="افتراضي"
+              disabled={!isActive}
+              {...register('isDefault')}
+            />
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
@@ -199,7 +217,11 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
               disabled={isSubmitting || mutation.isPending}
               className="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 disabled:opacity-60"
             >
-              {isSubmitting || mutation.isPending ? 'جاري الحفظ...' : isEditMode ? 'تحديث الحساب' : 'حفظ الحساب'}
+              {isSubmitting || mutation.isPending
+                ? 'جاري الحفظ...'
+                : isEditMode
+                  ? 'تحديث الحساب'
+                  : 'حفظ الحساب'}
             </button>
           </div>
         </form>

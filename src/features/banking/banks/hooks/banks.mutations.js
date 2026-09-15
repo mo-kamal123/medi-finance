@@ -7,6 +7,8 @@ import {
   updateBankAccount,
   deleteBankAccount,
   createBankTransfer,
+  approveBankTransfer,
+  cancelBankTransfer,
 } from '../api/banks.api';
 import { banksKeys } from './banks.keys';
 import { getErrorMessage, toast } from '../../../../shared/lib/toast';
@@ -106,7 +108,7 @@ export const useDeleteBankAccount = (bankId) => {
   });
 };
 
-export const useCreateBankTransfer = (bankId) => {
+export const useCreateBankTransfer = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -117,6 +119,43 @@ export const useCreateBankTransfer = (bankId) => {
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, 'تعذر تنفيذ التحويل'));
+    },
+  });
+};
+
+const invalidateTransfers = (queryClient, id) => {
+  queryClient.invalidateQueries({ queryKey: banksKeys.transfers() });
+  if (id) {
+    queryClient.invalidateQueries({ queryKey: banksKeys.transferDetail(id) });
+  }
+};
+
+export const useApproveBankTransfer = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: approveBankTransfer,
+    onSuccess: (_, id) => {
+      invalidateTransfers(queryClient, id);
+      toast.success('تم اعتماد التحويل بنجاح');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'تعذر اعتماد التحويل'));
+    },
+  });
+};
+
+export const useCancelBankTransfer = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: cancelBankTransfer,
+    onSuccess: (_, variables) => {
+      invalidateTransfers(queryClient, variables?.id);
+      toast.success('تم إلغاء التحويل بنجاح');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'تعذر إلغاء التحويل'));
     },
   });
 };
