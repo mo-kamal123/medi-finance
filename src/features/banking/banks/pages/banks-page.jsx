@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react';
-import { Eye, Plus, Trash2 } from 'lucide-react';
+import { Eye, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import FormInput from '../../../../shared/ui/input';
@@ -27,6 +27,12 @@ const BanksPage = () => {
 
   const { data = [], isLoading } = useBanks(filters);
   const pagination = paginateItems(data, pageNumber, pageSize);
+
+  const handleReset = () => {
+    setSearch('');
+    setIsActive('');
+    setPageNumber(1);
+  };
 
   const columns = [
     { header: 'كود البنك', key: 'bankCode' },
@@ -121,19 +127,19 @@ const BanksPage = () => {
           <option value="true">نشط</option>
           <option value="false">غير نشط</option>
         </FormInput>
-        <FormInput
-          as="select"
-          label="الحالة"
-          value={isActive}
-          onChange={(event) => {
-            setIsActive(event.target.value);
-            setPageNumber(1);
-          }}
-        >
-          <option value="">كل الحالات</option>
-          <option value="true">نشط</option>
-          <option value="false">غير نشط</option>
-        </FormInput>
+
+        <div className="flex items-end justify-end">
+          {search !== '' || isActive !== '' ? (
+            <button
+              type="button"
+              onClick={handleReset}
+              className="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
+            >
+              <RotateCcw size={16} />
+              مسح الفلاتر
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <Table columns={columns} data={pagination.items} loading={isLoading} onRowClick={(row) => navigate(`/banks/${row.bankID}`)} />

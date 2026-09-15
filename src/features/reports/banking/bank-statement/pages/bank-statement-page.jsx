@@ -1,16 +1,24 @@
 import { useMemo, useState } from 'react';
-import { Download, FileText, RotateCcw } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Download, ExternalLink, FileText, RotateCcw } from 'lucide-react';
 import DateInput from '../../../../../shared/ui/date-input';
 import SearchableSelect from '../../../../../shared/ui/searchable-select';
 import Pagination from '../../../../../shared/ui/pagination';
 import Table from '../../../../../shared/ui/table';
 import PageLoader from '../../../../../shared/ui/page-loader';
-import { formatCurrency, formatDate } from '../../../../../shared/utils/formatters';
-import { useAllBankAccounts } from '../../../../banking/banks/hooks/banks.queries';
+import {
+  formatCurrency,
+  formatDate,
+} from '../../../../../shared/utils/formatters';
+import {
+  useAllBankAccounts,
+  useBanks,
+} from '../../../../banking/banks/hooks/banks.queries';
 import { useBankStatement } from '../hooks/bank-statement.queries';
 import { useBankStatementExport } from '../hooks/use-bank-statement-export';
 
 const DEFAULT_FILTERS = {
+  bankId: '',
   bankAccountId: '',
   fromDate: '',
   toDate: '',
@@ -41,28 +49,53 @@ const getDirectionBadge = (direction, directionName) => {
 };
 
 const BankStatementPage = () => {
-  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const urlBankId = searchParams.get('bankId');
+  const urlBankAccountId = searchParams.get('bankAccountId');
+  const [filters, setFilters] = useState(() => ({
+    ...DEFAULT_FILTERS,
+    bankId: urlBankId || '',
+    bankAccountId: urlBankAccountId || '',
+  }));
   const { handleExport, isExporting } = useBankStatementExport();
 
+  const { data: banks = [] } = useBanks({ pageSize: 100 });
   const { data: accountsResponse = [] } = useAllBankAccounts();
+
+  const bankOptions = useMemo(
+    () =>
+      (Array.isArray(banks) ? banks : []).map((bank) => ({
+        value: String(bank.bankID || bank.id),
+        label:
+          bank.bankNameAr || bank.bankNameEn || String(bank.bankID || bank.id),
+      })),
+    [banks]
+  );
 
   const bankAccountOptions = useMemo(() => {
     const list = normalizeCollection(accountsResponse);
-    return list.map((account) => ({
-      value: String(account.bankAccountID || account.id),
-      label:
-        [
-          account.bankNameAr || account.bankName,
-          account.accountNumber,
-          account.accountNameAr || account.accountNameEn,
-        ]
-          .filter(Boolean)
-          .join(' - ') || String(account.bankAccountID || account.id),
-    }));
-  }, [accountsResponse]);
+    return list
+      .filter(
+        (account) =>
+          !filters.bankId || String(account.bankID) === String(filters.bankId)
+      )
+      .map((account) => ({
+        value: String(account.bankAccountID || account.id),
+        label:
+          [
+            account.bankNameAr || account.bankName,
+            account.accountNumber,
+            account.accountNameAr || account.accountNameEn,
+          ]
+            .filter(Boolean)
+            .join(' - ') || String(account.bankAccountID || account.id),
+      }));
+  }, [accountsResponse, filters.bankId]);
 
   const queryParams = useMemo(
     () => ({
+      bankId: filters.bankId,
       bankAccountId: filters.bankAccountId,
       fromDate: filters.fromDate,
       toDate: filters.toDate,
@@ -72,10 +105,39 @@ const BankStatementPage = () => {
     [filters]
   );
 
-  const { data: response, isLoading, isFetching } = useBankStatement(queryParams);
+  const {
+    data: response,
+    isLoading,
+    isFetching,
+  } = useBankStatement(queryParams);
 
-  const transactions = useMemo(() => response?.data ?? [], [response?.data]);
-  const summary = useMemo(() => response?.summary ?? null, [response?.summary]);
+  const accounts = useMemo(
+    () => (Array.isArray(response?.accounts) ? response.accounts : []),
+    [response]
+  );
+
+  const transactions = useMemo(() => {
+    if (Array.isArray(response?.data)) return response.data;
+    if (accounts.length > 0) return accounts.flatMap((acc) => acc.data ?? []);
+    return [];
+  }, [accounts, response]);
+
+  const summary = useMemo(() => {
+    if (!response) return null;
+    const single = accounts.length === 1 ? accounts[0]?.summary : null;
+    return {
+      openingBalance:
+        response.openingBalance ?? single?.openingBalance ?? 0,
+      totalIncoming: response.totalIncoming ?? single?.totalIncoming ?? 0,
+      totalOutgoing: response.totalOutgoing ?? single?.totalOutgoing ?? 0,
+      closingBalance: response.closingBalance ?? single?.closingBalance ?? 0,
+      bankNameAr: response.bankNameAr ?? single?.bankNameAr ?? '-',
+      accountNumber: accounts.length === 1 ? single?.accountNumber : null,
+      currencyCode: accounts.length === 1 ? single?.currencyCode : null,
+      accountCount: accounts.length,
+    };
+  }, [accounts, response]);
+
   const totalCount = Number(response?.totalCount) || transactions.length;
   const totalPages = Math.max(
     Math.ceil(totalCount / Math.max(Number(filters.pageSize) || 50, 1)),
@@ -83,7 +145,12 @@ const BankStatementPage = () => {
   );
 
   const handleChange = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value, pageNumber: 1 }));
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+      ...(key === 'bankId' ? { bankAccountId: '' } : {}),
+      pageNumber: 1,
+    }));
   };
 
   const handleReset = () => {
@@ -100,33 +167,6 @@ const BankStatementPage = () => {
 
   const columns = useMemo(
     () => [
-      { header: 'رقم العملية', key: 'transactionID' },
-      {
-        header: 'التاريخ',
-        key: 'transactionDate',
-        type: 'custom',
-        render: (row) => formatDate(row.transactionDate),
-      },
-      {
-        header: 'النوع',
-        key: 'transactionTypeName',
-        type: 'custom',
-        render: (row) => row.transactionTypeName || row.transactionType || '-',
-      },
-      {
-        header: 'الاتجاه',
-        key: 'directionName',
-        type: 'custom',
-        render: (row) =>
-          getDirectionBadge(row.direction, row.directionName),
-      },
-      {
-        header: 'المرجع',
-        key: 'referenceNumber',
-        type: 'custom',
-        render: (row) => row.referenceNumber || '-',
-      },
-      { header: 'البيان', key: 'descriptionAr' },
       {
         header: 'مدين',
         key: 'debit',
@@ -154,7 +194,7 @@ const BankStatementPage = () => {
           ),
       },
       {
-        header: 'الرصيد الجاري',
+        header: 'الرصيد',
         key: 'runningBalance',
         type: 'custom',
         render: (row) => (
@@ -164,18 +204,73 @@ const BankStatementPage = () => {
         ),
       },
       {
+        header: 'التاريخ',
+        key: 'transactionDate',
+        type: 'custom',
+        render: (row) => formatDate(row.transactionDate),
+      },
+      {
+        header: 'رقم الحساب',
+        key: 'bankAccountNumber',
+        type: 'custom',
+        render: (row) =>
+          row.bankAccountNumber ? (
+            <span className="font-medium text-gray-700" dir="ltr">
+              {row.bankAccountNumber}
+            </span>
+          ) : (
+            '-'
+          ),
+      },
+      {
+        header: 'النوع',
+        key: 'transactionTypeName',
+        type: 'custom',
+        render: (row) => row.transactionTypeName || row.transactionType || '-',
+      },
+      {
+        header: 'الاتجاه',
+        key: 'directionName',
+        type: 'custom',
+        render: (row) => getDirectionBadge(row.direction, row.directionName),
+      },
+      {
+        header: 'المرجع',
+        key: 'referenceNumber',
+        type: 'custom',
+        render: (row) => row.referenceNumber || '-',
+      },
+      {
         header: 'القيد اليومي',
         key: 'journalEntryNumber',
         type: 'custom',
-        render: (row) => row.journalEntryNumber || '-',
+        render: (row) => {
+          const entryId = row.journalEntryID ?? row.journalEntryId;
+          if (!row.journalEntryNumber && !entryId) return '-';
+          return (
+            <span className="inline-flex items-center gap-2" dir="ltr">
+              {entryId ? (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/entries/${entryId}`)}
+                  title="عرض تفاصيل القيد"
+                  className="text-main inline-flex cursor-pointer font-semibold justify-center items-center gap-2"
+                >
+                  <ExternalLink size={15} />
+                  {row.journalEntryNumber || `قيد ${entryId}`}
+                </button>
+              ) : null}
+            </span>
+          );
+        },
       },
     ],
-    []
+    [navigate]
   );
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <FileText size={24} />
@@ -190,7 +285,7 @@ const BankStatementPage = () => {
         <button
           type="button"
           onClick={() => handleExport(queryParams)}
-          disabled={isExporting || !filters.bankAccountId}
+          disabled={isExporting || (!filters.bankId && !filters.bankAccountId)}
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
         >
           <Download size={16} />
@@ -198,14 +293,82 @@ const BankStatementPage = () => {
         </button>
       </div>
 
-      <div className="space-y-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      {summary && (
+        <>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div className="rounded-xl border border-gray-200 bg-white p-5">
+              <div className="text-sm text-gray-500">رصيد افتتاحي</div>
+              <div className="mt-2 text-2xl font-bold text-gray-900">
+                {formatCurrency(Number(summary.openingBalance) || 0)}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-5">
+              <div className="text-sm text-gray-500">إجمالي الوارد</div>
+              <div className="mt-2 text-2xl font-bold text-emerald-700">
+                {formatCurrency(Number(summary.totalIncoming) || 0)}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-5">
+              <div className="text-sm text-gray-500">إجمالي الصادر</div>
+              <div className="mt-2 text-2xl font-bold text-red-600">
+                {formatCurrency(Number(summary.totalOutgoing) || 0)}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-5">
+              <div className="text-sm text-gray-500">الرصيد الختامي</div>
+              <div className="mt-2 text-2xl font-bold text-primary">
+                {formatCurrency(Number(summary.closingBalance) || 0)}
+              </div>
+            </div>
+          </div>
+
+          {/* <div className="rounded-xl border border-gray-200 bg-white px-5 py-4">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+              <span className="font-semibold text-gray-900">
+                {summary.bankNameAr || '-'}
+              </span>
+              {summary.accountCount === 1 ? (
+                <>
+                  <span className="text-gray-500">
+                    رقم الحساب:{' '}
+                    <span dir="ltr">{summary.accountNumber || '-'}</span>
+                  </span>
+                  <span className="text-gray-500">
+                    العملة: <span dir="ltr">{summary.currencyCode || '-'}</span>
+                  </span>
+                </>
+              ) : (
+                <span className="text-gray-500">
+                  عدد الحسابات: {summary.accountCount}
+                </span>
+              )}
+            </div>
+          </div> */}
+        </>
+      )}
+
+      <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <SearchableSelect
+            label="البنك"
+            value={filters.bankId || ''}
+            onChange={(event) => handleChange('bankId', event.target.value)}
+            placeholder="اختر البنك..."
+            options={bankOptions}
+          />
+
           <SearchableSelect
             label="الحساب البنكي"
             value={filters.bankAccountId || ''}
-            onChange={(event) => handleChange('bankAccountId', event.target.value)}
-            placeholder="اختر الحساب البنكي..."
+            onChange={(event) =>
+              handleChange('bankAccountId', event.target.value)
+            }
+            placeholder="اختر الحساب البنكي (اختياري)..."
             options={bankAccountOptions}
+            disabled={!filters.bankId}
           />
 
           <DateInput
@@ -233,72 +396,24 @@ const BankStatementPage = () => {
         </div>
       </div>
 
-      {summary && (
-        <>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-            <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-              <div className="text-sm text-gray-500">رصيد افتتاحي</div>
-              <div className="mt-2 text-2xl font-bold text-gray-900">
-                {formatCurrency(Number(summary.openingBalance) || 0)}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-              <div className="text-sm text-gray-500">إجمالي الوارد</div>
-              <div className="mt-2 text-2xl font-bold text-emerald-700">
-                {formatCurrency(Number(summary.totalIncoming) || 0)}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-              <div className="text-sm text-gray-500">إجمالي الصادر</div>
-              <div className="mt-2 text-2xl font-bold text-red-600">
-                {formatCurrency(Number(summary.totalOutgoing) || 0)}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-              <div className="text-sm text-gray-500">الرصيد الختامي</div>
-              <div className="mt-2 text-2xl font-bold text-primary">
-                {formatCurrency(Number(summary.closingBalance) || 0)}
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-gray-100 bg-white px-5 py-4 shadow-sm">
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-              <span className="font-semibold text-gray-900">
-                {summary.bankNameAr || '-'}
-              </span>
-              <span className="text-gray-500">
-                رقم الحساب: <span dir="ltr">{summary.accountNumber || '-'}</span>
-              </span>
-              <span className="text-gray-500">
-                العملة: <span dir="ltr">{summary.currencyCode || '-'}</span>
-              </span>
-            </div>
-          </div>
-        </>
-      )}
-
       {isLoading ? (
         <PageLoader label="جاري تحميل كشف الحساب..." />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+          <div className="rounded-xl bg-white">
             <Table
               columns={columns}
               data={transactions}
               loading={isFetching}
               emptyMessage={
-                filters.bankAccountId
+                filters.bankId || filters.bankAccountId
                   ? 'لا توجد حركات لعرضها'
-                  : 'اختر حساباً بنكياً لعرض الكشف'
+                  : 'اختر بنكاً لعرض الكشف'
               }
             />
           </div>
 
-          {filters.bankAccountId && (
+          {(filters.bankId || filters.bankAccountId) && (
             <Pagination
               currentPage={Number(filters.pageNumber) || 1}
               totalPages={totalPages}

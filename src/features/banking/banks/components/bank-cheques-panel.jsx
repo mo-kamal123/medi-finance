@@ -30,7 +30,52 @@ const STATUS_OPTIONS = [
   { value: '3', label: 'ملغاة' },
 ];
 
-const BankChequesPanel = () => {
+const STATUS_PALETTE = [
+  'bg-sky-100 text-sky-700',
+  'bg-amber-100 text-amber-700',
+  'bg-emerald-100 text-emerald-700',
+  'bg-rose-100 text-rose-700',
+  'bg-violet-100 text-violet-700',
+  'bg-teal-100 text-teal-700',
+  'bg-indigo-100 text-indigo-700',
+  'bg-orange-100 text-orange-700',
+  'bg-cyan-100 text-cyan-700',
+  'bg-lime-100 text-lime-700',
+  'bg-fuchsia-100 text-fuchsia-700',
+  'bg-blue-100 text-blue-700',
+];
+
+const STATUS_STYLES = {
+  'تم الاستلام': 'bg-sky-100 text-sky-700',
+  'تحت التحصيل': 'bg-amber-100 text-amber-700',
+  'تم التحصيل': 'bg-emerald-100 text-emerald-700',
+  مرفوض: 'bg-rose-100 text-rose-700',
+  مرتد: 'bg-orange-100 text-orange-700',
+};
+
+const getStatusStyle = (statusName) => {
+  const key = String(statusName || '').trim().toLowerCase();
+  if (!key) return 'bg-gray-100 text-gray-700';
+  if (STATUS_STYLES[key]) return STATUS_STYLES[key];
+  const hash = [...key].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  return STATUS_PALETTE[hash % STATUS_PALETTE.length];
+};
+
+const PrimaryBadge = ({ children }) => (
+  <span className="inline-block whitespace-nowrap rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+    {children || '-'}
+  </span>
+);
+
+const StatusBadge = ({ children }) => (
+  <span
+    className={`inline-block max-w-[120px] truncate whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ${getStatusStyle(children)}`}
+  >
+    {children || '-'}
+  </span>
+);
+
+const BankChequesPanel = ({ bankId }) => {
   const navigate = useNavigate();
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [pageNumber, setPageNumber] = useState(1);
@@ -48,6 +93,9 @@ const BankChequesPanel = () => {
   const filteredCheques = useMemo(() => {
     const term = debouncedSearch.trim().toLowerCase();
     return allCheques.filter((chq) => {
+      if (bankId && String(chq.bankID ?? '') !== String(bankId)) {
+        return false;
+      }
       if (filters.type !== '') {
         const raw = String(chq.transactionType ?? chq.type);
         if (raw !== String(filters.type) && raw !== filters.type) {
@@ -88,7 +136,7 @@ const BankChequesPanel = () => {
       }
       return true;
     });
-  }, [allCheques, filters, debouncedSearch]);
+  }, [allCheques, filters, debouncedSearch, bankId]);
 
   const pagination = useMemo(() => {
     const start = (pageNumber - 1) * pageSize;
@@ -226,12 +274,16 @@ const BankChequesPanel = () => {
                     {chq.partyNameAr || chq.customerNameAr || chq.supplierNameAr || '-'}
                   </td>
                   <td className="whitespace-nowrap p-3">
-                    {chq.transactionTypeNameAr ||
-                      (Number(chq.transactionType ?? chq.type) === 1 ? 'صرف' : 'قبض')}
+                    <PrimaryBadge>
+                      {chq.transactionTypeNameAr ||
+                        (Number(chq.transactionType ?? chq.type) === 1 ? 'صرف' : 'قبض')}
+                    </PrimaryBadge>
                   </td>
                   <td className="whitespace-nowrap p-3">{formatDate(chq.receiptDate)}</td>
                   <td className="whitespace-nowrap p-3">{formatDate(chq.dueDate)}</td>
-                  <td className="whitespace-nowrap p-3">{chq.statusNameAr || '-'}</td>
+                  <td className="whitespace-nowrap p-3">
+                    <StatusBadge>{chq.statusNameAr || chq.status}</StatusBadge>
+                  </td>
                   <td className="p-3">
                     <div className="flex justify-center">
                       <button

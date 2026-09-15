@@ -33,6 +33,7 @@ export const toast = {
 
 export const getErrorMessage = (error, fallback = 'حدث خطأ غير متوقع') => {
   return (
+    error?.response?.data?.detail ||
     error?.response?.data?.message ||
     error?.response?.data?.title ||
     error?.message ||

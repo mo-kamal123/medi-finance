@@ -143,7 +143,7 @@ const BankBalancesPage = () => {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Scale size={24} />
@@ -151,7 +151,8 @@ const BankBalancesPage = () => {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">أرصدة البنوك</h1>
             <p className="mt-1 text-sm text-gray-500">
-              عرض أرصدة البنوك الافتتاحية والختامية وإجمالي الوارد والصادر خلال الفترة
+              عرض أرصدة البنوك الافتتاحية والختامية وإجمالي الوارد والصادر خلال
+              الفترة
             </p>
           </div>
         </div>
@@ -166,7 +167,37 @@ const BankBalancesPage = () => {
         </button>
       </div>
 
-      <div className="space-y-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="text-sm text-gray-500">إجمالي الرصيد الافتتاحي</div>
+          <div className="mt-2 text-2xl font-bold text-gray-900">
+            {formatCurrency(totalOpening)}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="text-sm text-gray-500">إجمالي الوارد</div>
+          <div className="mt-2 text-2xl font-bold text-emerald-700">
+            {formatCurrency(totalIncoming)}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="text-sm text-gray-500">إجمالي الصادر</div>
+          <div className="mt-2 text-2xl font-bold text-red-600">
+            {formatCurrency(totalOutgoing)}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="text-sm text-gray-500">الرصيد الختامي</div>
+          <div className="mt-2 text-2xl font-bold text-primary">
+            {formatCurrency(totalClosing)}
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <DateInput
             label="من تاريخ"
@@ -193,41 +224,11 @@ const BankBalancesPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="text-sm text-gray-500">إجمالي الرصيد الافتتاحي</div>
-          <div className="mt-2 text-2xl font-bold text-gray-900">
-            {formatCurrency(totalOpening)}
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="text-sm text-gray-500">إجمالي الوارد</div>
-          <div className="mt-2 text-2xl font-bold text-emerald-700">
-            {formatCurrency(totalIncoming)}
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="text-sm text-gray-500">إجمالي الصادر</div>
-          <div className="mt-2 text-2xl font-bold text-red-600">
-            {formatCurrency(totalOutgoing)}
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="text-sm text-gray-500">الرصيد الختامي</div>
-          <div className="mt-2 text-2xl font-bold text-primary">
-            {formatCurrency(totalClosing)}
-          </div>
-        </div>
-      </div>
-
       {isLoading ? (
         <PageLoader label="جاري تحميل أرصدة البنوك..." />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-xl">
             <Table
               columns={columns}
               data={balances}

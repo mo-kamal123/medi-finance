@@ -1,4 +1,4 @@
-﻿import { useRef, useState } from 'react';
+﻿import { useMemo, useRef, useState } from 'react';
 import { Trash2, Columns3, Check } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import Spinner from './spinner';
@@ -16,10 +16,24 @@ const Table = ({
   emptyMessage = 'لا توجد بيانات',
   extraRenderArg,
 }) => {
-  const [hiddenCols, setHiddenCols] = useState(new Set());
   const [showColPicker, setShowColPicker] = useState(false);
   const pickerBtnRef = useRef(null);
   const [dropdownStyle, setDropdownStyle] = useState(null);
+
+  const storageKey = useMemo(
+    () => `mfc-table-cols:${columns.map((col) => col.header).join('|')}`,
+    [columns]
+  );
+
+  const [hiddenCols, setHiddenCols] = useState(() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) return new Set(JSON.parse(raw));
+    } catch {
+      /* ignore */
+    }
+    return new Set();
+  });
 
   const hasActions = !!onDelete;
   const nonActionColumns = hasActions ? columns.slice(0, -1) : columns;
@@ -35,6 +49,11 @@ const Table = ({
         next.delete(index);
       } else {
         next.add(index);
+      }
+      try {
+        localStorage.setItem(storageKey, JSON.stringify([...next]));
+      } catch {
+        /* ignore */
       }
       return next;
     });
@@ -127,8 +146,8 @@ const Table = ({
           )
         : null}
 
-      <div className="overflow-x-auto rounded-xl bg-white">
-        <table className="w-full table-auto border-collapse text-sm">
+      <div className="overflow-x-auto rounded-xl  bg-white">
+        <table className="w-full table-auto overflow-x-auto rounded-xl border-collapse text-sm">
         <thead className="bg-primary text-white">
           <tr>
             {visibleColumns.map((col, index) => (
@@ -191,7 +210,7 @@ const Table = ({
               </td>
             </tr>
           )}
-        </tbody>
+          </tbody>
         {footer ? (
           <tfoot className="bg-gray-50 font-semibold">{footer}</tfoot>
         ) : null}

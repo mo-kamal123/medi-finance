@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Edit3, Plus, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { BookOpen, Edit3, Plus, Trash2 } from 'lucide-react';
 import PageLoader from '../../../../shared/ui/page-loader';
 import ConfirmModal from '../../../../shared/ui/modal';
 import BankAccountModal from './bank-account-modal';
@@ -13,6 +14,7 @@ const normalizeCollection = (value) => {
 };
 
 const BankAccountsPanel = ({ bankId }) => {
+  const navigate = useNavigate();
   const [modalMode, setModalMode] = useState(null);
   const [selectedAccountId, setSelectedAccountId] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -81,7 +83,8 @@ const BankAccountsPanel = ({ bankId }) => {
                 accounts.map((account) => (
                   <tr
                     key={account.bankAccountID}
-                    className="border-t border-gray-200 even:bg-gray-50/50"
+                    onClick={() => openEditModal(account.bankAccountID)}
+                    className="cursor-pointer border-t border-gray-200 even:bg-gray-50/50 transition-colors hover:bg-gray-50"
                   >
                     <td className="p-3">{account.accountNumber || '-'}</td>
                     <td className="p-3">
@@ -112,7 +115,23 @@ const BankAccountsPanel = ({ bankId }) => {
                       <div className="flex gap-4 justify-center">
                         <button
                           type="button"
-                          onClick={() => openEditModal(account.bankAccountID)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(
+                              `/bank-statement?bankId=${bankId}&bankAccountId=${account.bankAccountID}`
+                            );
+                          }}
+                          className="text-primary hover:text-primary/70"
+                          title="كشف حساب"
+                        >
+                          <BookOpen size={18} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditModal(account.bankAccountID);
+                          }}
                           className="text-amber-600 hover:text-amber-600"
                           title="تعديل"
                         >
@@ -120,7 +139,10 @@ const BankAccountsPanel = ({ bankId }) => {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setDeleteTarget(account)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget(account);
+                          }}
                           className="text-red-500 hover:text-red-700"
                           title="حذف"
                         >
