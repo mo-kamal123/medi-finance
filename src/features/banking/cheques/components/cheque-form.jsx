@@ -1,7 +1,7 @@
-﻿import { useMemo } from 'react';
+﻿import { useEffect, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import FormInput from '../../../../shared/ui/input';
 import DateInput from '../../../../shared/ui/date-input';
 import NormalSelect from '../../../../shared/ui/NormalSelect';
@@ -10,11 +10,7 @@ import CostCenterSearchSelect from '../../../../shared/ui/cost-center-search-sel
 import PartySearchSelect from '../../../../shared/ui/party-search-select';
 import InvoiceSearch from './invoice-search';
 import { useCreateCheque } from '../hooks/cheques.mutations';
-import {
-  useChequeBanks,
-  useChequeCurrencies,
-  useChequeStatuses,
-} from '../hooks/cheques.queries';
+import { useChequeBanks, useChequeCurrencies } from '../hooks/cheques.queries';
 import { chequeSchema } from '../validation/cheque.validation';
 
 const toDateValue = (value) => {
@@ -163,6 +159,8 @@ const getInvoiceParty = (invoice) => {
 
 const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activeTab }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const bankIdFromUrl = searchParams.get('bankId');
   const createMutation = useCreateCheque();
   const { data: banks = [] } = useChequeBanks();
   const { data: currencies = [] } = useChequeCurrencies();
@@ -187,20 +185,26 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
 
   const chequeType = watch('chequeType');
 
-  const { data: statuses = [] } = useChequeStatuses(chequeType?.length ? chequeType : undefined);
+  useEffect(() => {
+    if (
+      !bankIdFromUrl ||
+      isViewMode ||
+      mode === 'edit' ||
+      !Array.isArray(banks) ||
+      banks.length === 0
+    ) {
+      return;
+    }
+    const exists = banks.some(
+      (b) => String(b.bankID) === String(bankIdFromUrl)
+    );
+    if (exists) {
+      setValue('bankID', String(bankIdFromUrl));
+    }
+  }, [bankIdFromUrl, banks, setValue, isViewMode, mode]);
 
   const bankOptions = toOptions(banks, 'bankID', 'bankNameAr');
   const currencyOptions = toOptions(currencies, 'currencyID', 'currencyNameAr');
-  const statusOptions = useMemo(() => {
-    if (!Array.isArray(statuses) || statuses.length === 0) return toOptions([], 'id', 'name');
-    return [
-      { value: '', label: 'اختر' },
-      ...statuses.map((status) => ({
-        value: String(status.id ?? status.statusID ?? status.statusId ?? ''),
-        label: status.nameAr || status.name || status.NameAr || status.Name || '',
-      })),
-    ];
-  }, [statuses]);
 
   const handleFormSubmit = (data) => {
     const payload = buildPayload(data);

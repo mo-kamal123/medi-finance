@@ -6,4 +6,6 @@
   accountDetail: (id) => [...banksKeys.all, 'account-detail', id],
   transactions: (filters = {}) => [...banksKeys.all, 'transactions', filters],
   transactionFilter: (type) => [...banksKeys.all, 'transaction-filter', type],
+  transfers: (filters = {}) => [...banksKeys.all, 'transfers', filters],
+  transferDetail: (id) => [...banksKeys.all, 'transfer-detail', id],
 };

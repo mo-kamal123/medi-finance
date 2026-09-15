@@ -22,4 +22,11 @@ export const banksRoutes = [
       'جاري تحميل بيانات البنك...'
     ),
   },
+  {
+    path: '/banks/:id/*',
+    element: lazyPage(
+      () => import('../pages/bank-details'),
+      'جاري تحميل بيانات البنك...'
+    ),
+  },
 ];

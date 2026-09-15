@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building2, BookOpen, Receipt, Wallet, Banknote, ArrowUpLeft, ArrowLeftRight } from 'lucide-react';
+import { useMemo } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, Building2, BookOpen, ListChecks, Receipt, Wallet, Banknote, ArrowLeftRight, Scale } from 'lucide-react';
 import PageLoader from '../../../../shared/ui/page-loader';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import BankAccountsPanel from '../components/bank-accounts-panel';
@@ -8,6 +8,8 @@ import BankChequesPanel from '../components/bank-cheques-panel';
 import BankForm from '../components/bank-form';
 import BankTransactionsPanel from '../components/bank-transactions-panel';
 import BankTransferForm from '../components/bank-transfer-form';
+import BankTransferPanel from '../components/bank-transfer-panel';
+import BankReconciliationsPanel from '../../reconciliations/components/bank-reconciliations-panel';
 import { useBank } from '../hooks/banks.queries';
 
 const TABS = [
@@ -15,14 +17,27 @@ const TABS = [
   { key: 'accounts', label: 'حسابات البنك', icon: Wallet },
   { key: 'cheques', label: 'الشيكات', icon: Banknote },
   { key: 'transactions', label: 'معاملات البنك', icon: Receipt },
-  { key: 'transfer', label: 'تحويل', icon: ArrowLeftRight },
+  { key: 'transfer', label: 'تحويل جديد', icon: ArrowLeftRight },
+  { key: 'transfers', label: 'التحويلات', icon: ListChecks },
+  { key: 'reconciliation', label: 'تسوية البنك', icon: Scale },
 ];
 
 const BankDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { data, isLoading } = useBank(id);
-  const [activeTab, setActiveTab] = useState('info');
+
+  const activeTab = useMemo(() => {
+    const pathSegment =
+      location.pathname.replace(`/banks/${id}`, '').split('/').filter(Boolean)[0] ||
+      'info';
+    return TABS.some((tab) => tab.key === pathSegment) ? pathSegment : 'info';
+  }, [location.pathname, id]);
+
+  const handleTabClick = (key) => {
+    navigate(key === 'info' ? `/banks/${id}` : `/banks/${id}/${key}`);
+  };
 
   if (isLoading) {
     return <PageLoader label="جاري تحميل بيانات البنك..." />;
@@ -56,9 +71,9 @@ const BankDetails = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {data.accountID && (
+              {data.bankID && (
                 <button
-                  onClick={() => navigate(`/general-ledger?accountId=${data.accountID}`)}
+                  onClick={() => navigate('/bank-statement?bankId=' + data.bankID)}
                   className="flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/30"
                 >
                   <BookOpen size={16} />
@@ -66,10 +81,10 @@ const BankDetails = () => {
                 </button>
               )}
               <button
-                onClick={() => navigate('/cash-vouchers/new?bankId=' + data.bankID)}
+                onClick={() => navigate('/cheques/new?bankId=' + data.bankID)}
                 className="flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/30"
               >
-                اضافه سند<ArrowUpLeft size={16} />
+                اضافه شيك<Banknote size={16} />
               </button>
             </div>
           </div>
@@ -85,7 +100,7 @@ const BankDetails = () => {
               <button
                 key={tab.key}
                 type="button"
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => handleTabClick(tab.key)}
                 className={`flex items-center gap-2 whitespace-nowrap rounded-t-lg px-4 py-2.5 text-base font-medium transition-colors ${
                   isActive
                     ? 'border-b-2 border-primary bg-primary/5 text-primary'
@@ -107,13 +122,19 @@ const BankDetails = () => {
             <BankAccountsPanel bankId={id} />
           )}
           {activeTab === 'cheques' && (
-            <BankChequesPanel />
+            <BankChequesPanel bankId={id} />
           )}
           {activeTab === 'transactions' && (
             <BankTransactionsPanel bankId={id} />
           )}
           {activeTab === 'transfer' && (
             <BankTransferForm bankId={id} />
+          )}
+          {activeTab === 'transfers' && (
+            <BankTransferPanel bankId={id} />
+          )}
+          {activeTab === 'reconciliation' && (
+            <BankReconciliationsPanel bankId={id} />
           )}
         </div>
       </div>

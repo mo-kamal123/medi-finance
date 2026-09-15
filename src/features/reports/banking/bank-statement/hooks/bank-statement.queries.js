@@ -7,6 +7,6 @@ export const useBankStatement = (filters) => {
     queryKey: bankStatementKeys.list(filters),
     queryFn: () => getBankStatement(filters),
     placeholderData: keepPreviousData,
-    enabled: !!filters?.bankAccountId,
+    enabled: !!(filters?.bankId || filters?.bankAccountId),
   });
 };

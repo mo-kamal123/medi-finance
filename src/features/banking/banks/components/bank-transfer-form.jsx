@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import FormInput from '../../../../shared/ui/input';
 import NormalSelect from '../../../../shared/ui/NormalSelect';
 import PartySearchSelect from '../../../../shared/ui/party-search-select';
+import TransferConfirmModal from './transfer-confirm-modal';
 import { useBankAccounts, useBanks } from '../hooks/banks.queries';
 import { useCreateBankTransfer } from '../hooks/banks.mutations';
 
@@ -30,11 +32,14 @@ const normalizeCollection = (value) => {
 };
 
 const BankTransferForm = ({ bankId }) => {
-  const [transferType, setTransferType] = useState('internal');
+  const navigate = useNavigate();
+  const [, setTransferType] = useState('internal');
   const [partyType, setPartyType] = useState('customer');
+  const [partyName, setPartyName] = useState('');
   const [toBankID, setToBankID] = useState('');
+  const [confirmPayload, setConfirmPayload] = useState(null);
 
-  const { mutate: createTransfer, isPending } = useCreateBankTransfer(bankId);
+  const { mutate: createTransfer, isPending } = useCreateBankTransfer();
 
   const { data: banks = [] } = useBanks({ pageSize: 100 });
   const { data: fromAccountsResponse, isLoading: loadingFromAccounts } =
@@ -134,18 +139,63 @@ const BankTransferForm = ({ bankId }) => {
       payload.partyID = Number(data.partyID);
     }
 
-    createTransfer(payload, {
-      onSuccess: () => {
+    setConfirmPayload(payload);
+  };
+
+  const handleConfirm = () => {
+    if (!confirmPayload) return;
+    createTransfer(confirmPayload, {
+      onSuccess: (data) => {
+        const transferId = data?.bankTransferID ?? data?.id;
         reset();
         setTransferType('internal');
         setPartyType('customer');
+        setPartyName('');
         setToBankID('');
+        setConfirmPayload(null);
+        if (transferId) {
+          navigate(`/banks/${bankId}/transfers?open=${transferId}`);
+        }
       },
     });
   };
 
+  const fromLabel = useMemo(() => {
+    const acc = fromAccounts.find(
+      (a) =>
+        confirmPayload &&
+        String(a.bankAccountID) === String(confirmPayload.FromBankAccountID)
+    );
+    return acc
+      ? `${acc.accountNumber || ''} ${acc.accountNameAr || acc.accountNameEn || ''}`.trim()
+      : confirmPayload
+        ? `حساب ${confirmPayload.FromBankAccountID}`
+        : '';
+  }, [confirmPayload, fromAccounts]);
+
+  const toLabel = useMemo(() => {
+    if (!confirmPayload) return '';
+    if (confirmPayload.transferType === 'internal') {
+      const acc = toAccounts.find(
+        (a) => String(a.bankAccountID) === String(confirmPayload.ToBankAccountID)
+      );
+      const bank = banks.find(
+        (b) => String(b.bankID) === String(confirmPayload.tobankId)
+      );
+      const bankName = bank?.bankNameAr || bank?.bankNameEn || '';
+      const accLabel = acc
+        ? `${acc.accountNumber || ''} ${acc.accountNameAr || acc.accountNameEn || ''}`.trim()
+        : `حساب ${confirmPayload.ToBankAccountID}`;
+      return [bankName, accLabel].filter(Boolean).join(' - ');
+    }
+    return `${confirmPayload.partyType === 'customer' ? 'عميل' : 'مورد'}${
+      partyName ? ` - ${partyName}` : ''
+    }`;
+  }, [confirmPayload, toAccounts, banks, partyName]);
+
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+    <>
+      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Controller
           name="transferType"
@@ -230,6 +280,7 @@ const BankTransferForm = ({ bankId }) => {
                 onChange={(e) => {
                   field.onChange(e.target.value);
                   setPartyType(e.target.value);
+                  setPartyName('');
                 }}
                 error={errors.partyType?.message}
                 required
@@ -251,7 +302,10 @@ const BankTransferForm = ({ bankId }) => {
                 <PartySearchSelect
                   type={partyType}
                   value={field.value ?? ''}
-                  onChange={(e) => field.onChange(e.target.value)}
+                  onChange={(e) => {
+                    field.onChange(e.target.value);
+                    setPartyName(e.target.entityName || '');
+                  }}
                   error={errors.partyID?.message}
                 />
               )}
@@ -301,7 +355,20 @@ const BankTransferForm = ({ bankId }) => {
           {isPending ? 'جاري التنفيذ...' : 'تنفيذ التحويل'}
         </button>
       </div>
-    </form>
+      </form>
+
+      <TransferConfirmModal
+        open={Boolean(confirmPayload)}
+        isInternal={confirmPayload?.transferType === 'internal'}
+        fromLabel={fromLabel}
+        toLabel={toLabel}
+        amount={confirmPayload?.amount ?? 0}
+        notes={confirmPayload?.notes}
+        onConfirm={handleConfirm}
+        onClose={() => setConfirmPayload(null)}
+        isPending={isPending}
+      />
+    </>
   );
 };
 

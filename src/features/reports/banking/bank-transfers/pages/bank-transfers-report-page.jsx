@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Download, FileText, RotateCcw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Download, ExternalLink, FileText, RotateCcw } from 'lucide-react';
 import SearchableSelect from '../../../../../shared/ui/searchable-select';
 import Pagination from '../../../../../shared/ui/pagination';
 import Table from '../../../../../shared/ui/table';
@@ -23,6 +24,36 @@ const TRANSFER_TYPE_OPTIONS = [
 const TRANSFER_TYPE_LABELS = {
   internal: 'تحويل داخلي',
   external: 'تحويل خارجي',
+};
+
+const TRANSFER_TYPE_STYLES = {
+  internal: 'bg-sky-100 text-sky-700',
+  external: 'bg-violet-100 text-violet-700',
+};
+
+const TYPE_PALETTE = [
+  'bg-sky-100 text-sky-700',
+  'bg-violet-100 text-violet-700',
+  'bg-amber-100 text-amber-700',
+  'bg-rose-100 text-rose-700',
+  'bg-teal-100 text-teal-700',
+  'bg-indigo-100 text-indigo-700',
+  'bg-orange-100 text-orange-700',
+  'bg-cyan-100 text-cyan-700',
+];
+
+const getTransferTypeStyle = (type) => {
+  const key = String(type ?? '').toLowerCase();
+  if (!key) return 'bg-gray-100 text-gray-700';
+  if (TRANSFER_TYPE_STYLES[key]) return TRANSFER_TYPE_STYLES[key];
+  const hash = [...key].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  return TYPE_PALETTE[hash % TYPE_PALETTE.length];
+};
+
+const getTransferTypeLabel = (type, name) => {
+  const key = String(type ?? '').toLowerCase();
+  if (TRANSFER_TYPE_LABELS[key]) return TRANSFER_TYPE_LABELS[key];
+  return name || type || '-';
 };
 
 const STATUS_STYLES = {
@@ -50,6 +81,7 @@ const getStatusBadge = (status, statusName) => (
 );
 
 const BankTransfersReportPage = () => {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const { handleExport, isExporting } = useBankTransfersReportExport();
 
@@ -77,10 +109,6 @@ const BankTransfersReportPage = () => {
     setFilters((prev) => ({ ...prev, [key]: value, pageNumber: 1 }));
   };
 
-  const handleReset = () => {
-    setFilters({ ...DEFAULT_FILTERS });
-  };
-
   const handlePageChange = (page) => {
     setFilters((prev) => ({ ...prev, pageNumber: page }));
   };
@@ -98,15 +126,11 @@ const BankTransfersReportPage = () => {
         type: 'custom',
         render: (row) => (
           <span
-            className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-              row.transferType === 'internal'
-                ? 'bg-sky-100 text-sky-700'
-                : 'bg-violet-100 text-violet-700'
-            }`}
+            className={`rounded-full px-2.5 py-1 text-xs font-medium ${getTransferTypeStyle(
+              row.transferType
+            )}`}
           >
-            {TRANSFER_TYPE_LABELS[row.transferType] ||
-              row.transferTypeName ||
-              '-'}
+            {getTransferTypeLabel(row.transferType, row.transferTypeName)}
           </span>
         ),
       },
@@ -135,29 +159,10 @@ const BankTransfersReportPage = () => {
         key: 'localAmount',
         type: 'custom',
         render: (row) => (
-          <span
-            className="inline-flex items-center gap-1 font-semibold text-gray-900"
-            dir="ltr"
-          >
+          <span className="font-semibold text-primary" dir="ltr">
             {formatCurrency(row.localAmount ?? row.amount)}
-            <span className="text-xs font-normal text-gray-400">
-              {row.currencyName}
-            </span>
           </span>
         ),
-      },
-      { header: 'البيان', key: 'descriptionAr' },
-      {
-        header: 'رقم الشيك',
-        key: 'chequeNumber',
-        type: 'custom',
-        render: (row) => row.chequeNumber || '-',
-      },
-      {
-        header: 'القيد اليومي',
-        key: 'journalEntryNumber',
-        type: 'custom',
-        render: (row) => row.journalEntryNumber || '-',
       },
       {
         header: 'الحالة',
@@ -165,19 +170,48 @@ const BankTransfersReportPage = () => {
         type: 'custom',
         render: (row) => getStatusBadge(row.status, row.statusName),
       },
+      {
+        header: 'القيد اليومي',
+        key: 'journalEntryNumber',
+        type: 'custom',
+        render: (row) => {
+          const entryId = row.journalEntryID ?? row.journalEntryId;
+          if (!row.journalEntryNumber && !entryId) return '-';
+          return (
+            <span
+              className="inline-flex items-center gap-2 whitespace-nowrap"
+              dir="ltr"
+            >
+              {entryId ? (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/entries/${entryId}`)}
+                  title="عرض تفاصيل القيد"
+                  className="text-main inline-flex cursor-pointer font-semibold justify-center items-center gap-2"
+                >
+                  <ExternalLink size={15} />
+                  {row.journalEntryNumber || `قيد ${entryId}`}
+                </button>
+              ) : null}
+            </span>
+          );
+        },
+      },
     ],
-    []
+    [navigate]
   );
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <FileText size={24} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">التحويلات البنكية</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              التحويلات البنكية
+            </h1>
             <p className="mt-1 text-sm text-gray-500">
               عرض التحويلات البنكية بين الحسابات والأطراف الخارجية
             </p>
@@ -194,26 +228,28 @@ const BankTransfersReportPage = () => {
         </button>
       </div>
 
-      <div className="space-y-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4">
+        <div className="grid grid-cols-1">
           <SearchableSelect
             label="نوع التحويل"
             value={filters.transferType || ''}
-            onChange={(event) => handleChange('transferType', event.target.value)}
+            onChange={(event) =>
+              handleChange('transferType', event.target.value)
+            }
             placeholder="كل الأنواع"
             options={TRANSFER_TYPE_OPTIONS}
           />
         </div>
 
         <div className="flex items-center justify-end">
-          <button
+          {/* <button
             type="button"
             onClick={handleReset}
             className="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
           >
             <RotateCcw size={16} />
             مسح الفلاتر
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -221,7 +257,7 @@ const BankTransfersReportPage = () => {
         <PageLoader label="جاري تحميل التحويلات البنكية..." />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-xl">
             <Table
               columns={columns}
               data={transfers}

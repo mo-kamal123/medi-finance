@@ -115,6 +115,28 @@ export const getBankTransactionFilterOptions = async (type) => {
   return extractArray(data);
 };
 
+export const getBankTransfers = async (params = {}) => {
+  const { data } = await axiosInstance.get('/bank-transfers', { params });
+  return normalizePaged(data, params.pageSize ?? 20);
+};
+
+export const getBankTransferById = async (id) => {
+  const { data } = await axiosInstance.get(`/bank-transfers/${id}`);
+  return data;
+};
+
+export const approveBankTransfer = async (id) => {
+  const { data } = await axiosInstance.post(`/bank-transfers/${id}/approve`);
+  return data;
+};
+
+export const cancelBankTransfer = async ({ id, cancelReason = '' }) => {
+  const { data } = await axiosInstance.post(`/bank-transfers/${id}/cancel`, {
+    cancelReason,
+  });
+  return data;
+};
+
 export const createBankTransfer = async (payload) => {
   const { data } = await axiosInstance.post('/bank-transfers', payload);
   return data;
