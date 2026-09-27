@@ -28,8 +28,13 @@ export const useUpdateCheque = () => {
 
   return useMutation({
     mutationFn: updateCheque,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: chequesKeys.all });
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: chequesKeys.lists() });
+      if (variables?.id !== null && variables?.id !== undefined) {
+        queryClient.invalidateQueries({
+          queryKey: chequesKeys.detail(variables.id),
+        });
+      }
       toast.success('تم تحديث الشيك بنجاح');
     },
     onError: (error) => {
@@ -58,8 +63,13 @@ export const useUpdateChequeStatus = () => {
 
   return useMutation({
     mutationFn: updateChequeStatus,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: chequesKeys.all });
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: chequesKeys.lists() });
+      if (variables?.id !== null && variables?.id !== undefined) {
+        queryClient.invalidateQueries({
+          queryKey: chequesKeys.detail(variables.id),
+        });
+      }
       toast.success('تم تحديث حالة الشيك بنجاح');
     },
     onError: (error) => {

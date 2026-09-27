@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Eye, Search } from 'lucide-react';
+import { Eye, FileText, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Pagination from '../../../../shared/ui/pagination';
 import SearchableSelect from '../../../../shared/ui/searchable-select';
@@ -216,11 +216,23 @@ const BankChequesPanel = ({ bankId }) => {
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-6">
-      <div className="mb-4">
-        <h2 className="text-xl font-bold text-gray-900">الشيكات</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          جميع الشيكات{filteredCheques.length ? ` (${filteredCheques.length} شيك)` : ''}
-        </p>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">الشيكات</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            جميع الشيكات{filteredCheques.length ? ` (${filteredCheques.length} شيك)` : ''}
+          </p>
+        </div>
+        {bankId && (
+          <button
+            type="button"
+            onClick={() => navigate(`/cheques-report?bankId=${bankId}`)}
+            className="flex items-center gap-1.5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+          >
+            <FileText size={16} />
+            تقرير الشيكات
+          </button>
+        )}
       </div>
 
       <div className="mb-4">

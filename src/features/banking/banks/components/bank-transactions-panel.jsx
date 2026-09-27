@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowDownLeft, ArrowUpRight, ExternalLink, Search } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, ExternalLink, FileText, Search } from 'lucide-react';
 import Pagination from '../../../../shared/ui/pagination';
 import SearchableSelect from '../../../../shared/ui/searchable-select';
 import DateInput from '../../../../shared/ui/date-input';
@@ -193,11 +193,23 @@ const BankTransactionsPanel = ({ bankId }) => {
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-6">
-      <div className="mb-4">
-        <h2 className="text-xl font-bold text-gray-900">معاملات البنك</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          سجل المعاملات المالية للبنك{totalCount ? ` (${totalCount} معاملة)` : ''}
-        </p>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">معاملات البنك</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            سجل المعاملات المالية للبنك{totalCount ? ` (${totalCount} معاملة)` : ''}
+          </p>
+        </div>
+        {bankId && (
+          <button
+            type="button"
+            onClick={() => navigate(`/bank-transactions?bankId=${bankId}`)}
+            className="flex items-center gap-1.5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+          >
+            <FileText size={16} />
+            تقرير الحركات
+          </button>
+        )}
       </div>
 
       <div className="mb-4">

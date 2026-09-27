@@ -7,6 +7,6 @@ export const useBankChequesReport = (filters) => {
     queryKey: bankChequesReportKeys.list(filters),
     queryFn: () => getBankChequesReport(filters),
     placeholderData: keepPreviousData,
-    enabled: !!filters?.bankAccountId,
+    enabled: !!filters?.bankAccountId || !!filters?.bankId,
   });
 };

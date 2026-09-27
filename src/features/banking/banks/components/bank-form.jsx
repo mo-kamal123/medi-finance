@@ -43,6 +43,8 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
     defaultValues: formDefaults,
     values: formDefaults,
     resolver: zodResolver(bankSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
   });
 
   const mutation = isCreateMode ? createMutation : updateMutation;

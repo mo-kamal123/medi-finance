@@ -1,13 +1,12 @@
 import { useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Building2, BookOpen, ListChecks, Receipt, Wallet, Banknote, ArrowLeftRight, Scale } from 'lucide-react';
+import { ArrowLeft, Building2, BookOpen, ListChecks, Receipt, Wallet, Banknote, Scale } from 'lucide-react';
 import PageLoader from '../../../../shared/ui/page-loader';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import BankAccountsPanel from '../components/bank-accounts-panel';
 import BankChequesPanel from '../components/bank-cheques-panel';
 import BankForm from '../components/bank-form';
 import BankTransactionsPanel from '../components/bank-transactions-panel';
-import BankTransferForm from '../components/bank-transfer-form';
 import BankTransferPanel from '../components/bank-transfer-panel';
 import BankReconciliationsPanel from '../../reconciliations/components/bank-reconciliations-panel';
 import { useBank } from '../hooks/banks.queries';
@@ -17,7 +16,6 @@ const TABS = [
   { key: 'accounts', label: 'حسابات البنك', icon: Wallet },
   { key: 'cheques', label: 'الشيكات', icon: Banknote },
   { key: 'transactions', label: 'معاملات البنك', icon: Receipt },
-  { key: 'transfer', label: 'تحويل جديد', icon: ArrowLeftRight },
   { key: 'transfers', label: 'التحويلات', icon: ListChecks },
   { key: 'reconciliation', label: 'تسوية البنك', icon: Scale },
 ];
@@ -126,9 +124,6 @@ const BankDetails = () => {
           )}
           {activeTab === 'transactions' && (
             <BankTransactionsPanel bankId={id} />
-          )}
-          {activeTab === 'transfer' && (
-            <BankTransferForm bankId={id} />
           )}
           {activeTab === 'transfers' && (
             <BankTransferPanel bankId={id} />

@@ -7,6 +7,6 @@ export const useBankTransactionsReport = (filters) => {
     queryKey: bankTransactionsReportKeys.list(filters),
     queryFn: () => getBankTransactionsReport(filters),
     placeholderData: keepPreviousData,
-    enabled: !!filters?.bankAccountId,
+    enabled: !!filters?.bankAccountId || !!filters?.bankId,
   });
 };

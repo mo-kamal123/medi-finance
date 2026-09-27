@@ -11,6 +11,7 @@ import PartySearchSelect from '../../../../shared/ui/party-search-select';
 import InvoiceSearch from './invoice-search';
 import { useCreateCheque } from '../hooks/cheques.mutations';
 import { useChequeBanks, useChequeCurrencies } from '../hooks/cheques.queries';
+import { useBankAccounts } from '../../banks/hooks/banks.queries';
 import { chequeSchema } from '../validation/cheque.validation';
 
 const toDateValue = (value) => {
@@ -50,6 +51,9 @@ const getInitialValues = (defaultValues) => {
         ? String(defaultValues.providerID)
         : '',
     bankID: defaultValues?.bankID ? String(defaultValues.bankID) : '',
+    bankAccountID: defaultValues?.bankAccountID
+      ? String(defaultValues.bankAccountID)
+      : '',
     bankBranchName: defaultValues?.bankBranchName ?? '',
     cardNumber: defaultValues?.cardNumber ?? '',
     underDeliveryAccountID: defaultValues?.underDeliveryAccountID
@@ -100,7 +104,7 @@ const buildPayload = (data) => ({
     ? Number(data.underDeliveryAccountID)
     : 0,
   isBearerOnly: Boolean(data.isBearerOnly),
-  bankAccountID: 0,
+  bankAccountID: data.bankAccountID ? Number(data.bankAccountID) : 0,
   beneficiaryName: data.beneficiaryName || '',
   branchName: data.branchName || '',
   notes: data.notes || '',
@@ -181,9 +185,27 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
   } = useForm({
     defaultValues: formDefaults,
     resolver: zodResolver(chequeSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
   });
 
   const chequeType = watch('chequeType');
+  const watchedBankID = watch('bankID');
+
+  const { data: bankAccountsRes = [], isLoading: loadingBankAccounts } =
+    useBankAccounts(watchedBankID);
+
+  const bankAccountOptions = useMemo(() => {
+    const list = Array.isArray(bankAccountsRes) ? bankAccountsRes : [];
+    return list.map((a) => ({
+      value: String(a.bankAccountID ?? a.id ?? ''),
+      label:
+        a.accountNumberWithBranch ||
+        a.accountNumber ||
+        a.accountNameAr ||
+        String(a.bankAccountID ?? a.id ?? ''),
+    }));
+  }, [bankAccountsRes]);
 
   useEffect(() => {
     if (
@@ -250,6 +272,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
           error={errors[name]?.message}
           disabled={isViewMode || opts.disabled}
           options={options}
+          placeholder={opts.placeholder ?? 'اختر'}
         />
       )}
     />
@@ -273,6 +296,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               {...register('chequeNumber')}
               error={errors.chequeNumber?.message}
               readOnly={isViewMode}
+              placeholder="أدخل رقم الشيك (أرقام فقط)"
             />
             <FormInput
               type="number"
@@ -281,6 +305,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               {...register('amount')}
               error={errors.amount?.message}
               readOnly={isViewMode}
+              placeholder="أدخل قيمة الشيك"
             />
             {renderSelect('chequeType', 'نوع الشيك', [
               { value: '0', label: 'شيك قبض' },
@@ -293,8 +318,8 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               },
             })}
             {renderDate('chequeDate', 'تاريخ الشيك', true)}
-            {renderDate('receiptDate', 'تاريخ الاستلام')}
-            {renderDate('dueDate', 'تاريخ الاستحقاق')}
+            {renderDate('receiptDate', 'تاريخ الاستلام', true)}
+            {renderDate('dueDate', 'تاريخ الاستحقاق', true)}
           </div>
         </div>
 
@@ -312,6 +337,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
                   <PartySearchSelect
                     type={isReceipt ? 'customer' : 'supplier'}
                     value={field.value ?? ''}
+                    onBlur={field.onBlur}
                     onChange={(e) => {
                       field.onChange(e.target.value);
                       if (isReceipt) {
@@ -326,8 +352,19 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
                 </div>
               )}
             />
-            {renderSelect('bankID', 'البنك', bankOptions, { required: true })}
-            {renderSelect('currencyID', 'العملة', currencyOptions)}
+            {renderSelect('bankID', 'البنك', bankOptions, {
+              required: true,
+              placeholder: 'اختر البنك',
+              onChange: () => setValue('bankAccountID', ''),
+            })}
+            {renderSelect('bankAccountID', 'الحساب البنكي', bankAccountOptions, {
+              required: true,
+              placeholder: 'اختر الحساب البنكي',
+              disabled: !watchedBankID || loadingBankAccounts,
+            })}
+            {renderSelect('currencyID', 'العملة', currencyOptions, {
+              placeholder: 'اختر العملة',
+            })}
             <FormInput
               type="number"
               step="0.01"
@@ -335,6 +372,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               {...register('exchangeRate')}
               error={errors.exchangeRate?.message}
               readOnly={isViewMode}
+              placeholder="1"
             />
             <div>
               <label className="mb-1 block font-medium text-gray-700">
@@ -347,6 +385,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
                   <InvoiceSearch
                     value={field.value ?? ''}
                     onChange={field.onChange}
+                    onBlur={field.onBlur}
                     displayValue={formDefaults.invoiceNumber}
                     onInvoiceSelect={(invoice) => {
                       const party = getInvoiceParty(invoice);
@@ -378,11 +417,13 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               label="اسم المستفيد"
               {...register('beneficiaryName')}
               readOnly={isViewMode}
+              placeholder="أدخل اسم المستفيد"
             />
             <FormInput
               label="فرع الشركة"
               {...register('branchName')}
               readOnly={isViewMode}
+              placeholder="أدخل اسم الفرع"
             />
           </div>
         </div>
@@ -406,6 +447,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               <AccountSearchSelect
                 value={field.value ?? ''}
                 onChange={field.onChange}
+                onBlur={field.onBlur}
                 disabled={isViewMode}
                 error={errors.underDeliveryAccountID?.message}
               />
@@ -423,6 +465,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               <AccountSearchSelect
                 value={field.value ?? ''}
                 onChange={field.onChange}
+                onBlur={field.onBlur}
                 disabled={isViewMode}
                 error={errors.collectionAccountID?.message}
               />
@@ -440,6 +483,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               <AccountSearchSelect
                 value={field.value ?? ''}
                 onChange={field.onChange}
+                onBlur={field.onBlur}
                 disabled={isViewMode}
                 error={errors.counterAccountID?.message}
               />
@@ -457,6 +501,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               <CostCenterSearchSelect
                 value={field.value ?? ''}
                 onChange={field.onChange}
+                onBlur={field.onBlur}
                 disabled={isViewMode}
                 error={errors.costCenterID?.message}
               />
@@ -508,6 +553,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
             label="ملاحظات"
             {...register('notes')}
             readOnly={isViewMode}
+            placeholder="أدخل ملاحظات الشيك"
           />
         </div>
       </div>

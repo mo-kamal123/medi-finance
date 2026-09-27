@@ -1,15 +1,17 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Download, ExternalLink, FileText, RotateCcw } from 'lucide-react';
 import SearchableSelect from '../../../../../shared/ui/searchable-select';
 import Pagination from '../../../../../shared/ui/pagination';
 import Table from '../../../../../shared/ui/table';
 import PageLoader from '../../../../../shared/ui/page-loader';
 import { formatCurrency, formatDate } from '../../../../../shared/utils/formatters';
+import { useBanks } from '../../../../banking/banks/hooks/banks.queries';
 import { useBankTransfersReport } from '../hooks/bank-transfers.queries';
 import { useBankTransfersReportExport } from '../hooks/use-bank-transfers-report-export';
 
 const DEFAULT_FILTERS = {
+  bankId: '',
   transferType: '',
   pageNumber: 1,
   pageSize: 20,
@@ -82,11 +84,29 @@ const getStatusBadge = (status, statusName) => (
 
 const BankTransfersReportPage = () => {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [searchParams] = useSearchParams();
+  const urlBankId = searchParams.get('bankId');
+  const [filters, setFilters] = useState(() => ({
+    ...DEFAULT_FILTERS,
+    bankId: urlBankId || '',
+  }));
   const { handleExport, isExporting } = useBankTransfersReportExport();
+
+  const { data: banks = [] } = useBanks({ pageSize: 100 });
+
+  const bankOptions = useMemo(
+    () =>
+      (Array.isArray(banks) ? banks : []).map((bank) => ({
+        value: String(bank.bankID || bank.id),
+        label:
+          bank.bankNameAr || bank.bankNameEn || String(bank.bankID || bank.id),
+      })),
+    [banks]
+  );
 
   const queryParams = useMemo(
     () => ({
+      bankId: filters.bankId,
       transferType: filters.transferType,
       pageNumber: filters.pageNumber,
       pageSize: filters.pageSize,
@@ -229,7 +249,15 @@ const BankTransfersReportPage = () => {
       </div>
 
       <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4">
-        <div className="grid grid-cols-1">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <SearchableSelect
+            label="البنك"
+            value={filters.bankId || ''}
+            onChange={(event) => handleChange('bankId', event.target.value)}
+            placeholder="كل البنوك"
+            options={bankOptions}
+          />
+
           <SearchableSelect
             label="نوع التحويل"
             value={filters.transferType || ''}

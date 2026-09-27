@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeftRight, ExternalLink, Eye, Search } from 'lucide-react';
+import { ArrowLeftRight, ExternalLink, Eye, FileText, Plus, Search } from 'lucide-react';
 import Pagination from '../../../../shared/ui/pagination';
 import SearchableSelect from '../../../../shared/ui/searchable-select';
 import DateInput from '../../../../shared/ui/date-input';
@@ -13,6 +13,7 @@ import {
 } from '../../../../shared/utils/formatters';
 import { useBankAccounts, useBankTransfers } from '../hooks/banks.queries';
 import TransferDetailsModal from './transfer-details-modal';
+import BankTransferModal from './bank-transfer-modal';
 
 const EMPTY_FILTERS = {
   searchTerm: '',
@@ -67,6 +68,9 @@ const getTypeBadge = (type, typeName) => (
   </span>
 );
 
+const formatTransferSide = (bankName, accountName, fallback) =>
+  [bankName, accountName].filter(Boolean).join(' - ') || fallback || '-';
+
 const buildParams = (bankId, filters, searchTerm, pageNumber, pageSize) => {
   const params = { bankId, pageNumber, pageSize };
   Object.entries({ ...filters, searchTerm }).forEach(([key, value]) => {
@@ -87,6 +91,7 @@ const BankTransferPanel = ({ bankId }) => {
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [transferOpen, setTransferOpen] = useState(false);
 
   const debouncedSearch = useDebounce(filters.searchTerm, 500);
 
@@ -202,11 +207,33 @@ const BankTransferPanel = ({ bankId }) => {
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-6">
-      <div className="mb-4">
-        <h2 className="text-xl font-bold text-gray-900">التحويلات البنكية</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          سجل التحويلات البنكية{totalCount ? ` (${totalCount} تحويل)` : ''}
-        </p>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">التحويلات البنكية</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            سجل التحويلات البنكية{totalCount ? ` (${totalCount} تحويل)` : ''}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {bankId && (
+            <button
+              type="button"
+              onClick={() => navigate(`/bank-transfers?bankId=${bankId}`)}
+              className="flex items-center gap-1.5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+            >
+              <FileText size={16} />
+              تقرير التحويلات
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setTransferOpen(true)}
+            className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90"
+          >
+            <ArrowLeftRight size={16} />
+            تحويل
+          </button>
+        </div>
       </div>
 
       <div className="mb-4">
@@ -268,7 +295,9 @@ const BankTransferPanel = ({ bankId }) => {
               transfers.map((tr) => (
                 <tr
                   key={tr.bankTransferID}
-                  onClick={() => setSelectedTransferId(String(tr.bankTransferID))}
+                  onClick={() =>
+                    setSelectedTransferId(String(tr.bankTransferID))
+                  }
                   className={`cursor-pointer border-t border-gray-200 even:bg-gray-50/50 transition-colors hover:bg-gray-50 ${
                     isFetching ? 'opacity-60' : ''
                   }`}
@@ -280,13 +309,17 @@ const BankTransferPanel = ({ bankId }) => {
                     {getTypeBadge(tr.transferType, tr.transferTypeName)}
                   </td>
                   <td className="whitespace-nowrap p-3">
-                    {tr.fromBankNameAr || tr.bankAccountName || '-'}
+                    {formatTransferSide(
+                      tr.fromBankNameAr,
+                      tr.fromBankAccountName || tr.bankAccountName
+                    )}
                   </td>
                   <td className="whitespace-nowrap p-3">
-                    {tr.toBankNameAr ||
-                      tr.partyName ||
-                      tr.toBankAccountName ||
-                      '-'}
+                    {formatTransferSide(
+                      tr.toBankNameAr,
+                      tr.toBankAccountName,
+                      tr.partyName
+                    )}
                   </td>
                   <td className="whitespace-nowrap p-3">
                     {formatDate(tr.transferDate)}
@@ -342,6 +375,15 @@ const BankTransferPanel = ({ bankId }) => {
         open={Boolean(selectedTransferId)}
         transferId={selectedTransferId}
         onClose={() => setSelectedTransferId(null)}
+      />
+
+      <BankTransferModal
+        bankId={bankId}
+        isOpen={transferOpen}
+        onClose={() => setTransferOpen(false)}
+        onSuccess={(transferId) => {
+          if (transferId) setSelectedTransferId(String(transferId));
+        }}
       />
     </section>
   );

@@ -22,7 +22,7 @@ const SummaryCard = ({
 }) => {
   const CardIcon = icon;
   return (
-    <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-white p-5">
       <div className="flex items-start justify-between">
         <div>
           <div className="text-sm text-gray-500">{label}</div>
@@ -73,7 +73,7 @@ const BankChequesSummaryPage = () => {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Banknote size={24} />
@@ -96,7 +96,7 @@ const BankChequesSummaryPage = () => {
         </button>
       </div>
 
-      <div className="space-y-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <SearchableSelect
             label="البنك"
@@ -161,7 +161,7 @@ const BankChequesSummaryPage = () => {
           />
         </div>
       ) : (
-        <div className="rounded-xl border border-gray-100 bg-white p-16 text-center text-gray-400 shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white p-16 text-center text-gray-400">
           اختر بنكاً لعرض ملخص الشيكات
         </div>
       )}

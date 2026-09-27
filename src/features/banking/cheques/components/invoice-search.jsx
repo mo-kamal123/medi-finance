@@ -11,7 +11,7 @@ const unwrapInvoice = (data) => {
   return data.data || data.result || data.item || data;
 };
 
-const InvoiceSearch = ({ value, onChange, onInvoiceSelect, disabled, error, displayValue }) => {
+const InvoiceSearch = ({ value, onChange, onBlur, onInvoiceSelect, disabled, error, displayValue }) => {
   const [searchText, setSearchText] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [selectedNumber, setSelectedNumber] = useState('');
@@ -111,6 +111,9 @@ const InvoiceSearch = ({ value, onChange, onInvoiceSelect, disabled, error, disp
           }}
           onFocus={() => {
             setIsOpen(true);
+          }}
+          onBlur={(event) => {
+            onBlur?.(event);
           }}
           placeholder="INV-2026-0001"
           disabled={disabled}
