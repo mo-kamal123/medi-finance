@@ -15,7 +15,6 @@ const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     login(loginData);
-    console.log(loginData);
   };
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 sm:p-10 space-y-8 max-w-md mx-auto">

@@ -66,6 +66,7 @@ export const links = [
       sub: [
         { name: 'البنوك المتاحه', link: '/banks', icon: Landmark },
         { name: 'الشيكات', link: '/cheques', icon: CreditCard },
+        { name: 'تسويات البنك', link: '/reconciliations', icon: FileCheck },
       ],
     },
     {
@@ -90,7 +91,7 @@ export const links = [
             { name: 'كشف حساب بنك', link: '/bank-statement', icon: FileText },
             { name: 'حركات البنوك', link: '/bank-transactions', icon: Receipt },
             { name: 'أرصدة البنوك', link: '/bank-balances', icon: Wallet },
-            // { name: 'مطابقة البنوك', link: '/bank-reconciliation', icon: FileCheck },
+            { name: 'مطابقة البنوك', link: '/bank-reconciliation', icon: FileCheck },
             { name: 'التحويلات البنكية', link: '/bank-transfers', icon: Link2 },
             { name: 'تقرير الشيكات', link: '/cheques-report', icon: CreditCard },
             { name: 'ملخص الشيكات', link: '/cheques-summary', icon: Banknote },

@@ -12,6 +12,7 @@ const DROPDOWN_MAX_HEIGHT = 240;
 const PartySearchSelect = ({
   value,
   onChange,
+  onBlur,
   disabled,
   error,
   type = 'customer',
@@ -180,6 +181,9 @@ const PartySearchSelect = ({
           onFocus={() => {
             setIsOpen(true);
             if (value && !displayLabel) setSearchText(String(value));
+          }}
+          onBlur={(event) => {
+            onBlur?.(event);
           }}
           placeholder={placeholder || (isCustomer ? 'ابحث عن عميل' : 'ابحث عن مورد')}
           disabled={disabled}

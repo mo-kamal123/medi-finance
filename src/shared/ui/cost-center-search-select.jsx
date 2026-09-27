@@ -14,6 +14,7 @@ const DROPDOWN_MAX_HEIGHT = 240;
 const CostCenterSearchSelect = ({
   value,
   onChange,
+  onBlur,
   disabled,
   error,
   placeholder = 'ابحث عن مركز تكلفة',
@@ -140,6 +141,9 @@ const CostCenterSearchSelect = ({
           onFocus={() => {
             setIsOpen(true);
             if (value && !displayLabel) setSearchText(String(value));
+          }}
+          onBlur={(event) => {
+            onBlur?.(event);
           }}
           placeholder={placeholder}
           disabled={disabled}

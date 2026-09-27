@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Plus, Search } from 'lucide-react';
+import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import Pagination from '../../../../shared/ui/pagination';
 import Table from '../../../../shared/ui/table';
 import SearchableSelect from '../../../../shared/ui/searchable-select';
@@ -9,10 +10,11 @@ import FormInput from '../../../../shared/ui/input';
 import FilterBar from '../../../../shared/ui/filter-bar';
 import { formatCurrency, formatDate } from '../../../../shared/utils/formatters';
 import { getErrorMessage } from '../../../../shared/lib/toast';
-import { useBankAccounts } from '../../banks/hooks/banks.queries';
+import { useBanks, useAllBankAccounts } from '../../banks/hooks/banks.queries';
 import { useBankReconciliations } from '../hooks/bank-reconciliations.queries';
 
 const EMPTY_FILTERS = {
+  bankId: '',
   bankAccountId: '',
   status: '',
   fromDate: '',
@@ -28,13 +30,6 @@ const STATUS_OPTIONS = [
   { value: 'Cancelled', label: 'ملغي' },
 ];
 
-const getRecId = (row) =>
-  row?.id ?? row?.reconciliationId ?? row?.reconciliationID;
-
-const getRecStatus = (row) => row?.status ?? row?.statusCode ?? '';
-
-const getRecStatusName = (row) => row?.statusName ?? row?.status ?? '-';
-
 const STATUS_STYLES = {
   Matched: 'bg-emerald-100 text-emerald-700',
   Reconciled: 'bg-sky-100 text-sky-700',
@@ -43,65 +38,98 @@ const STATUS_STYLES = {
   Cancelled: 'bg-red-100 text-red-700',
 };
 
-const BankReconciliationsPanel = ({ bankId }) => {
+const STATUS_AR = {
+  Reconciled: 'معتمدة',
+  InProgress: 'جارية',
+  Draft: 'مسودة',
+  Matched: 'مطابق',
+  Cancelled: 'ملغي',
+};
+
+const getRecId = (row) =>
+  row?.reconciliationID ?? row?.reconciliationId ?? row?.id;
+
+const getRecStatus = (row) => row?.status ?? row?.statusCode ?? '';
+
+const getRecStatusName = (row) =>
+  STATUS_AR[row?.status] || row?.statusName || row?.status || '-';
+
+const getAccountLabel = (row) =>
+  row?.accountNameAr ||
+  row?.bankAccountName ||
+  row?.accountName ||
+  [row?.bankNameAr, row?.accountNumber].filter(Boolean).join(' - ') ||
+  '-';
+
+const extractAccounts = (res) => {
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.data)) return res.data;
+  if (Array.isArray(res?.items)) return res.items;
+  return [];
+};
+
+const ReconciliationsPage = () => {
   const navigate = useNavigate();
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const { data: accountsRes = [] } = useBankAccounts(bankId);
+  const { data: banksRes = [] } = useBanks({});
+  const { data: accountsRes } = useAllBankAccounts();
 
+  const banks = useMemo(
+    () => (Array.isArray(banksRes) ? banksRes : []),
+    [banksRes]
+  );
   const accounts = useMemo(
-    () => (Array.isArray(accountsRes) ? accountsRes : []),
+    () => extractAccounts(accountsRes),
     [accountsRes]
   );
 
-  const accountOptions = useMemo(
+  const bankOptions = useMemo(
     () =>
-      accounts.map((account) => ({
-        value: String(account.bankAccountID ?? account.id),
-        label:
-          account.accountNumberWithBranch ||
-          [account.accountNumber, account.accountNameAr].filter(Boolean).join(' - ') ||
-          String(account.bankAccountID ?? account.id),
+      banks.map((b) => ({
+        value: String(b.bankID ?? b.id),
+        label: b.bankNameAr || b.bankNameEn || String(b.bankID ?? b.id),
       })),
-    [accounts]
+    [banks]
   );
 
-  const accountIdsOfBank = useMemo(
+  const filteredAccounts = useMemo(() => {
+    if (!filters.bankId) return accounts;
+    return accounts.filter(
+      (a) => String(a.bankID ?? a.bankId ?? '') === String(filters.bankId)
+    );
+  }, [accounts, filters.bankId]);
+
+  const accountOptions = useMemo(
     () =>
-      new Set(
-        accounts.map((a) => String(a.bankAccountID ?? a.id).toLowerCase())
-      ),
-    [accounts]
+      filteredAccounts.map((a) => ({
+        value: String(a.bankAccountID ?? a.id),
+        label:
+          a.accountNumberWithBranch ||
+          [a.accountNumber, a.accountNameAr].filter(Boolean).join(' - ') ||
+          String(a.bankAccountID ?? a.id),
+      })),
+    [filteredAccounts]
   );
 
   const queryParams = useMemo(() => {
     const params = { pageNumber, pageSize };
-    if (bankId) params.bankId = bankId;
+    if (filters.bankId) params.bankId = filters.bankId;
     if (filters.bankAccountId) params.bankAccountId = filters.bankAccountId;
     if (filters.status) params.status = filters.status;
     if (filters.fromDate) params.fromDate = filters.fromDate;
     if (filters.toDate) params.toDate = filters.toDate;
-    if (filters.searchTerm?.trim()) params.searchTerm = filters.searchTerm.trim();
+    if (filters.searchTerm?.trim())
+      params.searchTerm = filters.searchTerm.trim();
     return params;
-  }, [bankId, filters, pageNumber, pageSize]);
+  }, [filters, pageNumber, pageSize]);
 
   const { data, isLoading, isFetching, isError, error } =
     useBankReconciliations(queryParams);
 
-  const allItems = useMemo(() => data?.items ?? [], [data]);
-  // Client-side guard: keep only reconciliations of this bank's accounts
-  // (in case API ignores bankId filter)
-  const reconciliations = useMemo(() => {
-    if (!bankId || accountIdsOfBank.size === 0) return allItems;
-    return allItems.filter((row) => {
-      const accId = row?.bankAccountId ?? row?.bankAccountID;
-      if (accId === null || accId === undefined) return true;
-      return accountIdsOfBank.has(String(accId).toLowerCase());
-    });
-  }, [allItems, accountIdsOfBank, bankId]);
-
+  const reconciliations = useMemo(() => data?.items ?? [], [data]);
   const totalCount = data?.totalCount ?? reconciliations.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
@@ -111,7 +139,11 @@ const BankReconciliationsPanel = ({ bankId }) => {
   );
 
   const handleChange = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+      ...(key === 'bankId' ? { bankAccountId: '' } : {}),
+    }));
     setPageNumber(1);
   };
 
@@ -133,15 +165,25 @@ const BankReconciliationsPanel = ({ bankId }) => {
         ),
       },
       {
+        header: 'البنك',
+        key: 'bankNameAr',
+        type: 'custom',
+        render: (row) => row?.bankNameAr || row?.bankName || '-',
+      },
+      {
         header: 'الحساب',
         key: 'accountNameAr',
         type: 'custom',
-        render: (row) =>
-          row?.bankAccountName ??
-          row?.accountNameAr ??
-          row?.accountName ??
-          [row?.bankNameAr, row?.accountNumber].filter(Boolean).join(' - ') ??
-          '-',
+        render: (row) => (
+          <div className="flex flex-col">
+            <span>{getAccountLabel(row)}</span>
+            {row?.accountNumber ? (
+              <span dir="ltr" className="font-mono text-xs text-gray-500">
+                {row.accountNumber}
+              </span>
+            ) : null}
+          </div>
+        ),
       },
       {
         header: 'الفترة',
@@ -154,19 +196,23 @@ const BankReconciliationsPanel = ({ bankId }) => {
         ),
       },
       {
-        header: 'تاريخ الكشف',
-        key: 'statementDate',
-        type: 'custom',
-        render: (row) => formatDate(row?.statementDate),
-      },
-      {
-        header: 'رصيد الكشف النهائي',
+        header: 'رصيد الكشف',
         key: 'bankStatementClosingBalance',
         type: 'custom',
         render: (row) => (
           <span className="font-semibold" dir="ltr">
-            {formatCurrency(row?.bankStatementClosingBalance ?? 0)}
+            {formatCurrency(
+              row?.bankStatementClosingBalance ?? row?.statementBalance ?? 0
+            )}
           </span>
+        ),
+      },
+      {
+        header: 'رصيد الدفاتر',
+        key: 'bookBalance',
+        type: 'custom',
+        render: (row) => (
+          <span dir="ltr">{formatCurrency(row?.bookBalance ?? 0)}</span>
         ),
       },
       {
@@ -186,6 +232,12 @@ const BankReconciliationsPanel = ({ bankId }) => {
             </span>
           );
         },
+      },
+      {
+        header: 'البنود',
+        key: 'totalItems',
+        type: 'custom',
+        render: (row) => row?.totalItems ?? row?.items?.length ?? '-',
       },
       {
         header: 'الحالة',
@@ -232,14 +284,22 @@ const BankReconciliationsPanel = ({ bankId }) => {
       label="بحث"
       icon={Search}
       value={filters.searchTerm}
-      onChange={(event) => handleChange('searchTerm', event.target.value)}
-      placeholder="ابحث برقم التسوية أو الملاحظات"
+      onChange={(e) => handleChange('searchTerm', e.target.value)}
+      placeholder="ابحث برقم الحساب أو البنك"
+    />,
+    <SearchableSelect
+      key="bankId"
+      label="البنك"
+      value={filters.bankId || ''}
+      onChange={(e) => handleChange('bankId', e.target.value)}
+      options={bankOptions}
+      placeholder="كل البنوك"
     />,
     <SearchableSelect
       key="bankAccountId"
       label="الحساب البنكي"
       value={filters.bankAccountId || ''}
-      onChange={(event) => handleChange('bankAccountId', event.target.value)}
+      onChange={(e) => handleChange('bankAccountId', e.target.value)}
       options={accountOptions}
       placeholder="كل الحسابات"
     />,
@@ -247,7 +307,7 @@ const BankReconciliationsPanel = ({ bankId }) => {
       key="status"
       label="الحالة"
       value={filters.status || ''}
-      onChange={(event) => handleChange('status', event.target.value)}
+      onChange={(e) => handleChange('status', e.target.value)}
       options={STATUS_OPTIONS}
       placeholder="كل الحالات"
     />,
@@ -258,34 +318,32 @@ const BankReconciliationsPanel = ({ bankId }) => {
       key="fromDate"
       label="من تاريخ"
       value={filters.fromDate || ''}
-      onChange={(event) => handleChange('fromDate', event.target.value)}
+      onChange={(e) => handleChange('fromDate', e.target.value)}
     />,
     <DateInput
       key="toDate"
       label="إلى تاريخ"
       value={filters.toDate || ''}
-      onChange={(event) => handleChange('toDate', event.target.value)}
+      onChange={(e) => handleChange('toDate', e.target.value)}
     />,
   ];
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-4 p-6">
+      <Breadcrumb items={[{ label: 'البنوك' }, { label: 'تسويات البنك' }]} />
+
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-6">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">تسويات البنك</h2>
+          <h1 className="text-2xl font-bold text-gray-900">تسويات البنك</h1>
           <p className="mt-1 text-sm text-gray-500">
-            {totalCount ? `إجمالي التسويات (${totalCount})` : 'لا توجد تسويات بعد'}
+            {totalCount
+              ? `إجمالي التسويات (${totalCount})`
+              : 'عرض كل التسويات البنكية ومطابقتها'}
           </p>
         </div>
         <button
           type="button"
-          onClick={() =>
-            navigate(
-              bankId
-                ? `/reconciliations/new?bankId=${bankId}`
-                : '/reconciliations/new'
-            )
-          }
+          onClick={() => navigate('/reconciliations/new')}
           className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
         >
           <Plus size={16} />
@@ -293,25 +351,23 @@ const BankReconciliationsPanel = ({ bankId }) => {
         </button>
       </div>
 
-      <div className="mb-4">
-        <FilterBar
-          primaryFilters={primaryFilters}
-          extraFilters={extraFilters}
-          onReset={handleReset}
-          activeCount={activeFilterCount}
-          extraCount={
-            [filters.fromDate, filters.toDate].filter((v) => v !== '').length
-          }
-        />
-      </div>
+      <FilterBar
+        primaryFilters={primaryFilters}
+        extraFilters={extraFilters}
+        onReset={handleReset}
+        activeCount={activeFilterCount}
+        extraCount={
+          [filters.fromDate, filters.toDate].filter((v) => v !== '').length
+        }
+      />
 
       {isError ? (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
           {getErrorMessage(error, 'تعذر تحميل التسويات')}
         </div>
       ) : null}
 
-      <div className="mb-4 overflow-hidden rounded-xl">
+      <div className="overflow-hidden rounded-xl">
         <Table
           columns={columns}
           data={reconciliations}
@@ -333,8 +389,8 @@ const BankReconciliationsPanel = ({ bankId }) => {
           }}
         />
       ) : null}
-    </section>
+    </div>
   );
 };
 
-export default BankReconciliationsPanel;
+export default ReconciliationsPage;

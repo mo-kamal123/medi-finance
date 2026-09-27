@@ -16,12 +16,16 @@ import {
   formatCurrency,
   formatDate,
 } from '../../../../../shared/utils/formatters';
-import { useAllBankAccounts } from '../../../../banking/banks/hooks/banks.queries';
+import {
+  useAllBankAccounts,
+  useBanks,
+} from '../../../../banking/banks/hooks/banks.queries';
 import { useBankTransactionsReport } from '../hooks/bank-transactions.queries';
 import { useBankTransactionsReportExport } from '../hooks/use-bank-transactions-report-export';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const DEFAULT_FILTERS = {
+  bankId: '',
   bankAccountId: '',
   status: '',
   direction: '',
@@ -90,28 +94,50 @@ const getStatusBadge = (status, statusName) => (
 );
 
 const BankTransactionsReportPage = () => {
-  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [searchParams] = useSearchParams();
+  const urlBankId = searchParams.get('bankId');
+  const [filters, setFilters] = useState(() => ({
+    ...DEFAULT_FILTERS,
+    bankId: urlBankId || '',
+  }));
   const { handleExport, isExporting } = useBankTransactionsReportExport();
   const navigate = useNavigate();
+  const { data: banks = [] } = useBanks({ pageSize: 100 });
   const { data: accountsResponse = [] } = useAllBankAccounts();
+
+  const bankOptions = useMemo(
+    () =>
+      (Array.isArray(banks) ? banks : []).map((bank) => ({
+        value: String(bank.bankID || bank.id),
+        label:
+          bank.bankNameAr || bank.bankNameEn || String(bank.bankID || bank.id),
+      })),
+    [banks]
+  );
 
   const bankAccountOptions = useMemo(() => {
     const list = normalizeCollection(accountsResponse);
-    return list.map((account) => ({
-      value: String(account.bankAccountID || account.id),
-      label:
-        [
-          account.bankNameAr || account.bankName,
-          account.accountNumber,
-          account.accountNameAr || account.accountNameEn,
-        ]
-          .filter(Boolean)
-          .join(' - ') || String(account.bankAccountID || account.id),
-    }));
-  }, [accountsResponse]);
+    return list
+      .filter(
+        (account) =>
+          !filters.bankId || String(account.bankID) === String(filters.bankId)
+      )
+      .map((account) => ({
+        value: String(account.bankAccountID || account.id),
+        label:
+          [
+            account.bankNameAr || account.bankName,
+            account.accountNumber,
+            account.accountNameAr || account.accountNameEn,
+          ]
+            .filter(Boolean)
+            .join(' - ') || String(account.bankAccountID || account.id),
+      }));
+  }, [accountsResponse, filters.bankId]);
 
   const queryParams = useMemo(
     () => ({
+      bankId: filters.bankId,
       bankAccountId: filters.bankAccountId,
       status: filters.status,
       direction: filters.direction,
@@ -135,7 +161,12 @@ const BankTransactionsReportPage = () => {
   );
 
   const handleChange = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value, pageNumber: 1 }));
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+      ...(key === 'bankId' ? { bankAccountId: '' } : {}),
+      pageNumber: 1,
+    }));
   };
 
   const handleReset = () => {
@@ -276,7 +307,7 @@ const BankTransactionsReportPage = () => {
         <button
           type="button"
           onClick={() => handleExport(queryParams)}
-          disabled={isExporting || !filters.bankAccountId}
+          disabled={isExporting || (!filters.bankAccountId && !filters.bankId)}
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
         >
           <Download size={16} />
@@ -285,7 +316,15 @@ const BankTransactionsReportPage = () => {
       </div>
 
       <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 ">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5 ">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-6 ">
+          <SearchableSelect
+            label="البنك"
+            value={filters.bankId || ''}
+            onChange={(event) => handleChange('bankId', event.target.value)}
+            placeholder="اختر البنك..."
+            options={bankOptions}
+          />
+
           <SearchableSelect
             label="الحساب البنكي"
             value={filters.bankAccountId || ''}
@@ -294,6 +333,7 @@ const BankTransactionsReportPage = () => {
             }
             placeholder="اختر الحساب البنكي..."
             options={bankAccountOptions}
+            disabled={!filters.bankId}
           />
 
           <SearchableSelect
@@ -347,14 +387,14 @@ const BankTransactionsReportPage = () => {
               data={transactions}
               loading={isFetching}
               emptyMessage={
-                filters.bankAccountId
+                filters.bankAccountId || filters.bankId
                   ? 'لا توجد حركات لعرضها'
-                  : 'اختر حساباً بنكياً لعرض الحركات'
+                  : 'اختر بنكاً أو حساباً بنكياً لعرض الحركات'
               }
             />
           </div>
 
-          {filters.bankAccountId && (
+          {(filters.bankAccountId || filters.bankId) && (
             <Pagination
               currentPage={Number(filters.pageNumber) || 1}
               totalPages={totalPages}

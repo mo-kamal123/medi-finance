@@ -1,6 +1,5 @@
 import { buildTree } from '../../../accounting/tree/utils/buildTree';
 import { formatCurrency, formatDate } from '../../../../shared/utils/formatters';
-import { Plus } from 'lucide-react';
 import JournalEntryActions from '../components/journal-entry-actions';
 
 export const JOURNAL_TYPES = [
