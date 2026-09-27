@@ -1,13 +1,18 @@
 import { useMemo, useState } from 'react';
 import {
-  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
   CheckCircle2,
   EyeOff,
+  Landmark,
   Link2,
   Unlink,
   Flag,
+  Wallet,
+  Scale,
 } from 'lucide-react';
 import PageLoader from '../../../../shared/ui/page-loader';
+import Table from '../../../../shared/ui/table';
 import SearchableSelect from '../../../../shared/ui/searchable-select';
 import FormInput from '../../../../shared/ui/input';
 import ConfirmModal from '../../../../shared/ui/modal';
@@ -43,6 +48,10 @@ const STATUS_STYLES = {
 
 const STATUS_LABELS = {
   Matched: 'مطابق',
+  Reconciled: 'معتمدة',
+  InProgress: 'جارية',
+  Draft: 'مسودة',
+  Cancelled: 'ملغي',
   UnmatchedBankTransaction: 'حركة بنك غير مطابقة',
   OutstandingSystemTransaction: 'حركة سيستم معلقة',
   Adjusted: 'معدل',
@@ -109,10 +118,11 @@ const ReconciliationDetails = ({ reconciliationId, onBack }) => {
     refetch: refetchItems,
   } = useReconciliationItems(reconciliationId);
 
-  const items = useMemo(
-    () => (Array.isArray(itemsRes) ? itemsRes : []),
-    [itemsRes]
-  );
+  const items = useMemo(() => {
+    if (Array.isArray(itemsRes) && itemsRes.length > 0) return itemsRes;
+    const embedded = details?.items ?? details?.Items ?? [];
+    return Array.isArray(embedded) ? embedded : [];
+  }, [itemsRes, details]);
 
   const matchMutation = useMatchReconciliationItem(reconciliationId);
   const unmatchMutation = useUnmatchReconciliationItem(reconciliationId);
@@ -169,6 +179,185 @@ const ReconciliationDetails = ({ reconciliationId, onBack }) => {
           return { value: String(bankTxId), label: label || `حركة ${bankTxId}` };
         }),
     [items]
+  );
+
+  const isMatched = (item) => {
+    const key = getItemStatusKey(item);
+    return key === 'Matched' || key === 'Adjusted';
+  };
+  const isIgnored = (item) => getItemStatusKey(item) === 'Ignored';
+
+  const itemColumns = useMemo(
+    () => [
+      {
+        header: 'حركة كشف البنك',
+        key: 'bankTx',
+        type: 'custom',
+        render: (item) => {
+          const bankTx = getBankTx(item);
+          if (!bankTx && !item?.reference && !item?.description)
+            return <span className="text-xs text-gray-400">-</span>;
+          return (
+            <div className="space-y-0.5 text-xs text-right">
+              <p className="font-semibold text-gray-800">
+                {bankTx?.description ?? item?.description ?? '-'}
+              </p>
+              <p className="text-gray-500">
+                {bankTx?.reference ?? item?.reference ?? ''}
+                {bankTx?.externalReference || item?.externalReference
+                  ? ` · ${bankTx?.externalReference ?? item?.externalReference}`
+                  : ''}
+              </p>
+              <p className="text-gray-500">
+                {formatDate(bankTx?.transactionDate ?? item?.transactionDate)}
+              </p>
+            </div>
+          );
+        },
+      },
+      {
+        header: 'حركة السيستم',
+        key: 'systemTx',
+        type: 'custom',
+        render: (item) => {
+          const systemTx = getSystemTx(item);
+          if (!systemTx) return <span className="text-xs text-gray-400">-</span>;
+          return (
+            <div className="space-y-0.5 text-xs text-right">
+              <p className="font-semibold text-gray-800">
+                {systemTx?.description ?? systemTx?.transactionNumber ?? '-'}
+              </p>
+              <p className="text-gray-500">
+                {systemTx?.referenceNumber ?? systemTx?.reference ?? ''}
+              </p>
+              <p className="text-gray-500">
+                {formatDate(systemTx?.transactionDate)}
+              </p>
+            </div>
+          );
+        },
+      },
+      {
+        header: 'المبلغ',
+        key: 'amount',
+        type: 'custom',
+        render: (item) => (
+          <span className="font-semibold" dir="ltr">
+            {formatCurrency(getItemAmount(item))}
+          </span>
+        ),
+      },
+      {
+        header: 'الفرق',
+        key: 'difference',
+        type: 'custom',
+        render: (item) => (
+          <span
+            className={`font-semibold ${
+              Number(item?.difference ?? 0) !== 0
+                ? 'text-red-600'
+                : 'text-gray-500'
+            }`}
+            dir="ltr"
+          >
+            {formatCurrency(item?.difference ?? 0)}
+          </span>
+        ),
+      },
+      {
+        header: 'الحالة',
+        key: 'status',
+        type: 'custom',
+        render: (item) => {
+          const key = getItemStatusKey(item);
+          return (
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap ${
+                STATUS_STYLES[key] || 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              {STATUS_LABELS[key] || getItemStatusName(item)}
+            </span>
+          );
+        },
+      },
+      {
+        header: 'طريقة المطابقة',
+        key: 'matchMethod',
+        type: 'custom',
+        render: (item) => (
+          <span className="text-xs text-gray-600">
+            {item?.matchMethodName ?? item?.matchMethod ?? '-'}
+          </span>
+        ),
+      },
+      {
+        header: 'طابق بواسطة / بتاريخ',
+        key: 'matchedBy',
+        type: 'custom',
+        render: (item) => (
+          <span className="text-xs text-gray-600">
+            {item?.matchedBy ? <p>{item.matchedBy}</p> : null}
+            {item?.matchedAt ? <p>{formatDate(item.matchedAt)}</p> : null}
+            {!item?.matchedBy && !item?.matchedAt ? '-' : null}
+          </span>
+        ),
+      },
+      {
+        header: 'ملاحظات',
+        key: 'notes',
+        type: 'custom',
+        render: (item) => (
+          <span className="text-xs text-gray-600">{item?.notes ?? '-'}</span>
+        ),
+      },
+      {
+        header: 'إجراءات',
+        key: 'actions',
+        type: 'custom',
+        render: (item) => (
+          <div className="flex items-center justify-center gap-1.5">
+            {!isMatched(item) && !isIgnored(item) ? (
+              <button
+                type="button"
+                title="مطابقة يدوية"
+                onClick={() => {
+                  setMatchTarget(item);
+                  setMatchBankTxId('');
+                }}
+                className="rounded-lg p-2 text-primary hover:bg-primary/10"
+              >
+                <Link2 size={16} />
+              </button>
+            ) : null}
+            {isMatched(item) ? (
+              <button
+                type="button"
+                title="إلغاء المطابقة"
+                onClick={() => setUnmatchTarget(item)}
+                className="rounded-lg p-2 text-amber-600 hover:bg-amber-50"
+              >
+                <Unlink size={16} />
+              </button>
+            ) : null}
+            {!isMatched(item) && !isIgnored(item) ? (
+              <button
+                type="button"
+                title="تجاهل البند"
+                onClick={() => {
+                  setIgnoreTarget(item);
+                  setIgnoreNotes('');
+                }}
+                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
+              >
+                <EyeOff size={16} />
+              </button>
+            ) : null}
+          </div>
+        ),
+      },
+    ],
+    []
   );
 
   if (detailsLoading) return <PageLoader label="جاري تحميل التسوية..." />;
@@ -250,49 +439,148 @@ const ReconciliationDetails = ({ reconciliationId, onBack }) => {
     }
   };
 
-  const isMatched = (item) => {
-    const key = getItemStatusKey(item);
-    return key === 'Matched' || key === 'Adjusted';
-  };
-  const isIgnored = (item) => getItemStatusKey(item) === 'Ignored';
+  const recId =
+    details?.reconciliationID ?? details?.reconciliationId ?? reconciliationId;
+  const accountTitle =
+    details?.bankAccountName ??
+    details?.accountNameAr ??
+    `تسوية رقم ${recId}`;
+  const subtitleParts = [
+    details?.bankNameAr,
+    details?.accountNumber
+      ? `حساب ${details.accountNumber}`
+      : null,
+    details?.currencyName,
+  ].filter(Boolean);
+
+  const headerStatusClass = (() => {
+    if (status === 'Reconciled') return 'bg-emerald-100 text-emerald-700';
+    if (status === 'InProgress' || status === 'Draft')
+      return 'bg-amber-100 text-amber-700';
+    if (status === 'Cancelled') return 'bg-red-100 text-red-700';
+    if (status === 'Matched') return 'bg-sky-100 text-sky-700';
+    return 'bg-white/20 text-white';
+  })();
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 hover:border-primary/40 hover:text-primary"
-        >
-          <ArrowLeft size={15} />
-          رجوع لقائمة التسويات
-        </button>
-        <button
-          type="button"
-          onClick={() => setFinalizeOpen(true)}
-          disabled={!canFinalize || finalizeMutation.isPending}
-          title={
-            isClosed
-              ? 'التسوية مغلقة بالفعل'
-              : difference !== 0
-                ? 'لا يمكن الاعتماد قبل تصفير الفرق'
-                : 'اعتماد التسوية'
-          }
-          className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <CheckCircle2 size={16} />
-          {finalizeMutation.isPending ? 'جاري الاعتماد...' : 'إنهاء / اعتماد التسوية'}
-        </button>
+      {/* Header */}
+      <div className="overflow-hidden rounded-2xl">
+        <div className="bg-linear-to-r from-primary to-primary/80 px-6 py-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/20 text-white shadow-inner">
+                <Scale size={26} />
+              </div>
+              <div className="text-white">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-2xl font-bold">{accountTitle}</h1>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${headerStatusClass}`}
+                  >
+                    {STATUS_LABELS[status] || statusName}
+                  </span>
+                </div>
+                <p className="mt-1 flex flex-wrap items-center gap-x-2 text-white/80">
+                  <span className="font-medium">تسوية رقم {recId}</span>
+                  {subtitleParts.map((part) => (
+                    <span key={part} className="flex items-center gap-1">
+                      <span className="text-white/40">•</span>
+                      {part}
+                    </span>
+                  ))}
+                </p>
+                <p className="mt-1 flex flex-wrap items-center gap-x-4 text-xs text-white/70">
+                  <span className="flex items-center gap-1">
+                    <CalendarDays size={13} />
+                    الفترة: {formatDate(details?.fromDate)} -{' '}
+                    {formatDate(details?.toDate)}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Landmark size={13} />
+                    تاريخ الكشف: {formatDate(details?.statementDate)}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {/* <button
+                type="button"
+                onClick={onBack}
+                className="flex items-center gap-2 rounded-xl bg-white/20 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/30"
+              >
+                <ArrowRight size={16} />
+                رجوع للقائمة
+              </button> */}
+              <button
+                type="button"
+                onClick={() => setFinalizeOpen(true)}
+                disabled={!canFinalize || finalizeMutation.isPending}
+                title={
+                  isClosed
+                    ? 'التسوية مغلقة بالفعل'
+                    : difference !== 0
+                      ? 'لا يمكن الاعتماد قبل تصفير الفرق'
+                      : 'اعتماد التسوية'
+                }
+                className="flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-bold text-primary transition-colors hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <CheckCircle2 size={16} />
+                {finalizeMutation.isPending
+                  ? 'جاري الاعتماد...'
+                  : 'إنهاء / اعتماد التسوية'}
+              </button>
+            </div>
+          </div>
+
+          {/* Header balances strip */}
+          {/* <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="rounded-xl bg-white/15 px-4 py-3 text-white backdrop-blur-sm">
+              <p className="flex items-center gap-1 text-xs text-white/70">
+                <Wallet size={13} />
+                رصيد الكشف
+              </p>
+              <p className="mt-1 text-lg font-bold" dir="ltr">
+                {formatCurrency(
+                  details?.bankStatementClosingBalance ??
+                    details?.statementBalance ??
+                    0
+                )}
+              </p>
+            </div>
+            <div className="rounded-xl bg-white/15 px-4 py-3 text-white backdrop-blur-sm">
+              <p className="text-xs text-white/70">رصيد الدفاتر</p>
+              <p className="mt-1 text-lg font-bold" dir="ltr">
+                {formatCurrency(details?.bookBalance ?? 0)}
+              </p>
+            </div>
+            <div className="rounded-xl bg-white/15 px-4 py-3 text-white backdrop-blur-sm">
+              <p className="text-xs text-white/70">الرصيد المعدل</p>
+              <p className="mt-1 text-lg font-bold" dir="ltr">
+                {formatCurrency(details?.adjustedBalance ?? 0)}
+              </p>
+            </div>
+            <div
+              className={`rounded-xl px-4 py-3 backdrop-blur-sm ${
+                difference !== 0
+                  ? 'bg-red-500/30 text-white'
+                  : 'bg-emerald-400/25 text-white'
+              }`}
+            >
+              <p className="text-xs text-white/80">الفرق</p>
+              <p className="mt-1 text-lg font-bold" dir="ltr">
+                {formatCurrency(difference)}
+              </p>
+            </div>
+          </div> */}
+        </div>
       </div>
 
       {/* Summary */}
       <div className="rounded-xl border border-gray-200 bg-white p-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-bold text-gray-900">
-            {details?.bankAccountName
-              ? `تسوية حساب: ${details.bankAccountName}`
-              : `تسوية رقم ${reconciliationId}`}
-          </h3>
+        {/* <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-bold text-gray-900">ملخص التسوية</h3>
           <span
             className={`rounded-full px-3 py-1 text-xs font-medium ${
               STATUS_STYLES[status] || 'bg-gray-100 text-gray-700'
@@ -300,53 +588,78 @@ const ReconciliationDetails = ({ reconciliationId, onBack }) => {
           >
             {STATUS_LABELS[status] || statusName}
           </span>
-        </div>
+        </div> */}
 
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
           <SummaryCard
-            label="Bank Statement Closing Balance"
+            label="رصيد كشف البنك الختامي"
             value={formatCurrency(details?.bankStatementClosingBalance ?? 0)}
             accent
           />
           <SummaryCard
-            label="System Opening Balance"
+            label="رصيد النظام الافتتاحي"
             value={formatCurrency(details?.systemOpeningBalance ?? 0)}
           />
           <SummaryCard
-            label="System Closing Balance"
+            label="رصيد النظام الختامي"
             value={formatCurrency(details?.systemClosingBalance ?? 0)}
           />
           <SummaryCard
-            label="Adjusted Balance"
+            label="الرصيد المعدل"
             value={formatCurrency(details?.adjustedBalance ?? 0)}
             accent
           />
           <SummaryCard
-            label="Difference"
+            label="الفرق"
             value={formatCurrency(difference)}
             danger={difference !== 0}
           />
-          <SummaryCard label="Status" value={STATUS_LABELS[status] || statusName} />
+          <SummaryCard label="الحالة" value={STATUS_LABELS[status] || statusName} />
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500">
+        {/* <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500">
           <span>الفترة: {formatDate(details?.fromDate)} - {formatDate(details?.toDate)}</span>
           <span>تاريخ الكشف: {formatDate(details?.statementDate)}</span>
+          {details?.currencyName ? <span>العملة: {details.currencyName}</span> : null}
+          {details?.totalItems ?? details?.clearedAmount ? (
+            <span>
+              البنود: {details?.totalItems ?? items.length} · المبلغ المعتمد:{' '}
+              {formatCurrency(details?.clearedAmount ?? 0)}
+            </span>
+          ) : null}
+          {details?.reconciledBy ? (
+            <span>
+              اعتمدت بواسطة: {details.reconciledBy}
+              {details?.reconciledAt ? ` - ${formatDate(details.reconciledAt)}` : ''}
+            </span>
+          ) : null}
           {details?.notes ? <span>ملاحظات: {details.notes}</span> : null}
-        </div>
+        </div> */}
 
-        {statistics && typeof statistics === 'object' ? (
+        {/* {statistics && typeof statistics === 'object' ? (
           <div className="mt-4 flex flex-wrap gap-2 border-t border-gray-100 pt-3">
-            {Object.entries(statistics).map(([key, value]) => (
-              <span
-                key={key}
-                className="rounded-lg bg-gray-50 px-3 py-1.5 text-xs text-gray-600"
-              >
-                {key}: <span className="font-semibold text-gray-900">{String(value)}</span>
-              </span>
-            ))}
+            {Object.entries(statistics).map(([key, value]) => {
+              const arKey =
+                {
+                  totalBankTransactions: 'إجمالي حركات البنك',
+                  matchedTransactions: 'حركات مطابقة',
+                  unmatchedBankTransactions: 'حركات بنك غير مطابقة',
+                  outstandingSystemTransactions: 'حركات سيستم معلقة',
+                }[key] ?? key;
+              return (
+                <span
+                  key={key}
+                  className="rounded-lg bg-gray-50 px-3 py-1.5 text-xs text-gray-600"
+                >
+                  {arKey}:{' '}
+                  <span className="font-semibold text-gray-900">
+                    {String(value)}
+                  </span>
+                </span>
+              );
+            })}
           </div>
-        ) : null}
+        ) : null} */}
       </div>
 
       {/* Group tabs */}
@@ -379,157 +692,13 @@ const ReconciliationDetails = ({ reconciliationId, onBack }) => {
       </div>
 
       {/* Items table */}
-      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-        <table className="min-w-full border-collapse text-sm">
-          <thead className="bg-primary/90 text-white">
-            <tr>
-              <th className="whitespace-nowrap p-3 text-right font-semibold">حركة كشف البنك</th>
-              <th className="whitespace-nowrap p-3 text-right font-semibold">حركة السيستم</th>
-              <th className="whitespace-nowrap p-3 text-right font-semibold">المبلغ</th>
-              <th className="whitespace-nowrap p-3 text-right font-semibold">الفرق</th>
-              <th className="whitespace-nowrap p-3 text-right font-semibold">الحالة</th>
-              <th className="whitespace-nowrap p-3 text-right font-semibold">طريقة المطابقة</th>
-              <th className="whitespace-nowrap p-3 text-right font-semibold">طابق بواسطة / بتاريخ</th>
-              <th className="whitespace-nowrap p-3 text-right font-semibold">ملاحظات</th>
-              <th className="whitespace-nowrap p-3 text-right font-semibold">إجراءات</th>
-            </tr>
-          </thead>
-          <tbody>
-            {itemsLoading ? (
-              <tr>
-                <td colSpan={9} className="p-10 text-center text-gray-400">
-                  جاري تحميل البنود...
-                </td>
-              </tr>
-            ) : visibleItems.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="p-10 text-center text-gray-400">
-                  لا توجد بنود في هذا القسم
-                </td>
-              </tr>
-            ) : (
-              visibleItems.map((item, index) => {
-                const bankTx = getBankTx(item);
-                const systemTx = getSystemTx(item);
-                const key = getItemStatusKey(item);
-                return (
-                  <tr
-                    key={getItemId(item) ?? index}
-                    className="border-t border-gray-200 align-top even:bg-gray-50/50"
-                  >
-                    <td className="max-w-55 p-3">
-                      {bankTx || item?.reference || item?.description ? (
-                        <div className="space-y-0.5 text-xs">
-                          <p className="font-semibold text-gray-800">
-                            {bankTx?.description ?? item?.description ?? '-'}
-                          </p>
-                          <p className="text-gray-500">
-                            {bankTx?.reference ?? item?.reference ?? ''}
-                            {bankTx?.externalReference || item?.externalReference
-                              ? ` · ${bankTx?.externalReference ?? item?.externalReference}`
-                              : ''}
-                          </p>
-                          <p className="text-gray-500">
-                            {formatDate(bankTx?.transactionDate ?? item?.transactionDate)}
-                          </p>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td className="max-w-55 p-3">
-                      {systemTx ? (
-                        <div className="space-y-0.5 text-xs">
-                          <p className="font-semibold text-gray-800">
-                            {systemTx?.description ?? systemTx?.transactionNumber ?? '-'}
-                          </p>
-                          <p className="text-gray-500">
-                            {systemTx?.referenceNumber ?? systemTx?.reference ?? ''}
-                          </p>
-                          <p className="text-gray-500">
-                            {formatDate(systemTx?.transactionDate)}
-                          </p>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap p-3 font-semibold">
-                      {formatCurrency(getItemAmount(item))}
-                    </td>
-                    <td
-                      className={`whitespace-nowrap p-3 font-semibold ${
-                        Number(item?.difference ?? 0) !== 0 ? 'text-red-600' : 'text-gray-500'
-                      }`}
-                    >
-                      {formatCurrency(item?.difference ?? 0)}
-                    </td>
-                    <td className="whitespace-nowrap p-3">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          STATUS_STYLES[key] || 'bg-gray-100 text-gray-700'
-                        }`}
-                      >
-                        {STATUS_LABELS[key] || getItemStatusName(item)}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap p-3 text-xs text-gray-600">
-                      {item?.matchMethodName ?? item?.matchMethod ?? '-'}
-                    </td>
-                    <td className="whitespace-nowrap p-3 text-xs text-gray-600">
-                      {item?.matchedBy ? <p>{item.matchedBy}</p> : null}
-                      {item?.matchedAt ? <p>{formatDate(item.matchedAt)}</p> : null}
-                      {!item?.matchedBy && !item?.matchedAt ? '-' : null}
-                    </td>
-                    <td className="max-w-40 p-3 text-xs text-gray-600">
-                      {item?.notes ?? '-'}
-                    </td>
-                    <td className="whitespace-nowrap p-3">
-                      <div className="flex items-center gap-1.5">
-                        {!isMatched(item) && !isIgnored(item) ? (
-                          <button
-                            type="button"
-                            title="مطابقة يدوية"
-                            onClick={() => {
-                              setMatchTarget(item);
-                              setMatchBankTxId('');
-                            }}
-                            className="rounded-lg p-2 text-primary hover:bg-primary/10"
-                          >
-                            <Link2 size={16} />
-                          </button>
-                        ) : null}
-                        {isMatched(item) ? (
-                          <button
-                            type="button"
-                            title="إلغاء المطابقة"
-                            onClick={() => setUnmatchTarget(item)}
-                            className="rounded-lg p-2 text-amber-600 hover:bg-amber-50"
-                          >
-                            <Unlink size={16} />
-                          </button>
-                        ) : null}
-                        {!isMatched(item) && !isIgnored(item) ? (
-                          <button
-                            type="button"
-                            title="تجاهل البند"
-                            onClick={() => {
-                              setIgnoreTarget(item);
-                              setIgnoreNotes('');
-                            }}
-                            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
-                          >
-                            <EyeOff size={16} />
-                          </button>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+      <div className="overflow-hidden rounded-xl">
+        <Table
+          columns={itemColumns}
+          data={visibleItems}
+          loading={itemsLoading}
+          emptyMessage="لا توجد بنود في هذا القسم"
+        />
       </div>
 
       {/* Manual match modal */}

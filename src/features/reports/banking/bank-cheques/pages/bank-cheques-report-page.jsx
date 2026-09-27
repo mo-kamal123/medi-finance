@@ -1,16 +1,21 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Download, CreditCard, RotateCcw } from 'lucide-react';
 import SearchableSelect from '../../../../../shared/ui/searchable-select';
 import Pagination from '../../../../../shared/ui/pagination';
 import Table from '../../../../../shared/ui/table';
 import PageLoader from '../../../../../shared/ui/page-loader';
 import { formatCurrency, formatDate } from '../../../../../shared/utils/formatters';
-import { useAllBankAccounts } from '../../../../banking/banks/hooks/banks.queries';
+import {
+  useAllBankAccounts,
+  useBanks,
+} from '../../../../banking/banks/hooks/banks.queries';
 import { useChequeStatuses } from '../../../../banking/cheques/hooks/cheques.queries';
 import { useBankChequesReport } from '../hooks/bank-cheques.queries';
 import { useBankChequesReportExport } from '../hooks/use-bank-cheques-report-export';
 
 const DEFAULT_FILTERS = {
+  bankId: '',
   bankAccountId: '',
   status: '',
   transactionType: '',
@@ -65,27 +70,48 @@ const statusClass = (statusName) => {
 };
 
 const BankChequesReportPage = () => {
-  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [searchParams] = useSearchParams();
+  const urlBankId = searchParams.get('bankId');
+  const [filters, setFilters] = useState(() => ({
+    ...DEFAULT_FILTERS,
+    bankId: urlBankId || '',
+  }));
   const { handleExport, isExporting } = useBankChequesReportExport();
 
+  const { data: banks = [] } = useBanks({ pageSize: 100 });
   const { data: accountsResponse = [] } = useAllBankAccounts();
   const { data: receiptStatuses = [] } = useChequeStatuses(0);
   const { data: paymentStatuses = [] } = useChequeStatuses(1);
 
+  const bankOptions = useMemo(
+    () =>
+      (Array.isArray(banks) ? banks : []).map((bank) => ({
+        value: String(bank.bankID || bank.id),
+        label:
+          bank.bankNameAr || bank.bankNameEn || String(bank.bankID || bank.id),
+      })),
+    [banks]
+  );
+
   const bankAccountOptions = useMemo(() => {
     const list = normalizeCollection(accountsResponse);
-    return list.map((account) => ({
-      value: String(account.bankAccountID || account.id),
-      label:
-        [
-          account.bankNameAr || account.bankName,
-          account.accountNumber,
-          account.accountNameAr || account.accountNameEn,
-        ]
-          .filter(Boolean)
-          .join(' - ') || String(account.bankAccountID || account.id),
-    }));
-  }, [accountsResponse]);
+    return list
+      .filter(
+        (account) =>
+          !filters.bankId || String(account.bankID) === String(filters.bankId)
+      )
+      .map((account) => ({
+        value: String(account.bankAccountID || account.id),
+        label:
+          [
+            account.bankNameAr || account.bankName,
+            account.accountNumber,
+            account.accountNameAr || account.accountNameEn,
+          ]
+            .filter(Boolean)
+            .join(' - ') || String(account.bankAccountID || account.id),
+      }));
+  }, [accountsResponse, filters.bankId]);
 
   const statusOptions = useMemo(() => {
     const opts = [{ value: '', label: 'كل الحالات' }];
@@ -102,6 +128,7 @@ const BankChequesReportPage = () => {
 
   const queryParams = useMemo(
     () => ({
+      bankId: filters.bankId,
       bankAccountId: filters.bankAccountId,
       status: filters.status,
       transactionType: filters.transactionType,
@@ -123,7 +150,12 @@ const BankChequesReportPage = () => {
   );
 
   const handleChange = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value, pageNumber: 1 }));
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+      ...(key === 'bankId' ? { bankAccountId: '' } : {}),
+      pageNumber: 1,
+    }));
   };
 
   const handleReset = () => {
@@ -221,7 +253,7 @@ const BankChequesReportPage = () => {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <CreditCard size={24} />
@@ -236,7 +268,7 @@ const BankChequesReportPage = () => {
         <button
           type="button"
           onClick={() => handleExport(queryParams)}
-          disabled={isExporting || !filters.bankAccountId}
+          disabled={isExporting || (!filters.bankAccountId && !filters.bankId)}
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
         >
           <Download size={16} />
@@ -244,14 +276,23 @@ const BankChequesReportPage = () => {
         </button>
       </div>
 
-      <div className="space-y-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <SearchableSelect
+            label="البنك"
+            value={filters.bankId || ''}
+            onChange={(event) => handleChange('bankId', event.target.value)}
+            placeholder="اختر البنك..."
+            options={bankOptions}
+          />
+
           <SearchableSelect
             label="الحساب البنكي"
             value={filters.bankAccountId || ''}
             onChange={(event) => handleChange('bankAccountId', event.target.value)}
             placeholder="اختر الحساب البنكي..."
             options={bankAccountOptions}
+            disabled={!filters.bankId}
           />
 
           <SearchableSelect
@@ -287,20 +328,20 @@ const BankChequesReportPage = () => {
         <PageLoader label="جاري تحميل الشيكات..." />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-xl">
             <Table
               columns={columns}
               data={cheques}
               loading={isFetching}
               emptyMessage={
-                filters.bankAccountId
+                filters.bankAccountId || filters.bankId
                   ? 'لا توجد شيكات لعرضها'
-                  : 'اختر حساباً بنكياً لعرض الشيكات'
+                  : 'اختر بنكاً أو حساباً بنكياً لعرض الشيكات'
               }
             />
           </div>
 
-          {filters.bankAccountId && (
+          {(filters.bankAccountId || filters.bankId) && (
             <Pagination
               currentPage={Number(filters.pageNumber) || 1}
               totalPages={totalPages}

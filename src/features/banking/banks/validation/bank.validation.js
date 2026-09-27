@@ -52,6 +52,19 @@ const optionalWebsite = z.union([
   z.undefined(),
 ]);
 
+const optionalEnglishName = z.union([
+  z.literal(''),
+  z
+    .string()
+    .trim()
+    .regex(
+      /^[A-Za-z\s.'-]+$/,
+      'الاسم بالإنجليزية يجب أن يحتوي على حروف إنجليزية فقط'
+    ),
+  z.null(),
+  z.undefined(),
+]);
+
 export const bankSchema = z.object({
   bankCode: z.string().trim().min(1, 'كود البنك مطلوب'),
   bankNameAr: z
@@ -59,11 +72,7 @@ export const bankSchema = z.object({
     .trim()
     .min(1, 'اسم البنك بالعربية مطلوب')
     .regex(/^[\u0600-\u06FF\s]+$/, 'الاسم بالعربية يجب أن يحتوي على حروف عربية فقط'),
-  bankNameEn: z
-    .string()
-    .trim()
-    .regex(/^[A-Za-z\s.'-]+$/, 'الاسم بالإنجليزية يجب أن يحتوي على حروف إنجليزية فقط')
-    .optional(),
+  bankNameEn: optionalEnglishName,
   swiftCode: optionalSwift,
   phone: optionalPhone,
   email: optionalEmail,

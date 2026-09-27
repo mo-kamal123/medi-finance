@@ -17,28 +17,31 @@ const extractArray = (data) => {
   return found || [];
 };
 
+
+const normalizePaged = (data, fallbackPageSize = 20) => {
+  const items = extractArray(data);
+  return {
+    items,
+    totalCount: Number(data?.totalCount ?? items.length) || 0,
+    pageNumber: Number(data?.pageNumber ?? 1) || 1,
+    pageSize: Number(data?.pageSize ?? fallbackPageSize) || fallbackPageSize,
+  };
+};
+
 export const getAllBanks = async (params) => {
-  try {
-    const { data } = await axiosInstance.get('/Banks', {
-      params: {
-        pageNumber: 1,
-        pageSize: 20,
-        ...params,
-      },
-    });
-    return extractArray(data);
-  } catch {
-    return [];
-  }
+  const { data } = await axiosInstance.get('/Banks', {
+    params: {
+      pageNumber: 1,
+      pageSize: 20,
+      ...params,
+    },
+  });
+  return extractArray(data);
 };
 
 export const getBankById = async (id) => {
-  try {
-    const { data } = await axiosInstance.get(`/Banks/${id}`);
-    return data;
-  } catch {
-    return null;
-  }
+  const { data } = await axiosInstance.get(`/Banks/${id}`);
+  return data;
 };
 
 export const createBank = async (payload) => {
@@ -93,16 +96,6 @@ export const getAllBankAccounts = async (params = {}) => {
     params: { pageNumber: 1, pageSize: 100, ...params },
   });
   return data;
-};
-
-const normalizePaged = (data, fallbackPageSize = 20) => {
-  const items = extractArray(data);
-  return {
-    items,
-    totalCount: Number(data?.totalCount ?? items.length) || 0,
-    pageNumber: Number(data?.pageNumber ?? 1) || 1,
-    pageSize: Number(data?.pageSize ?? fallbackPageSize) || fallbackPageSize,
-  };
 };
 
 export const getBankTransactions = async (params = {}) => {

@@ -303,6 +303,8 @@ const SearchableSelect = forwardRef(
           </button>
         </div>
 
+        {error ? <p className="mt-1 text-sm text-red-500">{error}</p> : null}
+
         {isOpen && dropdownStyle
           ? createPortal(
               <div

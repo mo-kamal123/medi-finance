@@ -2,28 +2,13 @@ import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import FormInput from '../../../../shared/ui/input';
 import NormalSelect from '../../../../shared/ui/NormalSelect';
 import PartySearchSelect from '../../../../shared/ui/party-search-select';
 import TransferConfirmModal from './transfer-confirm-modal';
+import { transferSchema } from '../validation/bank-transfer.validation';
 import { useBankAccounts, useBanks } from '../hooks/banks.queries';
 import { useCreateBankTransfer } from '../hooks/banks.mutations';
-
-const transferSchema = z.object({
-  transferType: z.enum(['internal', 'external'], {
-    required_error: 'نوع التحويل مطلوب',
-  }),
-  fromAccountID: z.string().min(1, 'حساب المصدر مطلوب'),
-  toBankID: z.string().optional(),
-  toAccountID: z.string().optional(),
-  partyType: z.enum(['customer', 'supplier']).optional(),
-  partyID: z.string().optional(),
-  amount: z
-    .union([z.string(), z.number()])
-    .refine((val) => Number(val) > 0, 'المبلغ يجب أن يكون أكبر من صفر'),
-  notes: z.string().optional(),
-});
 
 const normalizeCollection = (value) => {
   if (Array.isArray(value)) return value;
@@ -31,7 +16,7 @@ const normalizeCollection = (value) => {
   return [];
 };
 
-const BankTransferForm = ({ bankId }) => {
+const BankTransferForm = ({ bankId, onSuccess, onConfirmStageChange }) => {
   const navigate = useNavigate();
   const [, setTransferType] = useState('internal');
   const [partyType, setPartyType] = useState('customer');
@@ -80,35 +65,29 @@ const BankTransferForm = ({ bankId }) => {
   const watchedTransferType = watch('transferType');
 
   const bankOptions = useMemo(
-    () => [
-      { value: '', label: 'اختر البنك' },
-      ...banks.map((b) => ({
+    () =>
+      banks.map((b) => ({
         value: String(b.bankID),
         label: b.bankNameAr || b.bankNameEn || '',
       })),
-    ],
     [banks]
   );
 
   const fromAccountOptions = useMemo(
-    () => [
-      { value: '', label: 'اختر حساب المصدر' },
-      ...fromAccounts.map((a) => ({
+    () =>
+      fromAccounts.map((a) => ({
         value: String(a.bankAccountID),
-        label: `${a.accountNumber || ''} - ${a.accountNameAr || a.accountNameEn || ''}`.trim(),
+        label: a.accountNumberWithBranch || a.accountNumber || '',
       })),
-    ],
     [fromAccounts]
   );
 
   const toAccountOptions = useMemo(
-    () => [
-      { value: '', label: 'اختر حساب الوجهة' },
-      ...toAccounts.map((a) => ({
+    () =>
+      toAccounts.map((a) => ({
         value: String(a.bankAccountID),
-        label: `${a.accountNumber || ''} - ${a.accountNameAr || a.accountNameEn || ''}`.trim(),
+        label: a.accountNumberWithBranch || a.accountNumber || '',
       })),
-    ],
     [toAccounts]
   );
 
@@ -140,6 +119,12 @@ const BankTransferForm = ({ bankId }) => {
     }
 
     setConfirmPayload(payload);
+    onConfirmStageChange?.(true);
+  };
+
+  const handleCancelConfirm = () => {
+    setConfirmPayload(null);
+    onConfirmStageChange?.(false);
   };
 
   const handleConfirm = () => {
@@ -153,28 +138,48 @@ const BankTransferForm = ({ bankId }) => {
         setPartyName('');
         setToBankID('');
         setConfirmPayload(null);
-        if (transferId) {
+        onConfirmStageChange?.(false);
+        if (onSuccess) {
+          onSuccess(transferId);
+        } else if (transferId) {
           navigate(`/banks/${bankId}/transfers?open=${transferId}`);
         }
       },
     });
   };
 
-  const fromLabel = useMemo(() => {
+  const fromBankName = useMemo(() => {
+    const bank = banks.find((b) => String(b.bankID) === String(bankId));
+    return bank?.bankNameAr || bank?.bankNameEn || '';
+  }, [banks, bankId]);
+
+  const getAccountDisplay = (acc) => {
+    if (!acc) return '';
+    return (
+      acc.accountNumberWithBranch ||
+      [acc.accountNameAr || acc.accountNameEn, acc.accountNumber]
+        .filter(Boolean)
+        .join(' - ') ||
+      `حساب ${acc.bankAccountID}`
+    );
+  };
+
+  const fromInfo = useMemo(() => {
     const acc = fromAccounts.find(
       (a) =>
         confirmPayload &&
         String(a.bankAccountID) === String(confirmPayload.FromBankAccountID)
     );
-    return acc
-      ? `${acc.accountNumber || ''} ${acc.accountNameAr || acc.accountNameEn || ''}`.trim()
-      : confirmPayload
-        ? `حساب ${confirmPayload.FromBankAccountID}`
-        : '';
-  }, [confirmPayload, fromAccounts]);
+    return {
+      account:
+        getAccountDisplay(acc) ||
+        (confirmPayload ? `حساب ${confirmPayload.FromBankAccountID}` : ''),
+      bank: fromBankName,
+    };
+  }, [confirmPayload, fromAccounts, fromBankName]);
 
-  const toLabel = useMemo(() => {
-    if (!confirmPayload) return '';
+  const toInfo = useMemo(() => {
+    if (!confirmPayload) return { account: '', bank: '' };
     if (confirmPayload.transferType === 'internal') {
       const acc = toAccounts.find(
         (a) => String(a.bankAccountID) === String(confirmPayload.ToBankAccountID)
@@ -182,15 +187,16 @@ const BankTransferForm = ({ bankId }) => {
       const bank = banks.find(
         (b) => String(b.bankID) === String(confirmPayload.tobankId)
       );
-      const bankName = bank?.bankNameAr || bank?.bankNameEn || '';
-      const accLabel = acc
-        ? `${acc.accountNumber || ''} ${acc.accountNameAr || acc.accountNameEn || ''}`.trim()
-        : `حساب ${confirmPayload.ToBankAccountID}`;
-      return [bankName, accLabel].filter(Boolean).join(' - ');
+      return {
+        account:
+          getAccountDisplay(acc) || `حساب ${confirmPayload.ToBankAccountID}`,
+        bank: bank?.bankNameAr || bank?.bankNameEn || '',
+      };
     }
-    return `${confirmPayload.partyType === 'customer' ? 'عميل' : 'مورد'}${
-      partyName ? ` - ${partyName}` : ''
-    }`;
+    return {
+      account: partyName || '-',
+      bank: confirmPayload.partyType === 'customer' ? 'عميل' : 'مورد',
+    };
   }, [confirmPayload, toAccounts, banks, partyName]);
 
   return (
@@ -227,6 +233,7 @@ const BankTransferForm = ({ bankId }) => {
               required
               options={fromAccountOptions}
               disabled={loadingFromAccounts}
+              placeholder="اختر حساب المصدر"
             />
           )}
         />
@@ -246,6 +253,7 @@ const BankTransferForm = ({ bankId }) => {
                 error={errors.toBankID?.message}
                 required
                 options={bankOptions}
+                placeholder="اختر البنك"
               />
             )}
           />
@@ -264,6 +272,7 @@ const BankTransferForm = ({ bankId }) => {
                 required
                 options={toAccountOptions}
                 disabled={!toBankID || loadingToAccounts}
+                placeholder="اختر حساب الوجهة"
               />
             )}
           />
@@ -360,12 +369,14 @@ const BankTransferForm = ({ bankId }) => {
       <TransferConfirmModal
         open={Boolean(confirmPayload)}
         isInternal={confirmPayload?.transferType === 'internal'}
-        fromLabel={fromLabel}
-        toLabel={toLabel}
+        fromAccount={fromInfo.account}
+        fromBank={fromInfo.bank}
+        toAccount={toInfo.account}
+        toBank={toInfo.bank}
         amount={confirmPayload?.amount ?? 0}
         notes={confirmPayload?.notes}
         onConfirm={handleConfirm}
-        onClose={() => setConfirmPayload(null)}
+        onClose={handleCancelConfirm}
         isPending={isPending}
       />
     </>

@@ -11,6 +11,7 @@ const getAccountId = (account) => account.id ?? account.accountID;
 const AccountSearchSelect = ({
   value,
   onChange,
+  onBlur,
   disabled,
   error,
   allowLocked = false,
@@ -124,6 +125,9 @@ const AccountSearchSelect = ({
           onFocus={() => {
             setIsOpen(true);
             if (value && !displayLabel) setSearchText(String(value));
+          }}
+          onBlur={(event) => {
+            onBlur?.(event);
           }}
           placeholder={placeholder}
           disabled={disabled}

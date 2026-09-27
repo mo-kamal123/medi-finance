@@ -125,8 +125,10 @@ export const useCreateBankTransfer = () => {
 
 const invalidateTransfers = (queryClient, id) => {
   queryClient.invalidateQueries({ queryKey: banksKeys.transfers() });
-  if (id) {
-    queryClient.invalidateQueries({ queryKey: banksKeys.transferDetail(id) });
+  if (id !== null && id !== undefined) {
+    queryClient.invalidateQueries({
+      queryKey: banksKeys.transferDetail(id),
+    });
   }
 };
 

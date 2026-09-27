@@ -38,7 +38,7 @@ export const useBankAccounts = (bankId) => {
 
 export const useAllBankAccounts = () => {
   return useQuery({
-    queryKey: ['all-bank-accounts'],
+    queryKey: banksKeys.allAccounts(),
     queryFn: getAllBankAccounts,
   });
 };

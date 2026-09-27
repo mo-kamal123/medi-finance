@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
-  ArrowLeftRight,
   CheckCircle2,
   ExternalLink,
   Landmark,
@@ -38,9 +37,9 @@ const PARTY_TYPE_LABELS = {
 };
 
 const Card = ({ title, children }) => (
-  <div className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
+  <div className="rounded-3xl border border-gray-200 bg-white p-5">
     {title ? (
-      <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-gray-900">
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-gray-900">
         {title}
       </h3>
     ) : null}
@@ -49,7 +48,7 @@ const Card = ({ title, children }) => (
 );
 
 const DetailRow = ({ label, value, ltr }) => (
-  <div className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-gray-50/60 px-4 py-3">
+  <div className="flex items-center justify-between gap-4 rounded-xl px-4 py-1">
     <span className="text-sm text-gray-500">{label}</span>
     <span
       className="text-sm font-medium text-gray-900"
@@ -65,7 +64,9 @@ const TransferDetailsModal = ({ open, transferId, onClose }) => {
   const [approveOpen, setApproveOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
-  const { data, isLoading, isError } = useBankTransfer(open ? transferId : null);
+  const { data, isLoading, isError } = useBankTransfer(
+    open ? transferId : null
+  );
   const { mutate: approveTransfer, isPending: approving } =
     useApproveBankTransfer();
   const { mutate: cancelTransfer, isPending: cancelling } =
@@ -98,7 +99,7 @@ const TransferDetailsModal = ({ open, transferId, onClose }) => {
   const content = () => {
     if (isLoading) {
       return (
-        <div className="flex min-h-[300px] items-center justify-center">
+        <div className="flex min-h-75 items-center justify-center">
           <PageLoader label="جاري تحميل بيانات التحويل..." />
         </div>
       );
@@ -106,7 +107,7 @@ const TransferDetailsModal = ({ open, transferId, onClose }) => {
 
     if (isError || !data) {
       return (
-        <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 p-6 text-center">
+        <div className="flex min-h-75 flex-col items-center justify-center gap-4 p-6 text-center">
           <p className="text-gray-500">تعذر تحميل بيانات التحويل.</p>
           <button
             type="button"
@@ -124,86 +125,83 @@ const TransferDetailsModal = ({ open, transferId, onClose }) => {
       data.transferTypeName ||
       data.transferType;
 
+    const statusLabel =
+      STATUS_LABELS[data.status] || data.statusName || data.status;
+
     return (
       <>
         <div className="space-y-4 p-5">
-          {/* Header */}
-          <div className="rounded-3xl bg-linear-to-br from-primary via-primary/85 to-primary/70 px-6 py-5 text-white shadow-lg shadow-primary/20">
-            <div className="flex items-center justify-between">
-              <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white">
-                {STATUS_LABELS[data.status] || data.statusName || data.status}
-              </span>
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-sm text-white transition-colors hover:bg-white/20"
-              >
-                <X size={15} />
-                إغلاق
-              </button>
+          {/* Header payment card */}
+          <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-primary via-primary/85 to-primary/60 p-6 text-white shadow-lg">
+            {/* decorative glows */}
+            <div className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-white/10" />
+            {/* <div className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-white/5" /> */}
+            <div className="pointer-events-none absolute -right-10 -bottom-16 h-40 w-40 rounded-full bg-black/10" />
+
+            <div className="relative flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-bold">{typeLabel}</div>
+                </div>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                    data.status === 'Posted'
+                      ? 'bg-emerald-400 text-emerald-950 shadow'
+                      : data.status === 'Cancelled'
+                        ? 'bg-red-500 text-white shadow'
+                        : 'bg-white/15 text-white'
+                  }`}
+                >
+                  {statusLabel}
+                </span>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-lg bg-white/10 p-1.5 text-white/80 transition-colors hover:bg-white/20 hover:text-white"
+                  title="إغلاق"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
-            <div className="mt-4 flex items-center gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15">
-                <ArrowLeftRight size={24} />
+            {/* amount centered */}
+            <div className="relative mt-5 text-center">
+              <div className="text-[11px] font-medium uppercase tracking-widest text-white/70">
+                المبلغ
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <h1 className="truncate text-lg font-bold">{typeLabel}</h1>
-                  <span
-                    dir="ltr"
-                    className="shrink-0 rounded-md bg-white/15 px-2 py-0.5 text-[11px] text-white/80"
-                  >
-                    {data.transferNumber}
-                  </span>
-                </div>
-                <div className="mt-1 text-xs text-white/70">
-                  {formatDate(data.transferDate)}
+              <div
+                className="mt-1 text-4xl font-black tracking-tight text-white drop-shadow-[0_2px_16px_rgba(255,255,255,0.35)]"
+                dir="ltr"
+              >
+                {formatCurrency(data.amount)}
+              </div>
+              <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-white/30" />
+            </div>
+
+            <div className="relative mt-4 flex items-end justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[11px] text-white/70">رقم التحويل</div>
+                <div
+                  dir="ltr"
+                  className="truncate text-sm font-semibold tracking-[0.18em] text-white"
+                >
+                  {data.transferNumber}
                 </div>
               </div>
               <div className="shrink-0 text-left">
-                <div className="text-[11px] text-white/70">المبلغ</div>
-                <div
-                  className="mt-0.5 text-xl font-bold tracking-tight"
-                  dir="ltr"
-                >
-                  {formatCurrency(data.amount)}{' '}
-                  <span className="text-sm font-semibold text-white/80">
-                    {data.currencyName || ''}
-                  </span>
+                <div className="text-[11px] text-white/70">تاريخ التحويل</div>
+                <div className="text-sm font-semibold">
+                  {formatDate(data.transferDate)}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-3">
-            {isApprovable ? (
-              <button
-                type="button"
-                onClick={() => setApproveOpen(true)}
-                disabled={approving}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-600 disabled:opacity-50"
-              >
-                <CheckCircle2 size={16} />
-                {approving ? 'جاري الاعتماد...' : 'اعتماد التحويل'}
-              </button>
-            ) : null}
-            {isCancellable ? (
-              <button
-                type="button"
-                onClick={() => setCancelOpen(true)}
-                disabled={cancelling}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-white py-3 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-50 disabled:opacity-50"
-              >
-                <XCircle size={16} />
-                {cancelling ? 'جاري الإلغاء...' : 'إلغاء التحويل'}
-              </button>
-            ) : null}
-          </div>
-
           {/* Transfer path */}
-          <div className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-3xl border border-gray-200 bg-white p-5">
             <div className="flex items-stretch gap-3">
               <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3.5">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
@@ -214,7 +212,7 @@ const TransferDetailsModal = ({ open, transferId, onClose }) => {
                   <div className="truncate text-sm font-semibold text-gray-900">
                     {data.fromBankNameAr || '-'}
                   </div>
-                  <div className="truncate text-xs text-gray-400" dir="ltr">
+                  <div className="truncate text-xs text-gray-400" >
                     {data.bankAccountName}
                   </div>
                 </div>
@@ -244,7 +242,7 @@ const TransferDetailsModal = ({ open, transferId, onClose }) => {
                         }`}
                   </div>
                   {data.toBankAccountName ? (
-                    <div className="truncate text-xs text-gray-400" dir="ltr">
+                    <div className="truncate text-xs text-gray-400">
                       {data.toBankAccountName}
                     </div>
                   ) : null}
@@ -254,14 +252,7 @@ const TransferDetailsModal = ({ open, transferId, onClose }) => {
           </div>
 
           {/* Operation details */}
-          <Card title="تفاصيل العملية">
-            <DetailRow label="نوع التحويل" value={typeLabel} />
-            <DetailRow
-              label="الحالة"
-              value={
-                STATUS_LABELS[data.status] || data.statusName || data.status
-              }
-            />
+          <Card>
             <DetailRow
               label="القيد اليومي"
               value={
@@ -269,7 +260,9 @@ const TransferDetailsModal = ({ open, transferId, onClose }) => {
                   <span className="inline-flex items-center gap-2" dir="ltr">
                     <button
                       type="button"
-                      onClick={() => navigate(`/entries/${data.journalEntryID}`)}
+                      onClick={() =>
+                        navigate(`/entries/${data.journalEntryID}`)
+                      }
                       title="عرض تفاصيل القيد"
                       className="text-main inline-flex cursor-pointer font-semibold justify-center items-center gap-2"
                     >
@@ -287,7 +280,31 @@ const TransferDetailsModal = ({ open, transferId, onClose }) => {
               <DetailRow label="سبب الإلغاء" value={data.cancelReason} />
             ) : null}
           </Card>
-
+          {/* Actions */}
+          <div className="flex gap-3">
+            {isApprovable ? (
+              <button
+                type="button"
+                onClick={() => setApproveOpen(true)}
+                disabled={approving}
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-600 disabled:opacity-50"
+              >
+                <CheckCircle2 size={16} />
+                {approving ? 'جاري الاعتماد...' : 'اعتماد التحويل'}
+              </button>
+            ) : null}
+            {isCancellable ? (
+              <button
+                type="button"
+                onClick={() => setCancelOpen(true)}
+                disabled={cancelling}
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-white py-3 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-50 disabled:opacity-50"
+              >
+                <XCircle size={16} />
+                {cancelling ? 'جاري الإلغاء...' : 'إلغاء التحويل'}
+              </button>
+            ) : null}
+          </div>
         </div>
 
         <ConfirmModal
