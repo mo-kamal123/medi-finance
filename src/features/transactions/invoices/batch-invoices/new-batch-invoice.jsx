@@ -2,13 +2,14 @@
 
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Search, Trash2 } from 'lucide-react';
+import { ArrowLeft, Beaker, Plus, Search, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import FormInput from '../../../../shared/ui/input';
 import SearchableSelect from '../../../../shared/ui/searchable-select';
 import PageLoader from '../../../../shared/ui/page-loader';
 import { toast } from '../../../../shared/lib/toast';
 import {
+  useCustomers,
   useFinancialPeriods,
   useSuppliers,
 } from '../shared/hooks/invoices.queries';
@@ -56,6 +57,58 @@ const createEmptyDiscount = () => ({
   amount: '',
 });
 
+const TEST_BATCH_NUMBER = '9999';
+
+const TEST_BATCH_DETAILS = [
+  { customerCode: 'C-1001', customerNameAr: 'شركة الأمل للمقاولات', totalAmount: 125000 },
+  { customerCode: 'C-1002', customerNameAr: 'مؤسسة النور التجارية', totalAmount: 87500 },
+  { customerCode: 'C-1003', customerNameAr: 'مجموعة المستقبل القابضة', totalAmount: 240750.5 },
+  { customerCode: 'C-1004', customerNameAr: 'شركة النيل للتوزيع', totalAmount: 43200 },
+  { customerCode: 'C-1005', customerNameAr: 'مصنع الأمل للصلب', totalAmount: 318900 },
+  { customerCode: 'C-1006', customerNameAr: 'مؤسسة الفجر للتجارة', totalAmount: 67500.25 },
+];
+
+const buildTestBatchDetails = (customers) => {
+  const list = (Array.isArray(customers) ? customers : []).filter(
+    (customer) => customer?.customerID || customer?.id
+  );
+
+  const rows = list.slice(0, TEST_BATCH_DETAILS.length);
+
+  if (rows.length === 0) {
+    return TEST_BATCH_DETAILS.map((detail, index) => ({
+      batchDetailID: 9000 + index,
+      customerID: 9000 + index,
+      customerCode: detail.customerCode,
+      customerNameAr: detail.customerNameAr,
+      totalAmount: detail.totalAmount,
+    }));
+  }
+
+  return rows.map((customer, index) => ({
+    batchDetailID: 9000 + index,
+    customerID: customer.customerID ?? customer.id,
+    customerCode: customer.accountCode || String(customer.customerID ?? customer.id),
+    customerNameAr:
+      customer.clientName || customer.customerNameAr || customer.customerNameEn || '-',
+    totalAmount: TEST_BATCH_DETAILS[index].totalAmount,
+  }));
+};
+
+const createTestBatch = ({ supplier, period, customers }) => ({
+  batchID: 9001,
+  batchNumber: TEST_BATCH_NUMBER,
+  status: 'مفتوحة',
+  supplierID: supplier?.supplierID ?? null,
+  supplierNameAr: supplier?.supplierNameAr ?? null,
+  supplierNameEn: supplier?.supplierNameEn ?? null,
+  financialPeriodID: period?.financialPeriodID ?? null,
+  batchDate: new Date().toISOString().slice(0, 10),
+  earnedDiscount: 0,
+  invoiceID: null,
+  details: buildTestBatchDetails(customers),
+});
+
 const mapBatchToFormData = (batch) => ({
   batchID: batch.batchID,
   batchNumber: String(batch.batchNumber ?? ''),
@@ -94,6 +147,7 @@ const NewBatchInvoicePage = () => {
   const queryClient = useQueryClient();
   const createBatchInvoiceMutation = useCreateBatchInvoice();
   const { data: suppliers = [] } = useSuppliers();
+  const { data: customers = [] } = useCustomers();
   const { data: financialPeriods = [] } = useFinancialPeriods();
 
   const [batchNumberInput, setBatchNumberInput] = useState('');
@@ -196,6 +250,19 @@ const NewBatchInvoicePage = () => {
     } finally {
       setIsLoadingBatch(false);
     }
+  };
+
+  const handleLoadTestBatch = () => {
+    const batch = createTestBatch({
+      supplier: suppliers[0],
+      period: financialPeriods[0],
+      customers,
+    });
+
+    setBatchData(batch);
+    setFormData(mapBatchToFormData(batch));
+    setBatchNumberInput(String(batch.batchNumber));
+    toast.success('تم تحميل بيانات الدفعة التجريبية');
   };
 
   const handleFieldChange = (field, value) => {
@@ -320,6 +387,15 @@ const NewBatchInvoicePage = () => {
           >
             <Search size={16} />
             {isLoadingBatch ? 'جاري التحميل...' : 'تحميل الدفعة'}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleLoadTestBatch}
+            className="mt-0 w-full flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-5 py-3 text-primary hover:bg-primary/10 md:self-end"
+          >
+            <Beaker size={16} />
+            دفعة تجريبية
           </button>
         </div>
       </div>
