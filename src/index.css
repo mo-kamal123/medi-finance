@@ -1,15 +1,15 @@
 @import 'tailwindcss';
 
 body {
-  font-family: 'Tajawal', sans-serif;
+  font-family: 'Cairo', sans-serif;
 }
 
 .main-font {
-  font-family: 'Tajawal', sans-serif;
+  font-family: 'Cairo', sans-serif;
 }
 
 .sub-font {
-  font-family: 'Montserrat', sans-serif;
+  font-family: "Cairo", sans-serif;
 }
 
 @theme {

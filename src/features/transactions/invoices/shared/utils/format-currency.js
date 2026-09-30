@@ -1,1 +1,1 @@
-export { formatCurrency } from '../../../../../shared/utils/formatters';
+export { formatCurrency, formatNumber } from '../../../../../shared/utils/formatters';

@@ -14,18 +14,6 @@ export const entriesCols = [
     key: 'journalEntryNumber',
   },
   {
-    header: 'التاريخ',
-    key: 'entryDate',
-    type: 'custom',
-    render: (row) => formatDate(row.entryDate),
-  },
-  {
-    header: 'النوع',
-    key: 'journalType',
-    type: 'custom',
-    render: (row) => getJournalTypeLabel(row.journalType),
-  },
-  {
     header: 'مدين',
     key: 'totalDebit',
     type: 'custom',
@@ -46,10 +34,16 @@ export const entriesCols = [
     ),
   },
   {
-    header: 'الوصف',
-    key: 'description',
+    header: 'التاريخ',
+    key: 'entryDate',
     type: 'custom',
-    render: (row) => getJournalEntryDescription(row),
+    render: (row) => formatDate(row.entryDate),
+  },
+  {
+    header: 'النوع',
+    key: 'journalType',
+    type: 'custom',
+    render: (row) => getJournalTypeLabel(row.journalType),
   },
   {
     header: 'الفترة المالية',
@@ -121,14 +115,14 @@ export const getJournalEntryStatusMeta = (entry = {}) => {
   const statusName = entry.statusName || entry.status || '-';
 
   if (isJournalEntryReversed(entry)) {
-    return { badgeClass: 'bg-red-100 text-red-700', label: statusName };
+    return { badgeClass: 'bg-red-100 text-red-700 main-font', label: statusName };
   }
 
   if (isJournalEntryPosted(entry)) {
-    return { badgeClass: 'bg-green-100 text-green-700', label: statusName };
+    return { badgeClass: 'bg-green-100 text-green-700 main-font', label: statusName };
   }
 
-  return { badgeClass: 'bg-yellow-100 text-yellow-700', label: statusName };
+  return { badgeClass: 'bg-yellow-100 text-yellow-700 main-font', label: statusName };
 };
 
 const toApiNumber = (value, defaultValue = 0) => {

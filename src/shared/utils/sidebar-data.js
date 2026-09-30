@@ -94,7 +94,6 @@ export const links = [
             { name: 'مطابقة البنوك', link: '/bank-reconciliation', icon: FileCheck },
             { name: 'التحويلات البنكية', link: '/bank-transfers', icon: Link2 },
             { name: 'تقرير الشيكات', link: '/cheques-report', icon: CreditCard },
-            { name: 'ملخص الشيكات', link: '/cheques-summary', icon: Banknote },
             { name: 'الشيكات المعلقة', link: '/outstanding-cheques', icon: FileClock },
             { name: 'التدفقات النقدية', link: '/cash-flow', icon: Wallet },
           ],

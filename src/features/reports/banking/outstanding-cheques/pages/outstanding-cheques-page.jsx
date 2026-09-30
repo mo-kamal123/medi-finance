@@ -5,11 +5,15 @@ import Pagination from '../../../../../shared/ui/pagination';
 import Table from '../../../../../shared/ui/table';
 import PageLoader from '../../../../../shared/ui/page-loader';
 import { formatCurrency, formatDate, formatNumber } from '../../../../../shared/utils/formatters';
-import { useAllBankAccounts } from '../../../../banking/banks/hooks/banks.queries';
+import {
+  useAllBankAccounts,
+  useBanks,
+} from '../../../../banking/banks/hooks/banks.queries';
 import { useOutstandingCheques } from '../hooks/outstanding-cheques.queries';
 import { useOutstandingChequesExport } from '../hooks/use-outstanding-cheques-export';
 
 const DEFAULT_FILTERS = {
+  bankId: '',
   bankAccountID: '',
   transactionType: '',
   pageNumber: 1,
@@ -33,21 +37,36 @@ const OutstandingChequesPage = () => {
   const { handleExport, isExporting } = useOutstandingChequesExport();
 
   const { data: accountsResponse = [] } = useAllBankAccounts();
+  const { data: banks = [] } = useBanks({ pageSize: 100 });
+
+  const bankOptions = useMemo(
+    () =>
+      (Array.isArray(banks) ? banks : []).map((bank) => ({
+        value: String(bank.bankID || bank.id),
+        label: bank.bankNameAr || bank.bankNameEn || String(bank.bankID || bank.id),
+      })),
+    [banks]
+  );
 
   const bankAccountOptions = useMemo(() => {
     const list = normalizeCollection(accountsResponse);
-    return list.map((account) => ({
-      value: String(account.bankAccountID || account.id),
-      label:
-        [
-          account.bankNameAr || account.bankName,
-          account.accountNumber,
-          account.accountNameAr || account.accountNameEn,
-        ]
-          .filter(Boolean)
-          .join(' - ') || String(account.bankAccountID || account.id),
-    }));
-  }, [accountsResponse]);
+    return list
+      .filter(
+        (account) =>
+          !filters.bankId || String(account.bankID) === String(filters.bankId)
+      )
+      .map((account) => ({
+        value: String(account.bankAccountID || account.id),
+        label:
+          [
+            account.bankNameAr || account.bankName,
+            account.accountNumber,
+            account.accountNameAr || account.accountNameEn,
+          ]
+            .filter(Boolean)
+            .join(' - ') || String(account.bankAccountID || account.id),
+      }));
+  }, [accountsResponse, filters.bankId]);
 
   const queryParams = useMemo(
     () => ({
@@ -75,7 +94,12 @@ const OutstandingChequesPage = () => {
   );
 
   const handleChange = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value, pageNumber: 1 }));
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+      ...(key === 'bankId' ? { bankAccountID: '' } : {}),
+      pageNumber: 1,
+    }));
   };
 
   const handleReset = () => {
@@ -164,7 +188,7 @@ const OutstandingChequesPage = () => {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <FileClock size={24} />
@@ -187,14 +211,23 @@ const OutstandingChequesPage = () => {
         </button>
       </div>
 
-      <div className="space-y-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+      <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <SearchableSelect
+            label="البنك"
+            value={filters.bankId || ''}
+            onChange={(event) => handleChange('bankId', event.target.value)}
+            placeholder="اختر البنك..."
+            options={bankOptions}
+          />
+
           <SearchableSelect
             label="الحساب البنكي"
             value={filters.bankAccountID || ''}
             onChange={(event) => handleChange('bankAccountID', event.target.value)}
             placeholder="اختر الحساب البنكي..."
             options={bankAccountOptions}
+            disabled={!filters.bankId}
           />
 
           <SearchableSelect
@@ -220,7 +253,7 @@ const OutstandingChequesPage = () => {
 
       {filters.bankAccountID && (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-gray-200 bg-white p-5">
             <div className="text-sm text-gray-500">شيكات قبض معلقة</div>
             <div className="mt-2 text-2xl font-bold text-gray-900">
               {formatNumber(incomingCount)}
@@ -230,7 +263,7 @@ const OutstandingChequesPage = () => {
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-gray-200 bg-white p-5">
             <div className="text-sm text-gray-500">شيكات صرف معلقة</div>
             <div className="mt-2 text-2xl font-bold text-gray-900">
               {formatNumber(outgoingCount)}
@@ -246,7 +279,7 @@ const OutstandingChequesPage = () => {
         <PageLoader label="جاري تحميل الشيكات المعلقة..." />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+          <div className="overflow-hidden">
             <Table
               columns={columns}
               data={cheques}
@@ -254,7 +287,7 @@ const OutstandingChequesPage = () => {
               emptyMessage={
                 filters.bankAccountID
                   ? 'لا توجد شيكات معلقة'
-                  : 'اختر حساباً بنكياً لعرض الشيكات المعلقة'
+                  : 'اختر بنكاً وحساباً بنكياً لعرض الشيكات المعلقة'
               }
             />
           </div>

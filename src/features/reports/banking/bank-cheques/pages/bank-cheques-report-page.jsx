@@ -13,6 +13,7 @@ import {
 import { useChequeStatuses } from '../../../../banking/cheques/hooks/cheques.queries';
 import { useBankChequesReport } from '../hooks/bank-cheques.queries';
 import { useBankChequesReportExport } from '../hooks/use-bank-cheques-report-export';
+import ChequesSummarySection from '../components/cheques-summary-section';
 
 const DEFAULT_FILTERS = {
   bankId: '',
@@ -318,11 +319,13 @@ const BankChequesReportPage = () => {
             onClick={handleReset}
             className="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
           >
-            <RotateCcw size={16} />
+            <            RotateCcw size={16} />
             مسح الفلاتر
           </button>
         </div>
       </div>
+
+      <ChequesSummarySection bankId={filters.bankId} />
 
       {isLoading ? (
         <PageLoader label="جاري تحميل الشيكات..." />
