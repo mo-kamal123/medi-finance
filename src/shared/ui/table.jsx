@@ -79,8 +79,11 @@ const Table = ({
 
   const getColIndex = (col) => columns.indexOf(col);
 
+  const footerContent =
+    typeof footer === 'function' ? footer(visibleColumns) : footer;
+
   return (
-    <div className="relative space-y-2">
+    <div className="relative space-y-2 ">
       <div className="flex justify-end">
         <button
           ref={pickerBtnRef}
@@ -158,7 +161,7 @@ const Table = ({
             {hasActions ? <th className="border border-gray-200" /> : null}
           </tr>
         </thead>
-        <tbody>
+        <tbody className='sub-font'>
           {loading ? (
             <tr>
               <td colSpan={colSpan} className="border border-gray-200 p-6">
@@ -211,8 +214,8 @@ const Table = ({
             </tr>
           )}
           </tbody>
-        {footer ? (
-          <tfoot className="bg-gray-50 font-semibold">{footer}</tfoot>
+        {footerContent ? (
+          <tfoot className="bg-gray-50 font-semibold">{footerContent}</tfoot>
         ) : null}
       </table>
       </div>

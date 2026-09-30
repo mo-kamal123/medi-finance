@@ -1,5 +1,4 @@
 import { bankBalancesRoutes } from "./bank-balances/routes/routes";
-import { bankChequesSummaryRoutes } from "./bank-cheques-summary/routes/routes";
 import { bankChequesRoutes } from "./bank-cheques/routes/routes";
 import { bankReconciliationRoutes } from "./bank-reconciliation/routes/routes";
 import { bankStatementRoutes } from "./bank-statement/routes/routes";
@@ -15,7 +14,6 @@ export const bankingReportsRoutes = [
     ...bankReconciliationRoutes,
     ...bankTransfersRoutes,
     ...bankChequesRoutes,
-    ...bankChequesSummaryRoutes,
     ...outstandingChequesRoutes,
     ...cashFlowRoutes,
 
