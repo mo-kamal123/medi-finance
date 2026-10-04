@@ -13,6 +13,10 @@ const FormInput = ({
   className = '',
   placeholder = 'ادخل قيمة',
   required,
+  ref,
+  name,
+  onBlur,
+  onChange,
   ...props
 }) => {
   const baseClasses = `
@@ -53,13 +57,24 @@ const FormInput = ({
         )}
 
         {as === 'textarea' ? (
-          <textarea {...props} className={baseClasses + ' min-h-25'} />
+          <textarea
+            ref={ref}
+            name={name}
+            onBlur={onBlur}
+            onChange={onChange}
+            {...props}
+            className={baseClasses + ' min-h-25'}
+          />
         ) : as === 'select' ? (
           <SearchableSelect
             {...props}
+            ref={ref}
+            name={name}
+            onBlur={onBlur}
+            onChange={onChange}
             label={null}
             error={error}
-            placeholder={props.placeholder || 'اختر'}
+            placeholder={placeholder || 'اختر'}
             className={baseClasses}
             options={Children.toArray(children)
               .filter(isValidElement)
@@ -69,9 +84,18 @@ const FormInput = ({
               }))}
           />
         ) : (
-          <input {...props} type={type} className={baseClasses} placeholder={placeholder}/>
+          <input
+            ref={ref}
+            name={name}
+            onBlur={onBlur}
+            onChange={onChange}
+            {...props}
+            type={type}
+            className={baseClasses}
+            placeholder={placeholder}
+          />
         )}
-        {error && (
+        {error && as !== 'select' && (
           <p className="mt-1 text-sm text-red-500">{error}</p>
         )}
       </div>

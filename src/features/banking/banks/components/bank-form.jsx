@@ -38,14 +38,28 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
   const {
     register,
     handleSubmit,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: formDefaults,
     values: formDefaults,
     resolver: zodResolver(bankSchema),
-    mode: 'onBlur',
+    mode: 'onTouched',
     reValidateMode: 'onChange',
   });
+
+  // Guarantee validation runs on unfocus (blur), even if the shared
+  // FormInput swallows/overrides the RHF onBlur handler.
+  const registerBlur = (name) => {
+    const { onBlur: rhfOnBlur, ...rest } = register(name);
+    return {
+      ...rest,
+      onBlur: async (e) => {
+        await rhfOnBlur(e);
+        trigger(name);
+      },
+    };
+  };
 
   const mutation = isCreateMode ? createMutation : updateMutation;
 
@@ -106,7 +120,7 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
           <FormInput
             label="كود البنك"
             placeholder="مثال: 001"
-            {...register('bankCode')}
+            {...registerBlur('bankCode')}
             error={errors.bankCode?.message}
             readOnly={isViewMode}
             required
@@ -114,7 +128,7 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
           <FormInput
             label="اسم البنك بالعربية"
             placeholder="مثال: البنك الأهلي"
-            {...register('bankNameAr')}
+            {...registerBlur('bankNameAr')}
             error={errors.bankNameAr?.message}
             readOnly={isViewMode}
             required
@@ -122,28 +136,28 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
           <FormInput
             label="اسم البنك بالإنجليزية"
             placeholder="مثال: National Bank"
-            {...register('bankNameEn')}
+            {...registerBlur('bankNameEn')}
             error={errors.bankNameEn?.message}
             readOnly={isViewMode}
           />
           <FormInput
             label="Swift Code"
             placeholder="مثال: NBEGEGCX"
-            {...register('swiftCode')}
+            {...registerBlur('swiftCode')}
             error={errors.swiftCode?.message}
             readOnly={isViewMode}
           />
           <FormInput
             label="العنوان"
             placeholder="مثال: شارع التسعين، التجمع الخامس"
-            {...register('addressAr')}
+            {...registerBlur('addressAr')}
             error={errors.addressAr?.message}
             readOnly={isViewMode}
           />
           <FormInput
             label="الهاتف"
             placeholder="مثال: 01012345678"
-            {...register('phone')}
+            {...registerBlur('phone')}
             error={errors.phone?.message}
             readOnly={isViewMode}
           />
@@ -151,14 +165,14 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
             type="email"
             label="البريد الإلكتروني"
             placeholder="مثال: info@bank.com"
-            {...register('email')}
+            {...registerBlur('email')}
             error={errors.email?.message}
             readOnly={isViewMode}
           />
           <FormInput
             label="الموقع الإلكتروني"
             placeholder="مثال: https://www.bank.com"
-            {...register('website')}
+            {...registerBlur('website')}
             error={errors.website?.message}
             readOnly={isViewMode}
           />
@@ -167,7 +181,7 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
         <Toggle
           label="البنك نشط"
           disabled={isViewMode}
-          {...register('isActive')}
+          {...registerBlur('isActive')}
         />
 
         <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
