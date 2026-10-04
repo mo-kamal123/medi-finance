@@ -38,13 +38,37 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
     register,
     handleSubmit,
     control,
+    trigger,
     formState: { errors, isSubmitting },
     reset,
   } = useForm({
     defaultValues: formDefaults,
     values: formDefaults,
     resolver: zodResolver(bankAccountSchema),
+    mode: 'onTouched',
+    reValidateMode: 'onChange',
   });
+
+  // Same blur (unfocus) validation pattern as bank-form:
+  // validate the field as soon as the user leaves it.
+  const registerBlur = (name) => {
+    const { onBlur: rhfOnBlur, ...rest } = register(name);
+    return {
+      ...rest,
+      onBlur: async (e) => {
+        await rhfOnBlur(e);
+        trigger(name);
+      },
+    };
+  };
+
+  // Account number: numbers only — strip non-digits on type/paste,
+  // then validate on blur.
+  const {
+    onChange: accountNumberOnChange,
+    onBlur: accountNumberOnBlur,
+    ...accountNumberRest
+  } = register('accountNumber');
 
   const isActive = useWatch({ control, name: 'isActive' });
 
@@ -117,7 +141,16 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
             <FormInput
               label="رقم الحساب"
               placeholder="مثال: 123456789"
-              {...register('accountNumber')}
+              inputMode="numeric"
+              {...accountNumberRest}
+              onChange={(e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                accountNumberOnChange(e);
+              }}
+              onBlur={async (e) => {
+                await accountNumberOnBlur(e);
+                trigger('accountNumber');
+              }}
               error={errors.accountNumber?.message}
               required
             />
@@ -125,7 +158,7 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
             <FormInput
               label="الفرع"
               placeholder="مثال: فرع وسط البلد"
-              {...register('branch')}
+              {...registerBlur('branch')}
               error={errors.branch?.message}
               required
             />
@@ -138,8 +171,16 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
                   label="العملة"
                   placeholder="اختر العملة"
                   error={errors.currencyID?.message}
+                  name={field.name}
                   value={field.value}
-                  onChange={field.onChange}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    trigger('currencyID');
+                  }}
+                  onBlur={() => {
+                    field.onBlur?.();
+                    trigger('currencyID');
+                  }}
                   required
                 >
                   {currencyOptions.map((opt) => (
@@ -153,7 +194,7 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
             <FormInput
               label="IBAN"
               placeholder="مثال: EG380019000500000000263180002"
-              {...register('iban')}
+              {...registerBlur('iban')}
               error={errors.iban?.message}
             />
 
@@ -162,13 +203,13 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
                 <FormInput
                   label="اسم الحساب بالعربية"
                   placeholder="مثال: الحساب الجاري"
-                  {...register('accountNameAr')}
+                  {...registerBlur('accountNameAr')}
                   error={errors.accountNameAr?.message}
                 />
                 <FormInput
                   label="اسم الحساب بالإنجليزية"
                   placeholder="مثال: Current Account"
-                  {...register('accountNameEn')}
+                  {...registerBlur('accountNameEn')}
                   error={errors.accountNameEn?.message}
                 />
               </>
@@ -180,7 +221,7 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
                 min="0"
                 label="الرصيد الافتتاحي"
                 placeholder="مثال: 1000"
-                {...register('openingBalance')}
+                {...registerBlur('openingBalance')}
                 error={errors.openingBalance?.message}
               />
             )}
@@ -190,7 +231,7 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
               min="0"
               label="الحد الأدنى للرصيد"
               placeholder="مثال: 500"
-              {...register('minBalance')}
+              {...registerBlur('minBalance')}
               error={errors.minBalance?.message}
             />
           </div>

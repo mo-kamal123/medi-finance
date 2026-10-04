@@ -77,8 +77,6 @@ const Table = ({
     setDropdownStyle(null);
   };
 
-  const getColIndex = (col) => columns.indexOf(col);
-
   const footerContent =
     typeof footer === 'function' ? footer(visibleColumns) : footer;
 
@@ -179,13 +177,12 @@ const Table = ({
                 className={`even:bg-gray-50/40 transition-colors hover:bg-gray-50 ${onRowClick ? 'cursor-pointer' : ''}`}
               >
                 {visibleColumns.map((col, colIndex) => {
-                  const originalIndex = getColIndex(col);
                   return (
                     <td
                       key={colIndex}
                       className="border border-gray-200 p-3 align-middle text-center"
                     >
-                      {renderCell(col, row, originalIndex, onChange, extraRenderArg)}
+                      {renderCell(col, row, rowIndex, onChange, extraRenderArg)}
                     </td>
                   );
                 })}

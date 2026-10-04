@@ -25,7 +25,11 @@ const nonNegativeAmount = z
   );
 
 export const bankAccountSchema = z.object({
-  accountNumber: z.string().trim().min(1, 'رقم الحساب مطلوب'),
+  accountNumber: z
+    .string()
+    .trim()
+    .min(1, 'رقم الحساب مطلوب')
+    .regex(/^[0-9]+$/, 'رقم الحساب يجب أن يحتوي على أرقام فقط'),
   branch: z.string().trim().min(1, 'الفرع مطلوب'),
   iban: optionalIban,
   accountNameAr: z.string().optional(),
