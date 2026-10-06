@@ -19,6 +19,9 @@ export const useBankReconciliation = (id) => {
     queryKey: bankReconciliationsKeys.detail(id),
     queryFn: () => getBankReconciliationById(id),
     enabled: !!id,
+    // Backend auto-adds posted moves inside [fromDate, toDate] on GET,
+    // so always refetch when the screen opens / is returned to.
+    refetchOnMount: 'always',
   });
 };
 
@@ -28,5 +31,6 @@ export const useReconciliationItems = (id, filters = {}) => {
     queryFn: () => getReconciliationItems(id, filters),
     enabled: !!id,
     placeholderData: keepPreviousData,
+    refetchOnMount: 'always',
   });
 };

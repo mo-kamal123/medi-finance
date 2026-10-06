@@ -110,7 +110,6 @@ const AccountForm = ({ mode = 'create', defaultValues = {}, onSubmit }) => {
           dir="ltr"
           {...register('nameEn')}
           error={errors.nameEn?.message}
-          required
         />
       </div>
 

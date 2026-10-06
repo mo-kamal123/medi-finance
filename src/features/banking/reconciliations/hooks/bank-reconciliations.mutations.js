@@ -39,6 +39,9 @@ export const useCreateBankReconciliation = () => {
 export const useMatchReconciliationItem = (reconciliationId) => {
   const queryClient = useQueryClient();
   return useMutation({
+    // payload: { itemId, bankTransactionIDs: number[] } — full new selection.
+    // Callers must refetch detail + items afterwards: match returns the
+    // single updated item only, not the full new list/balances.
     mutationFn: (payload) => matchReconciliationItem({ reconciliationId, ...payload }),
     onSuccess: () => {
       invalidateReconciliation(queryClient, reconciliationId);
