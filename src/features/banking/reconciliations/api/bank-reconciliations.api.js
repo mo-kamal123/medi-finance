@@ -75,10 +75,29 @@ export const getReconciliationItems = async (id, params = {}) => {
 };
 
 // POST /bank-reconciliations/{id}/items/{itemId}/match
-export const matchReconciliationItem = async ({ reconciliationId, itemId, bankTransactionId }) => {
+// itemId = reconciliationItemID of the BANK statement item.
+// Always sends the FULL new selection; backend replaces the previous one.
+// Never send an empty array or duplicate IDs (backend rejects them).
+export const matchReconciliationItem = async ({
+  reconciliationId,
+  itemId,
+  bankTransactionIDs,
+  // legacy single-ID callers (current match modal) — accepted as fallback
+  bankTransactionID,
+  bankTransactionId,
+}) => {
+  const source = bankTransactionIDs ?? bankTransactionID ?? bankTransactionId;
+  const ids = [...new Set(
+    (Array.isArray(source) ? source : [source])
+      .map(Number)
+      .filter((n) => Number.isFinite(n) && n > 0)
+  )];
+  if (ids.length === 0) {
+    throw new Error('اختر حركة واحدة على الأقل للمطابقة');
+  }
   const { data } = await axiosInstance.post(
     `/bank-reconciliations/${reconciliationId}/items/${itemId}/match`,
-    { bankTransactionId: Number(bankTransactionId) }
+    { bankTransactionIDs: ids }
   );
   return data;
 };

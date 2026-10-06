@@ -1,15 +1,12 @@
 // New batch invoice page.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
-  Beaker,
+  BadgePercent,
   FileText,
   Percent,
-  Plus,
   Search,
-  Trash2,
   Users,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -20,15 +17,19 @@ import Table from '../../../../shared/ui/table';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import { toast } from '../../../../shared/lib/toast';
 import {
-  useCustomers,
   useFinancialPeriods,
-  useSuppliers,
 } from '../shared/hooks/invoices.queries';
 import { useCreateBatchInvoice } from '../shared/hooks/invoices.mutations';
 import { invoicesKeys } from '../shared/hooks/invoices.keys';
 import { getBatchByNumber } from '../shared/api/invoices-api';
 import { toDateInputValue } from '../shared/utils/mapInvoiceToFormValues';
 import { formatCurrency, formatNumber } from '../shared/utils/format-currency';
+import {
+  DISCOUNT_SOURCE_OPTIONS,
+  buildFinanceDiscountPayload,
+  initializeDiscountRows,
+  updateFinanceDiscount,
+} from './batch-discounts';
 
 const createEmptyBatchForm = () => ({
   batchID: null,
@@ -71,7 +72,7 @@ const DETAIL_HEADERS = {
 const formatAmount = (value) => formatNumber(value, { maximumFractionDigits: 2 });
 
 const DetailTextCell = ({ children, className = '', title }) => (
-  <div className={`line-clamp-2 break-words whitespace-normal ${className}`} title={title}>
+  <div className={`line-clamp-2 wrap-break-word whitespace-normal ${className}`} title={title}>
     {children}
   </div>
 );
@@ -87,7 +88,7 @@ const DETAIL_COLUMNS = [
     type: 'custom',
     render: (row) => (
       <DetailTextCell
-        className="max-w-[9rem] text-gray-600"
+        className="max-w-36 text-gray-600"
         title={row.clientCode}
       >
         {row.clientCode}
@@ -100,7 +101,7 @@ const DETAIL_COLUMNS = [
     type: 'custom',
     render: (row) => (
       <DetailTextCell
-        className="min-w-[8rem] max-w-[16rem] font-medium text-gray-900"
+        className="min-w-32 max-w-[16rem] font-medium text-gray-900"
         title={row.clientName}
       >
         {row.clientName}
@@ -174,63 +175,6 @@ const resolveSummary = (summary, details) => {
   );
 };
 
-const DISCOUNT_TYPE_OPTIONS = [
-  'خصم طبي',
-  'خصم فني',
-  'فروق أسعار التعاقد',
-  'فروق التحمل والخصم',
-  'إجمالي الخصومات',
-  'خصم مكتسب -مراجعه فنية',
-  'خصم مسموح بة',
-  'ايراد خصم ادارة فنية',
-  'خصم مكتسب',
-  'خصم مكتسب - تعاقدات',
-  'خصم من المنبع',
-  'خصم اضافى موردين',
-  'خصم مشتريات',
-  'Earned Discount - Technical Review',
-  'Allowed Discount',
-  'Technical Management Discount Revenue',
-  'Earned Discount',
-  'Earned Discount - Contracts',
-  'Discount at Source',
-  'Additional Supplier Discount',
-  'Purchase Discount',
-].map((item) => ({
-  value: item,
-  label: item,
-}));
-
-const BATCH_DISCOUNT_FIELDS = [
-  { key: 'medicalDiscount', label: 'خصم طبي' },
-  { key: 'technicalDiscount', label: 'خصم فني' },
-  { key: 'contractPriceDifferences', label: 'فروق أسعار التعاقد' },
-  { key: 'copaymentAndDiscountDifferences', label: 'فروق التحمل والخصم' },
-];
-
-const mapBatchDiscounts = (batchDiscounts, earnedDiscount) => {
-  if (batchDiscounts) {
-    const componentRows = BATCH_DISCOUNT_FIELDS
-      .map(({ key, label }) => ({
-        discountType: label,
-        amount: toAmount(batchDiscounts[key]),
-      }))
-      .filter((row) => row.amount > 0);
-
-    if (componentRows.length > 0) {
-      return componentRows;
-    }
-
-    const totalDiscounts = toAmount(batchDiscounts.totalDiscounts);
-    return totalDiscounts > 0
-      ? [{ discountType: 'إجمالي الخصومات', amount: totalDiscounts }]
-      : [];
-  }
-
-  const earned = toAmount(earnedDiscount);
-  return earned > 0 ? [{ discountType: 'خصم مكتسب', amount: earned }] : [];
-};
-
 const buildDetailsFooter = (summary) => (visibleColumns) => {
   if (!summary) {
     return null;
@@ -288,166 +232,36 @@ const TABS = [
   },
 ];
 
-const createEmptyDiscount = () => ({
-  discountType: '',
-  amount: '',
-});
-
-const TEST_BATCH_NUMBER = '9999';
-
-const round2 = (value) => Math.round(value * 100) / 100;
-
-const TEST_BATCH_CLIENTS = [
-  {
-    clientId: 175,
-    clientCode: '2164',
-    clientName: 'Galala University',
-    claimsCount: 1,
-    totalBeforeCopayment: 1386.4,
-    copayment: 138.64,
-    paidByMember: 0.36,
-    revisionDelta: 0,
-    earnedDiscount: 0,
-  },
-  {
-    clientId: 182,
-    clientCode: '2087',
-    clientName: 'مستشفى النور التخصصي',
-    claimsCount: 3,
-    totalBeforeCopayment: 4210.75,
-    copayment: 421.08,
-    paidByMember: 12.5,
-    revisionDelta: 150,
-    earnedDiscount: 25,
-  },
-  {
-    clientId: 193,
-    clientCode: '1912',
-    clientName: 'مؤسسة المستقبل للتجارة',
-    claimsCount: 7,
-    totalBeforeCopayment: 12890.2,
-    copayment: 1289.02,
-    paidByMember: 45.75,
-    revisionDelta: 320,
-    earnedDiscount: 0,
-  },
-  {
-    clientId: 204,
-    clientCode: '1745',
-    clientName: 'شركة النيل للتوزيع',
-    claimsCount: 2,
-    totalBeforeCopayment: 2760.4,
-    copayment: 276.04,
-    paidByMember: 8.2,
-    revisionDelta: 0,
-    earnedDiscount: 40,
-  },
-  {
-    clientId: 211,
-    clientCode: '1630',
-    clientName: 'مصنع الأمل للصلب',
-    claimsCount: 12,
-    totalBeforeCopayment: 34210.9,
-    copayment: 3421.09,
-    paidByMember: 118.4,
-    revisionDelta: 640,
-    earnedDiscount: 120,
-  },
-  {
-    clientId: 226,
-    clientCode: '1508',
-    clientName: 'مؤسسة الفجر للتجارة',
-    claimsCount: 4,
-    totalBeforeCopayment: 5930.15,
-    copayment: 593.02,
-    paidByMember: 21.6,
-    revisionDelta: 90,
-    earnedDiscount: 0,
-  },
-];
-
-const expandTestDetail = (row, index) => {
-  const totalAfterCopayment = round2(row.totalBeforeCopayment - row.copayment);
-  const earnedDiscount = round2(row.earnedDiscount);
-  const totalAfterRevision = round2(totalAfterCopayment - row.revisionDelta);
-
-  return {
-    batchDetailID: 9000 + index,
-    clientId: row.clientId,
-    clientCode: row.clientCode,
-    clientName: row.clientName,
-    claimsCount: row.claimsCount,
-    totalBeforeCopayment: round2(row.totalBeforeCopayment),
-    copayment: round2(row.copayment),
-    paidByMember: round2(row.paidByMember),
-    totalAfterCopayment,
-    totalAfterRevision,
-    earnedDiscount,
-    totalAmount: round2(totalAfterRevision - earnedDiscount - row.paidByMember),
-  };
-};
-
-const buildTestBatchDetails = (customers) => {
-  const list = (Array.isArray(customers) ? customers : []).filter(
-    (customer) => customer?.customerID || customer?.id
+const getDefaultFinancialPeriodId = (periods) => {
+  if (!Array.isArray(periods) || periods.length === 0) return '';
+  const open = periods.filter((period) => period?.isActive && !period?.isClosed);
+  const pool = open.length > 0 ? open : periods;
+  const sorted = [...pool].sort(
+    (a, b) => new Date(b?.startDate ?? 0) - new Date(a?.startDate ?? 0)
   );
-
-  if (list.length === 0) {
-    return TEST_BATCH_CLIENTS.map(expandTestDetail);
-  }
-
-  return list.slice(0, TEST_BATCH_CLIENTS.length).map((customer, index) => {
-    const sample = TEST_BATCH_CLIENTS[index];
-    const clientId = customer.customerID ?? customer.id;
-
-    return expandTestDetail(
-      {
-        ...sample,
-        clientId,
-        clientCode: customer.accountCode || sample.clientCode,
-        clientName:
-          customer.clientName || customer.customerNameAr || sample.clientName,
-      },
-      index
-    );
-  });
-};
-
-
-const createTestBatch = ({ supplier, period, customers }) => {
-  const details = buildTestBatchDetails(customers);
-  const technicalDiscount = round2(
-    details.reduce((sum, detail) => sum + detail.earnedDiscount, 0)
-  );
-
-  return {
-    batchID: 9001,
-    batchNumber: TEST_BATCH_NUMBER,
-    providerId: supplier?.supplierID ?? null,
-    supplierName:
-      supplier?.supplierNameAr ?? supplier?.supplierNameEn ?? null,
-    financialPeriodID: period?.financialPeriodID ?? null,
-    batchDate: new Date().toISOString(),
-    amount: round2(
-      details.reduce((sum, detail) => sum + detail.totalBeforeCopayment, 0)
-    ),
-    batchDiscounts: {
-      medicalDiscount: 0,
-      technicalDiscount,
-      contractPriceDifferences: round2(technicalDiscount / 20),
-      copaymentAndDiscountDifferences: 0,
-      totalDiscounts: technicalDiscount,
-    },
-    invoiceID: null,
-    clients: details,
-    summary: sumDetails(details),
-  };
+  const id = sorted[0]?.financialPeriodID ?? sorted[0]?.id;
+  return id != null ? String(id) : '';
 };
 
 const mapBatchToFormData = (batch) => {
   const details = (batch.clients ?? batch.details ?? []).map(mapBatchDetail);
   const providerValue = batch.providerId ?? batch.supplierID;
   const summary = resolveSummary(batch.summary, details);
+  const bases = {
+    netAmount: summary?.totalAmount ?? details.reduce((sum, detail) => sum + toAmount(detail.totalAmount), 0),
+    beforeCopayment: summary?.totalBeforeCopayment ?? details.reduce((sum, detail) => sum + toAmount(detail.totalBeforeCopayment), 0),
+  };
+  // Match finance discount types to the corresponding batch percentages.
+  const financePercentages = {
+    1: batch.adminFees,
+    2: batch.taxes,
+  };
+  const discounts = initializeDiscountRows(batch.batchDiscounts).map((row) => {
+    if (!row.isFinance) return row;
+    const percentage = financePercentages[row.type];
+    if (percentage == null || percentage === '') return row;
+    return updateFinanceDiscount(row, 'percentage', String(percentage), bases);
+  });
 
   return {
     batchID: batch.batchID ?? null,
@@ -460,25 +274,154 @@ const mapBatchToFormData = (batch) => {
       : '',
     invoiceDate: toDateInputValue(batch.batchDate),
     dueDate: toDateInputValue(batch.batchDate),
-    discounts: mapBatchDiscounts(batch.batchDiscounts, batch.earnedDiscount),
+    discounts,
     details,
     summary,
   };
+};
+
+const DiscountsTab = ({ discounts, onDiscountChange }) => {
+  const withIndex = discounts.map((discount, index) => ({ ...discount, index }));
+  const batchDiscounts = withIndex.filter((discount) => !discount.isFinance);
+  const financeDiscounts = withIndex.filter((discount) => discount.isFinance);
+
+  if (discounts.length === 0) {
+    return (
+      <div className="mx-auto max-w-4xl">
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-gray-300 bg-gray-50/60 px-6 py-14 text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-gray-400">
+            <BadgePercent size={22} aria-hidden="true" />
+          </span>
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">لا توجد خصومات</h2>
+            <p className="mt-1 text-sm text-gray-500">لم يتم إضافة خصومات لهذه الدفعة بعد.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-5xl space-y-5">
+
+      <section aria-label="خصومات الدفعة" className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-gray-50/70 px-5 py-3.5">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
+              <FileText size={17} aria-hidden="true" />
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-gray-900">خصومات الدفعة</h3>
+              <p className="text-xs text-gray-500">المبالغ الواردة من الدفعة</p>
+            </div>
+          </div>
+          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500">للعرض فقط</span>
+        </div>
+        <div className="grid grid-cols-1 gap-3 p-5 sm:grid-cols-4">
+          {batchDiscounts.map((discount) => (
+            <div
+              key={discount.discountType}
+              className="group rounded-xl border border-gray-200 bg-linear-to-b from-gray-50/80 to-white px-4 py-3 transition-colors hover:border-sky-200"
+            >
+              <p className="truncate text-xs font-medium text-gray-500" title={discount.discountType}>
+                {discount.discountType}
+              </p>
+              <p className="mt-1 text-lg font-bold text-gray-900 tabular-nums">
+                {formatCurrency(toAmount(discount.amount))}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section aria-label="خصومات المالية" className="overflow-hidden rounded-2xl border border-primary/20 bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-primary/10 bg-primary/4 px-5 py-3.5">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white">
+              <Percent size={17} aria-hidden="true" />
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-gray-900">خصومات المالية</h3>
+              <p className="text-xs text-gray-500">
+                أدخل النسبة أو القيمة واختر مصدر الاحتساب
+              </p>
+            </div>
+          </div>
+          <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">قابل للتعديل</span>
+        </div>
+        <div className="space-y-4 bg-linear-to-b from-primary/2 to-white p-5">
+          {financeDiscounts.map((discount) => (
+            <div
+              key={discount.discountType}
+              className="rounded-xl border border-gray-200 bg-white p-4 focus-within:border-primary/40"
+            >
+              <h4 className="mb-3 text-sm font-bold text-gray-900">{discount.discountType}</h4>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <FormInput
+                  label="النسبة (%)"
+                  aria-label={`نسبة ${discount.discountType}`}
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={discount.percentage}
+                  inputClass="py-2.5 tabular-nums"
+                  onChange={(event) => onDiscountChange(discount.index, 'percentage', event.target.value)}
+                />
+                <FormInput
+                  label="قيمة الخصم"
+                  aria-label={`قيمة ${discount.discountType}`}
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={discount.amount}
+                  inputClass="py-2.5 tabular-nums font-semibold"
+                  onChange={(event) => onDiscountChange(discount.index, 'amount', event.target.value)}
+                  placeholder="0.00"
+                />
+                <FormInput
+                  as="select"
+                  label="مصدر الاحتساب"
+                  aria-label={`مصدر احتساب ${discount.discountType}`}
+                  value={discount.source}
+                  inputClass="py-2.5"
+                  onChange={(event) => onDiscountChange(discount.index, 'source', event.target.value)}
+                >
+                  {DISCOUNT_SOURCE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </FormInput>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
 };
 
 const NewBatchInvoicePage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const createBatchInvoiceMutation = useCreateBatchInvoice();
-  const { data: suppliers = [] } = useSuppliers();
-  const { data: customers = [] } = useCustomers();
   const { data: financialPeriods = [] } = useFinancialPeriods();
 
   const [batchNumberInput, setBatchNumberInput] = useState('');
   const [batchData, setBatchData] = useState(null);
   const [formData, setFormData] = useState(createEmptyBatchForm);
   const [isLoadingBatch, setIsLoadingBatch] = useState(false);
+  const [batchLoadError, setBatchLoadError] = useState(null);
   const [activeTab, setActiveTab] = useState('info');
+
+  // Default to the latest open financial period (e.g. 2026) once loaded.
+  useEffect(() => {
+    if (!financialPeriods.length) return;
+    setFormData((prev) => {
+      if (prev.financialPeriodID) return prev;
+      const id = getDefaultFinancialPeriodId(financialPeriods);
+      if (!id) return prev;
+      return { ...prev, financialPeriodID: id };
+    });
+  }, [financialPeriods]);
 
   const totalAmount = useMemo(
     () =>
@@ -491,51 +434,25 @@ const NewBatchInvoicePage = () => {
     [formData.details, formData.summary]
   );
 
-  const discountAmount = useMemo(
+  const batchDiscountAmount = useMemo(
     () =>
       formData.discounts.reduce(
-        (sum, discount) => sum + (Number(discount.amount) || 0),
+        (sum, discount) =>
+          sum + (!discount.isFinance ? Number(discount.amount) || 0 : 0),
         0
       ),
     [formData.discounts]
   );
-  const netAmount = Math.max(totalAmount - discountAmount, 0);
-
-  const supplierOptions = useMemo(() => {
-    const baseOptions = suppliers.map((supplier) => ({
-      value: String(supplier.supplierID),
-      label: supplier.supplierNameAr || supplier.supplierNameEn,
-    }));
-
-    const batchSupplierValue = String(
-      batchData?.providerId ?? batchData?.supplierID ?? ''
-    );
-
-    if (!batchSupplierValue || batchSupplierValue === 'undefined') {
-      return baseOptions;
-    }
-
-    const hasBatchSupplier = baseOptions.some(
-      (option) => option.value === batchSupplierValue
-    );
-
-    if (hasBatchSupplier) {
-      return baseOptions;
-    }
-
-    return [
-      {
-        value: batchSupplierValue,
-        label:
-          batchData.supplierName ||
-          batchData.supplierNameAr ||
-          batchData.supplierNameEn ||
-          batchData.supplierCode ||
-          batchSupplierValue,
-      },
-      ...baseOptions,
-    ];
-  }, [batchData, suppliers]);
+  const financeDiscountAmount = useMemo(
+    () =>
+      formData.discounts.reduce(
+        (sum, discount) =>
+          sum + (discount.isFinance ? Number(discount.amount) || 0 : 0),
+        0
+      ),
+    [formData.discounts]
+  );
+  const netAmount = Math.max(totalAmount - financeDiscountAmount, 0);
 
   const periodOptions = useMemo(
     () =>
@@ -548,14 +465,17 @@ const NewBatchInvoicePage = () => {
 
   const canSubmit =
     (Number(formData.batchID) > 0 || Boolean(formData.batchNumber)) &&
-    Number(formData.supplierID) > 0 &&
+    Boolean(formData.supplierName?.trim()) &&
     Number(formData.financialPeriodID) > 0 &&
     Boolean(formData.invoiceDate) &&
     Boolean(formData.dueDate) &&
     formData.details.length > 0 &&
     formData.details.every((detail) => Number(detail.totalAmount) >= 0);
 
-  const handleLoadBatch = async () => {
+  const handleLoadBatch = async (event) => {
+    event.preventDefault();
+    if (isLoadingBatch) return;
+
     const normalizedBatchNumber = batchNumberInput.trim();
     if (!normalizedBatchNumber) {
       toast.error('أدخل رقم الدفعة أولاً');
@@ -563,64 +483,66 @@ const NewBatchInvoicePage = () => {
     }
 
     setIsLoadingBatch(true);
+    setBatchData(null);
+    setFormData(createEmptyBatchForm());
+    setActiveTab('info');
+    setBatchLoadError(null);
 
     try {
       const response = await queryClient.fetchQuery({
         queryKey: invoicesKeys.batch(normalizedBatchNumber),
         queryFn: () => getBatchByNumber(normalizedBatchNumber),
+        staleTime: 0,
+        retry: false,
       });
 
-      const batch = response?.data ?? response;
+      const batch = response && Object.hasOwn(response, 'data')
+        ? response.data
+        : response;
+      if (
+        !batch ||
+        typeof batch !== 'object' ||
+        (!batch.batchNumber && !(Number(batch.batchID) > 0))
+      ) {
+        setBatchLoadError({ type: 'not-found', batchNumber: normalizedBatchNumber });
+        return;
+      }
+
+      const nextFormData = mapBatchToFormData(batch);
+      if (!nextFormData.financialPeriodID) {
+        const defaultPeriodId = getDefaultFinancialPeriodId(financialPeriods);
+        if (defaultPeriodId) nextFormData.financialPeriodID = defaultPeriodId;
+      }
       setBatchData(batch);
-      setFormData(mapBatchToFormData(batch));
+      setFormData(nextFormData);
       setBatchNumberInput(String(batch.batchNumber ?? normalizedBatchNumber));
       toast.success('تم تحميل بيانات الدفعة');
     } catch (error) {
       console.error('Error loading batch:', error);
-      toast.error('تعذر تحميل بيانات الدفعة');
+      setBatchData(null);
+      setFormData(createEmptyBatchForm());
+      setBatchLoadError({
+        type: error.response?.status === 404 ? 'not-found' : 'error',
+        batchNumber: normalizedBatchNumber,
+      });
     } finally {
       setIsLoadingBatch(false);
     }
-  };
-
-  const handleLoadTestBatch = () => {
-    const batch = createTestBatch({
-      supplier: suppliers[0],
-      period: financialPeriods[0],
-      customers,
-    });
-
-    setBatchData(batch);
-    setFormData(mapBatchToFormData(batch));
-    setBatchNumberInput(String(batch.batchNumber));
-    toast.success('تم تحميل بيانات الدفعة التجريبية');
   };
 
   const handleFieldChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const addDiscountRow = () => {
-    setFormData((prev) => ({
-      ...prev,
-      discounts: [...prev.discounts, createEmptyDiscount()],
-    }));
-  };
-
-  const removeDiscountRow = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      discounts: prev.discounts.filter((_, rowIndex) => rowIndex !== index),
-    }));
-  };
-
   const handleDiscountChange = (index, field, value) => {
     setFormData((prev) => {
+      if (!prev.discounts[index]?.isFinance) return prev;
       const discounts = [...prev.discounts];
-      discounts[index] = {
-        ...discounts[index],
-        [field]: value,
-      };
+      discounts[index] = updateFinanceDiscount(discounts[index], field, value, {
+        netAmount: totalAmount,
+        beforeCopayment: prev.summary?.totalBeforeCopayment ??
+          prev.details.reduce((sum, detail) => sum + toAmount(detail.totalBeforeCopayment), 0),
+      });
       return { ...prev, discounts };
     });
   };
@@ -634,32 +556,15 @@ const NewBatchInvoicePage = () => {
     }
 
     const payload = {
-      batchID: Number(formData.batchID) || 0,
       batchNumber: formData.batchNumber,
-      supplierID: Number(formData.supplierID),
-      financialPeriodID: Number(formData.financialPeriodID),
-      invoiceDate: new Date(formData.invoiceDate).toISOString(),
+      date: new Date(formData.invoiceDate).toISOString(),
       dueDate: new Date(formData.dueDate).toISOString(),
-      totalAmount,
-      discountAmount,
-      netAmount,
-      details: formData.details.map((detail) => ({
-        batchDetailID: detail.batchDetailID,
-        clientId: Number(detail.clientId) || 0,
-        claimsCount: Number(detail.claimsCount) || 0,
-        totalAmount: Number(detail.totalAmount) || 0,
-      })),
-      discounts: formData.discounts
-        .filter(
-          (discount) =>
-            discount.discountType && Number(discount.amount || 0) > 0
-        )
-        .map((discount) => ({
-          discountType: discount.discountType,
-          amount: Number(discount.amount) || 0,
-        })),
-      installments: [],
-      createdBy: 'ms',
+      financialPeriod: Number(formData.financialPeriodID),
+      totalAmount: Math.max(
+        Number((totalAmount - financeDiscountAmount).toFixed(2)),
+        0
+      ),
+      discount: buildFinanceDiscountPayload(formData.discounts),
     };
 
     try {
@@ -691,7 +596,10 @@ const NewBatchInvoicePage = () => {
           </div>
         </div>
 
-        <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
+        <form
+          onSubmit={handleLoadBatch}
+          className="flex w-full flex-col gap-3 md:w-auto md:flex-row"
+        >
           <FormInput
             label="رقم الدفعة"
             value={batchNumberInput}
@@ -702,32 +610,41 @@ const NewBatchInvoicePage = () => {
 
           <button
             type="submit"
-            onClick={handleLoadBatch}
             disabled={isLoadingBatch}
             className="mt-0 w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-white hover:bg-primary/90 disabled:opacity-60 md:self-end"
           >
             <Search size={16} />
             {isLoadingBatch ? 'جاري التحميل...' : 'تحميل'}
           </button>
-
-          <button
-            type="button"
-            onClick={handleLoadTestBatch}
-            className="mt-0 w-full flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-5 py-3 text-primary hover:bg-primary/10 md:self-end"
-          >
-            <Beaker size={16} />
-           تجريبية
-          </button>
-        </div>
+        </form>
       </div>
 
       {isLoadingBatch ? (
         <PageLoader label="جاري تحميل بيانات الدفعة..." />
       ) : null}
 
+      {!isLoadingBatch && batchLoadError ? (
+        <div
+          role="alert"
+          className="flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white px-6 py-16 text-center"
+        >
+          <Search size={40} className="text-gray-400" aria-hidden="true" />
+          <h2 className="text-xl font-semibold text-gray-900">
+            {batchLoadError.type === 'not-found'
+              ? 'الدفعة غير موجودة'
+              : 'تعذر تحميل بيانات الدفعة'}
+          </h2>
+          <p className="text-sm text-gray-600">
+            {batchLoadError.type === 'not-found'
+              ? `لم يتم العثور على دفعة برقم ${batchLoadError.batchNumber}. تحقق من الرقم وحاول مرة أخرى.`
+              : 'حدث خطأ أثناء تحميل الدفعة. حاول مرة أخرى.'}
+          </p>
+        </div>
+      ) : null}
+
       {batchData ? (
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <div className="rounded-xl border border-gray-200 bg-white p-4">
               <p className="text-sm text-gray-500">عدد المطالبات</p>
               <p className="mt-2 text-lg font-semibold text-gray-900">
@@ -743,6 +660,13 @@ const NewBatchInvoicePage = () => {
             </div>
 
             <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <p className="text-sm text-gray-500">خصم المطالبه</p>
+              <p className="mt-2 text-lg font-semibold text-red-500">
+                {formatCurrency(batchDiscountAmount)}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
               <p className="text-sm text-gray-500">إجمالي التفاصيل</p>
               <p className="mt-2 text-lg font-semibold text-gray-900">
                 {formatCurrency(totalAmount)}
@@ -750,9 +674,9 @@ const NewBatchInvoicePage = () => {
             </div>
 
             <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <p className="text-sm text-gray-500">الخصم</p>
+              <p className="text-sm text-gray-500">الخصم الماليه</p>
               <p className="mt-2 text-lg font-semibold text-red-500">
-                {formatCurrency(discountAmount)}
+                {formatCurrency(financeDiscountAmount)}
               </p>
             </div>
 
@@ -813,19 +737,20 @@ const NewBatchInvoicePage = () => {
                     className="bg-gray-50 text-gray-600"
                   />
 
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                      المورد
-                    </label>
-                    <SearchableSelect
-                      value={formData.supplierID}
-                      onChange={(event) =>
-                        handleFieldChange('supplierID', event.target.value)
-                      }
-                      options={supplierOptions}
-                      placeholder="اختر المورد"
-                    />
-                  </div>
+                  <FormInput
+                    label="المورد"
+                    value={formData.supplierName}
+                    readOnly
+                    className="bg-gray-50 text-gray-600"
+                    placeholder="اسم المورد"
+                  />
+
+                  <FormInput
+                    label="تاريخ الدفعة"
+                    value={toDateInputValue(batchData.batchDate)}
+                    readOnly
+                    className="bg-gray-50 text-gray-600"
+                  />
 
                   <div>
                     <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -840,13 +765,6 @@ const NewBatchInvoicePage = () => {
                       placeholder="اختر الفترة المالية"
                     />
                   </div>
-
-                  <FormInput
-                    label="تاريخ الدفعة"
-                    value={toDateInputValue(batchData.batchDate)}
-                    readOnly
-                    className="bg-gray-50 text-gray-600"
-                  />
 
                   <FormInput
                     type="date"
@@ -891,77 +809,10 @@ const NewBatchInvoicePage = () => {
               ) : null}
 
               {activeTab === 'discounts' ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-lg font-semibold text-gray-900">
-                        الخصومات
-                      </h2>
-                      <p className="text-sm text-gray-500">
-                        خصومات الدفعة كما وردت من الخادم، يمكن تعديلها قبل الإرسال
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={addDiscountRow}
-                      className="flex items-center gap-2 rounded-lg border border-primary bg-primary px-4 py-2 text-white hover:bg-primary/90"
-                    >
-                      <Plus size={16} />
-                      إضافة خصم
-                    </button>
-                  </div>
-
-                  {formData.discounts.length > 0 ? (
-                    <div className="space-y-3">
-                      {formData.discounts.map((discount, index) => (
-                        <div
-                          key={`${discount.discountType}-${index}`}
-                          className="grid grid-cols-1 gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 md:grid-cols-[minmax(0,1fr)_180px_56px]"
-                        >
-                          <SearchableSelect
-                            value={discount.discountType}
-                            onChange={(event) =>
-                              handleDiscountChange(
-                                index,
-                                'discountType',
-                                event.target.value
-                              )
-                            }
-                            options={DISCOUNT_TYPE_OPTIONS}
-                            placeholder="اختر نوع الخصم"
-                          />
-
-                          <FormInput
-                            type="number"
-                            value={discount.amount}
-                            onChange={(event) =>
-                              handleDiscountChange(
-                                index,
-                                'amount',
-                                event.target.value
-                              )
-                            }
-                            placeholder="قيمة الخصم"
-                          />
-
-                          <button
-                            type="button"
-                            onClick={() => removeDiscountRow(index)}
-                            className="flex items-center justify-center rounded-xl border border-red-200 text-red-600 hover:bg-red-50"
-                            aria-label="حذف الخصم"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
-                      لم يتم إضافة خصومات بعد
-                    </div>
-                  )}
-                </div>
+                <DiscountsTab
+                  discounts={formData.discounts}
+                  onDiscountChange={handleDiscountChange}
+                />
               ) : null}
             </div>
           </div>
