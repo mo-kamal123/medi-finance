@@ -1,8 +1,9 @@
 ﻿import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, ChevronDown, Paperclip, RotateCcw, SlidersHorizontal, X } from 'lucide-react';
+import { Check, Paperclip, Search, X } from 'lucide-react';
 import FormInput from '../../../../shared/ui/input';
 import NormalSelect from '../../../../shared/ui/NormalSelect';
+import FilterBar from '../../../../shared/ui/filter-bar';
 import PageLoader from '../../../../shared/ui/page-loader';
 import Pagination from '../../../../shared/ui/pagination';
 import Table from '../../../../shared/ui/table';
@@ -15,10 +16,10 @@ import {
 } from '../hooks/suppliers.queries';
 
 const STATUS_OPTIONS = [
-  { value: 'activated', label: 'Activated' },
-  { value: 'Deactived', label: 'Deactivated' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'hold', label: 'Hold' },
+  { value: 'activated', label: 'نشط' },
+  { value: 'Deactived', label: 'غير نشط' },
+  { value: 'pending', label: 'قيد الانتظار' },
+  { value: 'hold', label: 'موقوف مؤقتاً' },
 ];
 
 const CLASS_OPTIONS = ['A', 'B', 'C', 'P'].map((value) => ({ value, label: value }));
@@ -28,16 +29,20 @@ const IMPORTANCE_OPTIONS = ['A', 'AA', 'AKK', 'Y', 'X'].map((value) => ({ value,
 const StatusBadge = ({ statusName }) => {
   const normalized = String(statusName || '').trim().toLowerCase();
   let color = 'bg-gray-100 text-gray-700';
+  let label = statusName || 'غير معروف';
   if (normalized.startsWith('deactiv') || normalized.includes('inactiv')) {
     color = 'bg-red-100 text-red-700';
+    label = 'غير نشط';
   } else if (normalized.startsWith('activ') || normalized === 'active') {
     color = 'bg-emerald-100 text-emerald-700';
+    label = 'نشط';
   } else if (normalized === 'hold' || normalized === 'pending') {
     color = 'bg-amber-100 text-amber-700';
+    label = normalized === 'hold' ? 'موقوف مؤقتاً' : 'قيد الانتظار';
   }
   return (
     <span className={`px-3 py-1 rounded-full text-xs font-medium ${color}`}>
-      {statusName || 'Unknown'}
+      {label}
     </span>
   );
 };
@@ -55,31 +60,31 @@ const BooleanBadge = ({ value }) =>
   );
 
 const Columns = [
-  { header: 'ID', key: 'supplierID' },
-  { header: 'Name (AR)', key: 'supplierNameAr' },
-  { header: 'Category', key: 'categoryName' },
-  { header: 'Branches', key: 'locationsCount' },
+  { header: 'كود المورد', key: 'supplierID' },
+  { header: 'اسم المورد', key: 'supplierNameAr' },
+  { header: 'التصنيف', key: 'categoryName' },
+  { header: 'عدد الفروع', key: 'locationsCount' },
   {
-    header: 'Status', key: 'status', type: 'custom',
+    header: 'الحالة', key: 'status', type: 'custom',
     render: (row) => <StatusBadge statusName={row.status} />,
   },
   {
-    header: 'Work with Medicard', key: 'providerWorkWithMedicard', type: 'custom',
+    header: 'يتعامل مع ميديكارد', key: 'providerWorkWithMedicard', type: 'custom',
     render: (row) => <BooleanBadge value={row.providerWorkWithMedicard} />,
   },
   {
-    header: 'Only Medicard', key: 'isMedicardProvider', type: 'custom',
+    header: 'ميديكارد فقط', key: 'isMedicardProvider', type: 'custom',
     render: (row) => <BooleanBadge value={row.isMedicardProvider} />,
   },
-  { header: 'Class', key: 'providerClass' },
-  { header: 'Tax number', key: 'taxNumber' },
+  { header: 'فئة المورد', key: 'providerClass' },
+  { header: 'الرقم الضريبي', key: 'taxNumber' },
   {
-    header: 'Allow chronic', key: 'allowChronicOnPortal', type: 'custom',
+    header: 'السماح بالأمراض المزمنة', key: 'allowChronicOnPortal', type: 'custom',
     render: (row) => <BooleanBadge value={row.allowChronicOnPortal} />,
   },
-  { header: 'Head government', key: 'headQuartersGovernorate' },
+  { header: 'محافظة المقر الرئيسي', key: 'headQuartersGovernorate' },
   {
-    header: 'Attachments', key: 'attachments', type: 'custom',
+    header: 'المرفقات', key: 'attachments', type: 'custom',
     render: (row, _, openAttachments) => (
       <button
         type="button"
@@ -168,17 +173,16 @@ const SuppliersPage = () => {
   const [governorateId, setGovernorateId] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [attachmentsSupplier, setAttachmentsSupplier] = useState(null);
 
   const debouncedSearchTerm = useDebounce(search, 500);
 
   const activeFilterCount = useMemo(
     () =>
-      [status, providerClass, importanceLevel, governorateId].filter(
+      [search.trim(), status, providerClass, importanceLevel, governorateId].filter(
         (v) => v !== null && v !== ''
       ).length,
-    [status, providerClass, importanceLevel, governorateId]
+    [search, status, providerClass, importanceLevel, governorateId]
   );
 
   const handleReset = () => {
@@ -188,7 +192,6 @@ const SuppliersPage = () => {
     setImportanceLevel(null);
     setGovernorateId(null);
     setPageNumber(1);
-    setShowAdvanced(false);
   };
 
   const { data: governorates = [] } = useGovernorates();
@@ -205,129 +208,101 @@ const SuppliersPage = () => {
 
   const { items: suppliers = [], totalPages = 1 } = response || {};
 
-  if (isLoading) return <PageLoader label="جاري تحميل الموردين..." />;
+  if (isLoading && !response) {
+    return <PageLoader label="جاري تحميل الموردين..." />;
+  }
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-6 p-6">
       <Breadcrumb items={[{ label: 'الموردين' }]} />
-        <div className='rounded-xl border border-gray-200 bg-white p-6'>
-          <div className='flex flex-col gap-1'>
-            <h1 className="text-2xl font-bold">الموردين</h1>
-            <p className="text-sm text-gray-600">إدارة جميع الموردين</p>
-          </div>
+
+      <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-gray-200 bg-white p-6 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl font-bold md:text-2xl">الموردين</h1>
+          <p className="text-sm text-gray-600">إدارة جميع الموردين</p>
         </div>
-      <div className="rounded-xl border flex flex-col gap-7 border-gray-200 bg-white p-6">
+      </div>
 
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <FormInput
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPageNumber(1);
-              }}
-              placeholder="ابحث باسم المورد"
-              autoFocus
-              containerClass="min-w-64 flex-1"
-            />
-            <NormalSelect
-              options={STATUS_OPTIONS}
-              value={status}
-              onChange={(event) => {
-                setStatus(event.target.value || null);
-                setPageNumber(1);
-              }}
-              isClearable
-              placeholder="الحالة"
-              containerClass="sm:w-40"
-            />
-            <NormalSelect
-              options={CLASS_OPTIONS}
-              value={providerClass}
-              onChange={(event) => {
-                setProviderClass(event.target.value || null);
-                setPageNumber(1);
-              }}
-              isClearable
-              placeholder="فئة المورد"
-              containerClass="sm:w-44"
-            />
-            <NormalSelect
-              options={IMPORTANCE_OPTIONS}
-              value={importanceLevel}
-              onChange={(event) => {
-                setImportanceLevel(event.target.value || null);
-                setPageNumber(1);
-              }}
-              isClearable
-              placeholder="مستوى الأهمية"
-              containerClass="sm:w-44"
-            />
-            <NormalSelect
-              options={governorates.map((g) => ({
-                value: g.id,
-                label: g.nameAr,
-              }))}
-              value={governorateId}
-              onChange={(event) => {
-                setGovernorateId(event.target.value || null);
-                setPageNumber(1);
-              }}
-              isClearable
-              placeholder="المحافظة"
-              containerClass="sm:w-44"
-            />
-          </div>
+      <FilterBar
+        primaryFilters={[
+          <FormInput
+            key="search"
+            label="اسم المورد"
+            icon={Search}
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPageNumber(1);
+            }}
+            placeholder="ابحث باسم المورد"
+            autoFocus
+          />,
+          <NormalSelect
+            key="status"
+            label="الحالة"
+            options={STATUS_OPTIONS}
+            value={status || ''}
+            onChange={(event) => {
+              setStatus(event.target.value || null);
+              setPageNumber(1);
+            }}
+            isClearable
+            placeholder="كل الحالات"
+          />,
+          <NormalSelect
+            key="class"
+            label="فئة المورد"
+            options={CLASS_OPTIONS}
+            value={providerClass || ''}
+            onChange={(event) => {
+              setProviderClass(event.target.value || null);
+              setPageNumber(1);
+            }}
+            isClearable
+            placeholder="كل الفئات"
+          />,
+          <NormalSelect
+            key="importance"
+            label="مستوى الأهمية"
+            options={IMPORTANCE_OPTIONS}
+            value={importanceLevel || ''}
+            onChange={(event) => {
+              setImportanceLevel(event.target.value || null);
+              setPageNumber(1);
+            }}
+            isClearable
+            placeholder="كل المستويات"
+          />,
+        ]}
+        extraFilters={[
+          <NormalSelect
+            key="governorate"
+            label="المحافظة"
+            options={governorates.map((governorate) => ({
+              value: governorate.id,
+              label: governorate.nameAr,
+            }))}
+            value={governorateId ?? ''}
+            onChange={(event) => {
+              setGovernorateId(event.target.value || null);
+              setPageNumber(1);
+            }}
+            isClearable
+            placeholder="كل المحافظات"
+          />,
+        ]}
+        onReset={handleReset}
+        activeCount={activeFilterCount}
+        extraCount={governorateId !== null && governorateId !== '' ? 1 : 0}
+      />
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            {/* <button
-            type="button"
-            onClick={() => setShowAdvanced((prev) => !prev)}
-            className="inline-flex items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-primary/80"
-          >
-            <SlidersHorizontal size={16} />
-            <span>فلاتر إضافية</span>
-            {activeFilterCount > 0 ? (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
-                {activeFilterCount}
-              </span>
-            ) : null}
-            <ChevronDown
-              size={16}
-              className={`transition-transform ${showAdvanced ? 'rotate-180' : ''}`}
-            />
-          </button> */}
-
-            {activeFilterCount > 0 ? (
-              <button
-                type="button"
-                onClick={handleReset}
-                className="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
-              >
-                <RotateCcw size={16} />
-                مسح الفلاتر
-              </button>
-            ) : null}
-          </div>
-
-          {showAdvanced ? (
-            <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 pt-4"></div>
-          ) : null}
-        </div>
-
+      <div className="min-w-0 max-w-full overflow-hidden rounded-xl bg-white [&_th]:whitespace-nowrap [&_td]:whitespace-nowrap">
         <Table
           columns={Columns}
           data={suppliers}
           loading={isLoading}
           extraRenderArg={setAttachmentsSupplier}
-          onRowClick={(row) =>
-            navigate(`/suppliers/${row.supplierID || row.id}`)
-          }
-        />
-
-        <AttachmentsModal
-          supplier={attachmentsSupplier}
-          onClose={() => setAttachmentsSupplier(null)}
+          onRowClick={(row) => navigate(`/suppliers/${row.supplierID || row.id}`)}
         />
       </div>
 
@@ -340,6 +315,11 @@ const SuppliersPage = () => {
           setPageSize(value);
           setPageNumber(1);
         }}
+      />
+
+      <AttachmentsModal
+        supplier={attachmentsSupplier}
+        onClose={() => setAttachmentsSupplier(null)}
       />
     </div>
   );

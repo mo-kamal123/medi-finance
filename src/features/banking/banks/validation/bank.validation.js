@@ -1,37 +1,29 @@
 ﻿import { z } from 'zod';
 
-const optionalEmail = z.union([
-  z.literal(''),
-  z.string().email('البريد الإلكتروني غير صحيح'),
-  z.null(),
-  z.undefined(),
-]);
+const optionalTrimmedString = (schema) => z.preprocess(
+  (value) => typeof value === 'string' ? value.trim() : value,
+  z.union([z.literal(''), schema, z.null(), z.undefined()])
+);
 
-const optionalPhone = z.union([
-  z.literal(''),
-  z
-    .string()
-    .trim()
-    .regex(/^\+?[0-9\s()-]{7,20}$/, 'رقم الهاتف غير صحيح'),
-  z.null(),
-  z.undefined(),
-]);
+const optionalEmail = optionalTrimmedString(
+  z.string().email('البريد الإلكتروني غير صحيح')
+);
 
-const optionalSwift = z.union([
-  z.literal(''),
+const optionalHotline = optionalTrimmedString(
+  z.string().regex(/^[0-9]{3,6}$/, 'الخط الساخن يجب أن يتكون من 3 إلى 6 أرقام فقط')
+);
+
+const optionalSwift = optionalTrimmedString(
   z
     .string()
     .trim()
     .regex(
       /^[A-Za-z0-9]{8}([A-Za-z0-9]{3})?$/,
       'يجب أن يكون طول الكود 8 أو 11 حرفًا'
-    ),
-  z.null(),
-  z.undefined(),
-]);
+    )
+);
 
-const optionalWebsite = z.union([
-  z.literal(''),
+const optionalWebsite = optionalTrimmedString(
   z
     .string()
     .trim()
@@ -47,23 +39,18 @@ const optionalWebsite = z.union([
         }
       },
       'الموقع الإلكتروني غير صحيح'
-    ),
-  z.null(),
-  z.undefined(),
-]);
+    )
+);
 
-const optionalEnglishName = z.union([
-  z.literal(''),
+const optionalEnglishName = optionalTrimmedString(
   z
     .string()
     .trim()
     .regex(
       /^[A-Za-z\s.'-]+$/,
       'الاسم بالإنجليزية يجب أن يحتوي على حروف إنجليزية فقط'
-    ),
-  z.null(),
-  z.undefined(),
-]);
+    )
+);
 
 export const bankSchema = z.object({
   bankCode: z.string().trim().min(1, 'كود البنك مطلوب'),
@@ -74,7 +61,7 @@ export const bankSchema = z.object({
     .regex(/^[\u0600-\u06FF\s]+$/, 'الاسم بالعربية يجب أن يحتوي على حروف عربية فقط'),
   bankNameEn: optionalEnglishName,
   swiftCode: optionalSwift,
-  phone: optionalPhone,
+  phone: optionalHotline,
   email: optionalEmail,
   website: optionalWebsite,
   addressAr: z.string().optional(),

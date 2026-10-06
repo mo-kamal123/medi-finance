@@ -2,7 +2,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BadgeCheck, Save } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import FormInput from '../../../../shared/ui/input';
 import Toggle from '../../../../shared/ui/toggle';
 import { useCreateBank, useUpdateBank } from '../hooks/banks.mutations';
@@ -94,6 +94,7 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
+      noValidate
       className="rounded-xl border border-gray-200 bg-white p-6"
     >
       <div className="space-y-6">
@@ -155,8 +156,11 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
             readOnly={isViewMode}
           />
           <FormInput
-            label="الهاتف"
-            placeholder="مثال: 01012345678"
+            label="الخط الساخن"
+            type="tel"
+            inputMode="numeric"
+            dir="ltr"
+            placeholder="مثال: 19623"
             {...registerBlur('phone')}
             error={errors.phone?.message}
             readOnly={isViewMode}
