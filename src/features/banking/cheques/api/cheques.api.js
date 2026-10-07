@@ -34,6 +34,11 @@ export const createCheque = async (payload) => {
   return data;
 };
 
+export const getBatchInvoiceSummary = async (batchNumber) => {
+  const { data } = await axiosInstance.get(`/batches/${encodeURIComponent(batchNumber)}/invoice-summary`);
+  return data;
+};
+
 export const updateCheque = async ({ id, ...payload }) => {
   const { data } = await axiosInstance.put(`/cheques/${id}`, payload);
   return data;

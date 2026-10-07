@@ -38,7 +38,11 @@ const InvoiceDetailsTable = ({
           min="0"
           step="any"
           value={field.value ?? ''}
-          onChange={(event) => field.onChange(event.target.value)}
+          onChange={(event) => {
+            const raw = event.target.value;
+            field.onChange(raw === '' ? '' : raw.replace(/^0+(?=\d)/, ''));
+          }}
+          onFocus={(event) => event.target.select()}
           onBlur={field.onBlur}
           className="w-full rounded-lg border border-gray-200 px-3 py-2"
         />

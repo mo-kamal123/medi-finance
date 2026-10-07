@@ -26,7 +26,7 @@ const JournalEntryDetailsTable = ({
   totalCredit,
 }) => (
   <div className="max-w-full overflow-x-auto">
-    <table className="min-w-max overflow-hidden rounded-lg border border-gray-200 text-sm">
+    <table className={`min-w-max overflow-hidden rounded-lg border border-gray-200 text-sm ${readOnly ? 'w-full table-auto [&_th]:whitespace-nowrap [&_td]:whitespace-nowrap' : ''}`}>
       <thead className="bg-primary/90 text-white">
         <tr>
           <th className="p-3 text-right">مدين</th>
@@ -38,13 +38,45 @@ const JournalEntryDetailsTable = ({
           <th className="p-3 text-right">الوصف</th>
           <th className="p-3 text-right">تاريخ السجل</th>
           <th className="p-3 text-right">رقم المستند</th>
-          <th className="p-3 text-right">رقم الفاتوره</th>
-          <th></th>
+          {!readOnly ? <th className="p-3 text-right">رقم الفاتوره</th> : null}
+          {!readOnly ? <th></th> : null}
         </tr>
       </thead>
       <tbody>
         {fields.map((field, index) => {
           const rowErrors = errors?.details?.[index] || {};
+          const row = { ...field, ...watchedDetails[index] };
+          if (readOnly) {
+            const values = [
+              Number(row.debitAmount || 0).toFixed(2),
+              Number(row.creditAmount || 0).toFixed(2),
+              [row.accountCode, row.accountNameAr || row.accountName || row.accountNameEn].filter(Boolean).join(' - ') || '-',
+              [row.costCenterCode, row.costCenterNameAr || row.costCenterNameEn].filter(Boolean).join(' - ') || '-',
+              row.customerNameAr || row.customerName || row.customerNameEn || '-',
+              row.supplierNameAr || row.supplierName || row.supplierNameEn || '-',
+              row.description || '-',
+              row.recordDate || '-',
+              row.documentNumber || '-',
+            ];
+            return (
+              <tr key={field.id} className="border-b border-gray-200 even:bg-gray-50/40">
+                {values.map((value, columnIndex) => (
+                  <td key={columnIndex} className={`px-3 py-3 align-middle text-right ${columnIndex < 2 ? 'tabular-nums' : ''}`}>
+                    <input
+                      type="text"
+                      value={value}
+                      readOnly
+                      aria-label={['مدين', 'دائن', 'الحساب', 'مركز التكلفة', 'العميل', 'المورد', 'الوصف', 'تاريخ السجل', 'رقم المستند'][columnIndex]}
+                      title={String(value)}
+                      size={Math.max(String(value).length + 2, 8)}
+                      className={`${journalEntryInputClass} h-10 overflow-hidden leading-normal`}
+                      style={{ width: 'auto', minWidth: '100%' }}
+                    />
+                  </td>
+                ))}
+              </tr>
+            );
+          }
           return (
             <tr key={field.id} className="align-top border border-gray-200">
               <td className="min-w-30 p-2">
@@ -232,7 +264,7 @@ const JournalEntryDetailsTable = ({
         <tr>
           <td className="p-3 text-green-600">{totalDebit.toFixed(2)}</td>
           <td className="p-3 text-red-600">{totalCredit.toFixed(2)}</td>
-          <td colSpan="9" className="p-3 text-right">
+          <td colSpan={readOnly ? 7 : 9} className="p-3 text-right">
             الإجمالي
           </td>
         </tr>
