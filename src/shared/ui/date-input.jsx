@@ -92,7 +92,7 @@ const getMonthLabel = (value) =>
     year: 'numeric',
   });
 
-const DateInput = ({ label, value, onChange, error, required, readOnly, ...props }) => {
+const DateInput = ({ label, value, onChange, error, required, readOnly, minDate, ...props }) => {
   const wrapperRef = useRef(null);
   const [displayValue, setDisplayValue] = useState(() =>
     formatDateInputDisplay(value)
@@ -100,6 +100,7 @@ const DateInput = ({ label, value, onChange, error, required, readOnly, ...props
   const [isOpen, setIsOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(() => toLocalDate(value));
   const selectedValue = toDateInputValue(value);
+  const minValue = toDateInputValue(minDate);
 
   const emitChange = (nextValue) => {
     onChange?.({
@@ -287,15 +288,19 @@ const DateInput = ({ label, value, onChange, error, required, readOnly, ...props
                 {getCalendarDays(visibleMonth).map((date, index) => {
                   const dateValue = date ? toDateInputValue(date) : '';
                   const isSelected = dateValue && dateValue === selectedValue;
+                  const isDisabled = Boolean(dateValue && minValue && dateValue < minValue);
 
                   return date ? (
                     <button
                       key={dateValue}
                       type="button"
+                      disabled={isDisabled}
                       className={`h-9 rounded-lg text-sm transition ${
                         isSelected
                           ? 'bg-primary text-white'
-                          : 'text-gray-700 hover:bg-primary/10 hover:text-primary'
+                          : isDisabled
+                            ? 'cursor-not-allowed text-gray-300'
+                            : 'text-gray-700 hover:bg-primary/10 hover:text-primary'
                       }`}
                       onClick={() => handleSelectDate(date)}
                     >

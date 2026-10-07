@@ -2,7 +2,7 @@
 
 import { formatCurrency } from '../utils/format-currency';
 
-const InvoiceTotals = ({ totalAmount, totalDiscounts, netAmount, isLoading }) => (
+const InvoiceTotals = ({ totalAmount, totalDiscounts, netAmount, isLoading, disabled }) => (
   <div className="space-y-4">
     <div className="grid grid-cols-1 gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 md:grid-cols-3">
       <div className="rounded-xl bg-white p-4 border border-gray-200">
@@ -30,7 +30,7 @@ const InvoiceTotals = ({ totalAmount, totalDiscounts, netAmount, isLoading }) =>
     <div className="flex justify-end">
       <button
         type="submit"
-        disabled={isLoading}
+        disabled={isLoading || disabled}
         className="px-8 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition disabled:opacity-50"
       >
         حفظ الفاتورة

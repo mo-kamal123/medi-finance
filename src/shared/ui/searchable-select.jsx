@@ -88,8 +88,12 @@ const SearchableSelect = forwardRef(
 
     const normalizedOptions = useMemo(() => {
       const source = Array.isArray(options) && options.length ? options : parsedChildrenOptions;
-      return source.map(normalizeOption);
-    }, [options, parsedChildrenOptions]);
+      const normalized = source.map(normalizeOption);
+      // For required fields the placeholder ("اختر", value '') is display-only:
+      // it must not appear as a selectable row, otherwise '' bypasses UX validation.
+      // Optional (non-required) selects keep the empty option as a clear action.
+      return required ? normalized.filter((option) => option.value !== '') : normalized;
+    }, [options, parsedChildrenOptions, required]);
 
     const selectedValue =
       value !== undefined ? String(value ?? '') : String(internalValue ?? '');

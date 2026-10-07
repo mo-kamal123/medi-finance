@@ -173,7 +173,12 @@ const Table = ({
             data.map((row, rowIndex) => (
               <tr
                 key={rowIndex}
-                onClick={() => onRowClick?.(row)}
+                onClick={(event) => {
+                  // Action buttons (view/delete/...) inside the row handle
+                  // their own clicks — don't also trigger row navigation.
+                  if (event.target.closest?.('button, a')) return;
+                  onRowClick?.(row);
+                }}
                 className={`even:bg-gray-50/40 transition-colors hover:bg-gray-50 ${onRowClick ? 'cursor-pointer' : ''}`}
               >
                 {visibleColumns.map((col, colIndex) => {

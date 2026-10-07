@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import FormInput from '../../../../../shared/ui/input';
 import DateInput from '../../../../../shared/ui/date-input';
 import NormalSelect from '../../../../../shared/ui/NormalSelect';
+import PartySearchSelect from '../../../../../shared/ui/party-search-select';
 
 // -- Domain logic 
 import { invoiceSchema } from '../validation/invoice.validation';
@@ -45,11 +46,9 @@ const InvoiceForm = ({
 
   // Data fetching
   const {
-    customers,
     financialPeriods,
     invoiceTypes,
     productsServices,
-    suppliers,
   } = useDropdowns();
   const { data: nextInvoiceNumberData } = useNextInvoiceNumber(!isEditMode);
   const { data: invoiceStatuses = EMPTY_STATUSES } = useInvoiceStatuses();
@@ -79,6 +78,15 @@ const InvoiceForm = ({
   const watchedDetails = useWatch({ control, name: 'details' });
   const watchedDiscountAmount = useWatch({ control, name: 'discountAmount' });
   const watchedTaxAmount = useWatch({ control, name: 'taxAmount' });
+  const watchedInvoiceDate = useWatch({ control, name: 'invoiceDate' });
+  const watchedDueDate = useWatch({ control, name: 'dueDate' });
+
+  const isDueBeforeIssue = Boolean(
+    watchedInvoiceDate && watchedDueDate && watchedDueDate < watchedInvoiceDate
+  );
+  const dueDateError =
+    errors.dueDate?.message ||
+    (isDueBeforeIssue ? 'تاريخ الاستحقاق لا يمكن أن يكون قبل تاريخ الإصدار' : undefined);
 
   const { totalAmount, totalDiscounts, netAmount } = calculateTotals(
     watchedDetails,
@@ -198,8 +206,9 @@ const InvoiceForm = ({
           render={({ field }) => (
             <DateInput
               label="تاريخ الاستحقاق"
-              error={errors.dueDate?.message}
+              error={dueDateError}
               required
+              minDate={watchedInvoiceDate || undefined}
               {...field}
             />
           )}
@@ -210,26 +219,25 @@ const InvoiceForm = ({
             name="customerID"
             control={control}
             render={({ field }) => (
-              <NormalSelect
-                label="العميل"
-                value={field.value ?? ''}
-                onChange={(event) => {
-                  field.onChange(event.target.value);
-                  if (event.target.value) {
-                    setValue('supplierID', '');
-                  }
-                }}
-                onBlur={field.onBlur}
-                error={errors.customerID?.message}
-                required
-                options={[
-                  { value: '', label: 'اختر' },
-                  ...(customers?.map((c) => ({
-                    value: String(c.customerID),
-                    label: c.customerNameAr || c.customerNameEn,
-                  })) || []),
-                ]}
-              />
+              <div>
+                <label className="mb-1 block font-medium text-gray-700 text-[15px]">
+                  العميل
+                  <span className="text-red-500 mr-1"> *</span>
+                </label>
+                <PartySearchSelect
+                  type="customer"
+                  value={field.value ?? ''}
+                  onChange={(event) => {
+                    field.onChange(event.target.value);
+                    if (event.target.value) {
+                      setValue('supplierID', '');
+                    }
+                  }}
+                  onBlur={field.onBlur}
+                  error={errors.customerID?.message}
+                  placeholder="ابحث عن عميل بالاسم"
+                />
+              </div>
             )}
           />
         )}
@@ -239,26 +247,25 @@ const InvoiceForm = ({
             name="supplierID"
             control={control}
             render={({ field }) => (
-              <NormalSelect
-                label="المورد"
-                value={field.value ?? ''}
-                onChange={(event) => {
-                  field.onChange(event.target.value);
-                  if (event.target.value) {
-                    setValue('customerID', '');
-                  }
-                }}
-                onBlur={field.onBlur}
-                error={errors.supplierID?.message}
-                required
-                options={[
-                  { value: '', label: 'اختر' },
-                  ...(suppliers?.map((s) => ({
-                    value: String(s.supplierID),
-                    label: s.supplierNameAr || s.supplierNameEn,
-                  })) || []),
-                ]}
-              />
+              <div>
+                <label className="mb-1 block font-medium text-gray-700 text-[15px]">
+                  المورد
+                  <span className="text-red-500 mr-1"> *</span>
+                </label>
+                <PartySearchSelect
+                  type="supplier"
+                  value={field.value ?? ''}
+                  onChange={(event) => {
+                    field.onChange(event.target.value);
+                    if (event.target.value) {
+                      setValue('customerID', '');
+                    }
+                  }}
+                  onBlur={field.onBlur}
+                  error={errors.supplierID?.message}
+                  placeholder="ابحث عن مورد بالاسم"
+                />
+              </div>
             )}
           />
         )}
@@ -269,9 +276,16 @@ const InvoiceForm = ({
           render={({ field }) => (
             <FormInput
               type="number"
+              min="0"
+              step="any"
+              inputMode="decimal"
               label="المبلغ الضريبي"
               value={field.value ?? ''}
-              onChange={(event) => field.onChange(event.target.valueAsNumber || 0)}
+              onChange={(event) => {
+                const raw = event.target.value;
+                field.onChange(raw === '' ? '' : raw.replace(/^0+(?=\d)/, ''));
+              }}
+              onFocus={(event) => event.target.select()}
               onBlur={field.onBlur}
               error={errors.taxAmount?.message}
             />
@@ -283,9 +297,16 @@ const InvoiceForm = ({
           render={({ field }) => (
             <FormInput
               type="number"
-              label="المبلغ الخصم"
+              min="0"
+              step="any"
+              inputMode="decimal"
+              label="الخصم"
               value={field.value ?? ''}
-              onChange={(event) => field.onChange(event.target.valueAsNumber || 0)}
+              onChange={(event) => {
+                const raw = event.target.value;
+                field.onChange(raw === '' ? '' : raw.replace(/^0+(?=\d)/, ''));
+              }}
+              onFocus={(event) => event.target.select()}
               onBlur={field.onBlur}
               error={errors.discountAmount?.message}
             />
@@ -357,6 +378,7 @@ const InvoiceForm = ({
         totalDiscounts={totalDiscounts}
         netAmount={netAmount}
         isLoading={isLoading}
+        disabled={isDueBeforeIssue}
       />
     </form>
   );

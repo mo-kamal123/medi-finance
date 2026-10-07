@@ -302,20 +302,18 @@ const DiscountsTab = ({ discounts, onDiscountChange }) => {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5">
+    <div className="mx-auto max-w-5xl space-y-10">
 
       <section aria-label="خصومات الدفعة" className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-gray-50/70 px-5 py-3.5">
           <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
+            {/* <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
               <FileText size={17} aria-hidden="true" />
-            </span>
+            </span> */}
             <div>
               <h3 className="text-sm font-bold text-gray-900">خصومات الدفعة</h3>
-              <p className="text-xs text-gray-500">المبالغ الواردة من الدفعة</p>
             </div>
           </div>
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500">للعرض فقط</span>
         </div>
         <div className="grid grid-cols-1 gap-3 p-5 sm:grid-cols-4">
           {batchDiscounts.map((discount) => (
@@ -337,17 +335,13 @@ const DiscountsTab = ({ discounts, onDiscountChange }) => {
       <section aria-label="خصومات المالية" className="overflow-hidden rounded-2xl border border-primary/20 bg-white">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-primary/10 bg-primary/4 px-5 py-3.5">
           <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white">
+            {/* <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white">
               <Percent size={17} aria-hidden="true" />
-            </span>
+            </span> */}
             <div>
               <h3 className="text-sm font-bold text-gray-900">خصومات المالية</h3>
-              <p className="text-xs text-gray-500">
-                أدخل النسبة أو القيمة واختر مصدر الاحتساب
-              </p>
             </div>
           </div>
-          <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">قابل للتعديل</span>
         </div>
         <div className="space-y-4 bg-linear-to-b from-primary/2 to-white p-5">
           {financeDiscounts.map((discount) => (
@@ -644,13 +638,13 @@ const NewBatchInvoicePage = () => {
 
       {batchData ? (
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 my-10">
+            {/* <div className="rounded-xl border border-gray-200 bg-white p-4">
               <p className="text-sm text-gray-500">عدد المطالبات</p>
               <p className="mt-2 text-lg font-semibold text-gray-900">
                 {formatNumber(formData.summary?.claimsCount ?? 0)}
               </p>
-            </div>
+            </div> */}
 
             <div className="rounded-xl border border-gray-200 bg-white p-4">
               <p className="text-sm text-gray-500">قيمة الدفعة</p>

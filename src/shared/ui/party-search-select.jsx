@@ -9,6 +9,31 @@ import { getSuppliers, getSupplier } from '../../features/master-data/suppliers/
 
 const DROPDOWN_MAX_HEIGHT = 240;
 
+// Supplier records use varying key names (supplierNameAr, providerNameAr,
+// supplierName, providerName, ...) unlike customers (clientName) — resolve
+// through every known variant so the name (not the id) is displayed.
+const getEntityId = (entity, idKey) =>
+  entity?.[idKey] ??
+  entity?.providerId ??
+  entity?.providerID ??
+  entity?.id ??
+  '';
+const getEntityName = (entity) =>
+  entity?.clientName ||
+  entity?.supplierNameAr ||
+  entity?.supplierNameEn ||
+  entity?.supplierName ||
+  entity?.providerNameAr ||
+  entity?.providerNameEn ||
+  entity?.providerName ||
+  entity?.customerNameAr ||
+  entity?.customerNameEn ||
+  entity?.customerName ||
+  entity?.nameAr ||
+  entity?.nameEn ||
+  entity?.name ||
+  '';
+
 const PartySearchSelect = ({
   value,
   onChange,
@@ -37,7 +62,6 @@ const PartySearchSelect = ({
   const queryKey = isCustomer ? 'customers' : 'suppliers';
 
   const idKey = isCustomer ? 'customerID' : 'supplierID';
-  const nameKey = 'clientName';
 
   const { data: searchResults = [], isLoading: isSearching } = useQuery({
     queryKey: [queryKey, 'search', debouncedSearch],
@@ -48,7 +72,7 @@ const PartySearchSelect = ({
   const selectedInResults = useMemo(
     () =>
       searchResults.find(
-        (r) => String(r[idKey] ?? r.id) === String(value)
+        (r) => String(getEntityId(r, idKey)) === String(value)
       ),
     [searchResults, value, idKey]
   );
@@ -62,22 +86,16 @@ const PartySearchSelect = ({
     enabled: !!value && !selectedInResults,
   });
 
-  const displayEntity =
-    selectedInResults ||
-    selectedEntity ||
-    (lastSelected && String(lastSelected.id) === String(value)
-      ? lastSelected
-      : null);
+  // Priority: live search hit → the name the user just picked → server
+  // by-id fetch (edit mode). A truthy-but-nameless by-id response must never
+  // shadow the confirmed selection, otherwise the input falls back to the id.
+  const selectedName =
+    getEntityName(selectedInResults) ||
+    (lastSelected && String(lastSelected.id) === String(value) ? lastSelected.name : '') ||
+    getEntityName(selectedEntity);
 
-  const displayLabel = displayEntity
-    ? displayEntity[nameKey] ||
-      displayEntity.nameAr ||
-      displayEntity.providerNameAr ||
-      displayEntity.customerNameAr ||
-      displayEntity.supplierNameAr ||
-      displayEntity.name ||
-      String(value)
-    : value || '';
+  const displayLabel = selectedName || (value ? String(value) : '');
+  const hasSelection = Boolean(value);
 
   useLayoutEffect(() => {
     if (!isOpen || !wrapperRef.current) return;
@@ -129,15 +147,8 @@ const PartySearchSelect = ({
   }, [isOpen]);
 
   const handleSelect = (entity) => {
-    const entityId = String(entity[idKey] ?? entity.id);
-    const entityName =
-      entity[nameKey] ||
-      entity.nameAr ||
-      entity.providerNameAr ||
-      entity.customerNameAr ||
-      entity.supplierNameAr ||
-      entity.name ||
-      '';
+    const entityId = String(getEntityId(entity, idKey));
+    const entityName = getEntityName(entity);
     onChange({
       target: {
         value: entityId,
@@ -190,12 +201,12 @@ const PartySearchSelect = ({
           dir="rtl"
           className={cn(
             'w-full rounded-lg border py-2 pr-10 placeholder:text-sm outline-none transition-colors',
-            displayEntity ? 'pl-8' : 'pl-3',
+            hasSelection ? 'pl-8' : 'pl-3',
             error ? 'border-red-500' : 'border-gray-200',
             disabled ? 'cursor-not-allowed bg-gray-100' : 'bg-white'
           )}
         />
-        {displayEntity && !disabled ? (
+        {hasSelection && !disabled ? (
           <button
             type="button"
             onClick={handleClear}
@@ -226,15 +237,8 @@ const PartySearchSelect = ({
                 <div className="p-3 text-sm text-gray-500">لا توجد نتائج</div>
               ) : (
                 searchResults.map((entity) => {
-                  const entityId = entity[idKey] ?? entity.id;
-                  const entityName =
-                    entity[nameKey] ||
-                    entity.nameAr ||
-                    entity.providerNameAr ||
-                    entity.customerNameAr ||
-                    entity.supplierNameAr ||
-                    entity.name ||
-                    '';
+                  const entityId = getEntityId(entity, idKey);
+                  const entityName = getEntityName(entity);
                   return (
                     <div
                       key={entityId}
