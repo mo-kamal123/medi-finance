@@ -4,6 +4,21 @@ body {
   font-family: 'Cairo', sans-serif;
 }
 
+input:not([type='checkbox']):not([type='radio']) {
+  overflow-y: hidden;
+}
+
+input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .main-font {
   font-family: 'Cairo', sans-serif;
 }

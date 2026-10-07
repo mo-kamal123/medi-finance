@@ -2,7 +2,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
-  CalendarDays,
   Check,
   ChevronDown,
   CreditCard,
@@ -24,7 +23,6 @@ import {
 
 const TABS = [
   { key: 'info', label: 'بيانات الشيك', icon: FileText },
-  { key: 'accounts', label: 'الحسابات', icon: CalendarDays },
   { key: 'settings', label: 'الخصائص والملاحظات', icon: Settings },
 ];
 

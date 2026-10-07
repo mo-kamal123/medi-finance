@@ -64,6 +64,13 @@ export const invoiceSchema = z
       .min(1, 'يجب إضافة سطر واحد على الأقل'),
   })
   .superRefine((data, ctx) => {
+    if (data.invoiceDate && data.dueDate && data.dueDate < data.invoiceDate) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'تاريخ الاستحقاق لا يمكن أن يكون قبل تاريخ الإصدار',
+        path: ['dueDate'],
+      });
+    }
     if (!data.customerID && !data.supplierID) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

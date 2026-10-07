@@ -1,14 +1,14 @@
-﻿import { useEffect, useMemo } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import FormInput from '../../../../shared/ui/input';
 import DateInput from '../../../../shared/ui/date-input';
 import NormalSelect from '../../../../shared/ui/NormalSelect';
-import AccountSearchSelect from '../../../transactions/entries/components/account-search-select';
-import CostCenterSearchSelect from '../../../../shared/ui/cost-center-search-select';
 import PartySearchSelect from '../../../../shared/ui/party-search-select';
 import InvoiceSearch from './invoice-search';
+import BatchInvoiceSelector from './batch-invoice-selector';
+import { totalBatchInvoiceAmount } from '../utils/batch-invoice-summaries';
 import { useCreateCheque } from '../hooks/cheques.mutations';
 import { useChequeBanks, useChequeCurrencies } from '../hooks/cheques.queries';
 import { useBankAccounts } from '../../banks/hooks/banks.queries';
@@ -169,6 +169,8 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
   const { data: banks = [] } = useChequeBanks();
   const { data: currencies = [] } = useChequeCurrencies();
   const isViewMode = mode === 'view';
+  const [batchInvoices, setBatchInvoices] = useState([]);
+  const [isLoadingBatch, setIsLoadingBatch] = useState(false);
 
   const formDefaults = useMemo(
     () => getInitialValues(defaultValues),
@@ -180,7 +182,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
     control,
     handleSubmit,
     setValue,
-    watch,
+    getValues,
     formState: { errors },
   } = useForm({
     defaultValues: formDefaults,
@@ -189,8 +191,10 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
     reValidateMode: 'onChange',
   });
 
-  const chequeType = watch('chequeType');
-  const watchedBankID = watch('bankID');
+  const chequeType = useWatch({ control, name: 'chequeType' });
+  const usesBatchInvoices = mode === 'create' && chequeType === '1';
+  const batchSupplierName = [...new Set(batchInvoices.map((batch) => batch.supplierName))].join('، ');
+  const watchedBankID = useWatch({ control, name: 'bankID' });
 
   const { data: bankAccountsRes = [], isLoading: loadingBankAccounts } =
     useBankAccounts(watchedBankID);
@@ -228,8 +232,32 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
   const bankOptions = toOptions(banks, 'bankID', 'bankNameAr');
   const currencyOptions = toOptions(currencies, 'currencyID', 'currencyNameAr');
 
+  const handleBatchInvoicesChange = (batches) => {
+    setBatchInvoices(batches);
+    const suppliedSupplierID = batches.find((batch) => batch.supplierID)?.supplierID;
+    const supplierID = suppliedSupplierID
+      ? String(suppliedSupplierID)
+      : batches.length > 0 && batchInvoices.length > 0 ? getValues('supplierID') : '';
+    setValue('supplierID', supplierID, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue('customerID', '');
+    setValue('amount', batches.length > 0 ? totalBatchInvoiceAmount(batches) : '', {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue('invoiceID', '');
+    setValue('invoiceNumber', '');
+  };
+
   const handleFormSubmit = (data) => {
+    if (isLoadingBatch) return;
     const payload = buildPayload(data);
+    if (usesBatchInvoices) {
+      delete payload.invoiceID;
+      payload.invoices = batchInvoices.map((batch) => batch.batchNumber);
+    }
     if (onSubmit) {
       onSubmit(payload);
     } else {
@@ -304,7 +332,8 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               required
               {...register('amount')}
               error={errors.amount?.message}
-              readOnly={isViewMode}
+              readOnly={isViewMode || (usesBatchInvoices && batchInvoices.length > 0)}
+              step="0.01"
               placeholder="أدخل قيمة الشيك"
             />
             {renderSelect('chequeType', 'نوع الشيك', [
@@ -312,9 +341,11 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               { value: '1', label: 'شيك صرف' },
             ], {
               required: true,
+              disabled: isLoadingBatch,
               onChange: () => {
                 setValue('customerID', '');
                 setValue('supplierID', '');
+                if (batchInvoices.length > 0) handleBatchInvoicesChange([]);
               },
             })}
             {renderDate('chequeDate', 'تاريخ الشيك', true)}
@@ -334,7 +365,30 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
                   <label className="mb-1 block font-medium text-gray-700 text-[15px]">
                     {partyLabel} <span className="text-red-500">*</span>
                   </label>
-                  <PartySearchSelect
+                  {usesBatchInvoices && batchInvoices.length > 0 ? (
+                    <div className="space-y-2">
+                    <FormInput
+                      aria-label="المورد"
+                      value={batchSupplierName}
+                      title={batchSupplierName}
+                      readOnly
+                      className="bg-gray-50 text-gray-700"
+                    />
+                    {!batchInvoices.some((batch) => batch.supplierID) ? (
+                      <>
+                        <p className="text-xs text-gray-500">اختر المورد لربط الشيك؛ ملخص الفاتورة يحتوي على الاسم فقط.</p>
+                        <PartySearchSelect
+                          type="supplier"
+                          value={field.value ?? ''}
+                          onChange={(event) => field.onChange(event.target.value)}
+                          onBlur={field.onBlur}
+                          placeholder="اختر المورد للحفظ"
+                          error={errors.supplierID?.message}
+                        />
+                      </>
+                    ) : null}
+                    </div>
+                  ) : <PartySearchSelect
                     type={isReceipt ? 'customer' : 'supplier'}
                     value={field.value ?? ''}
                     onBlur={field.onBlur}
@@ -348,7 +402,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
                     }}
                     error={errors[partyField]?.message}
                     disabled={isViewMode}
-                  />
+                  />}
                 </div>
               )}
             />
@@ -374,7 +428,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               readOnly={isViewMode}
               placeholder="1"
             />
-            <div>
+            {!usesBatchInvoices ? <div>
               <label className="mb-1 block font-medium text-gray-700">
                 الفاتورة
               </label>
@@ -406,9 +460,17 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
                   />
                 )}
               />
-            </div>
+            </div> : null}
           </div>
         </div>
+
+        {usesBatchInvoices ? (
+          <BatchInvoiceSelector
+            batches={batchInvoices}
+            onChange={handleBatchInvoicesChange}
+            onLoadingChange={setIsLoadingBatch}
+          />
+        ) : null}
 
         <div>
           <SectionHeader title="بيانات إضافية" />
@@ -430,88 +492,6 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
       </div>
     );
   };
-
-  const renderAccountsTab = () => (
-    <div className="space-y-8">
-      <div>
-        <SectionHeader title="بيانات الحسابات" />
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="mb-1 block font-medium text-gray-700">
-            حساب تحت التحصيل
-          </label>
-          <Controller
-            name="underDeliveryAccountID"
-            control={control}
-            render={({ field }) => (
-              <AccountSearchSelect
-                value={field.value ?? ''}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                disabled={isViewMode}
-                error={errors.underDeliveryAccountID?.message}
-              />
-            )}
-          />
-        </div>
-        <div>
-          <label className="mb-1 block font-medium text-gray-700">
-            حساب التحصيل
-          </label>
-          <Controller
-            name="collectionAccountID"
-            control={control}
-            render={({ field }) => (
-              <AccountSearchSelect
-                value={field.value ?? ''}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                disabled={isViewMode}
-                error={errors.collectionAccountID?.message}
-              />
-            )}
-          />
-        </div>
-        <div>
-          <label className="mb-1 block font-medium text-gray-700">
-            الحساب المقابل
-          </label>
-          <Controller
-            name="counterAccountID"
-            control={control}
-            render={({ field }) => (
-              <AccountSearchSelect
-                value={field.value ?? ''}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                disabled={isViewMode}
-                error={errors.counterAccountID?.message}
-              />
-            )}
-          />
-        </div>
-        <div>
-          <label className="mb-1 block font-medium text-gray-700">
-            مركز التكلفة
-          </label>
-          <Controller
-            name="costCenterID"
-            control={control}
-            render={({ field }) => (
-              <CostCenterSearchSelect
-                value={field.value ?? ''}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                disabled={isViewMode}
-                error={errors.costCenterID?.message}
-              />
-            )}
-          />
-        </div>
-      </div>
-      </div>
-    </div>
-  );
 
   const renderSettingsTab = () => (
     <div className="space-y-8">
@@ -565,7 +545,6 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
       return (
         <>
           {renderInfoTab()}
-          {renderAccountsTab()}
           {renderSettingsTab()}
         </>
       );
@@ -573,8 +552,6 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
     switch (activeTab) {
       case 'info':
         return renderInfoTab();
-      case 'accounts':
-        return renderAccountsTab();
       case 'settings':
         return renderSettingsTab();
       default:
@@ -617,7 +594,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
           {!isViewMode && (
             <button
               type="submit"
-              disabled={isPending}
+              disabled={isPending || createMutation.isPending || isLoadingBatch}
               className="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg disabled:opacity-50"
             >
               {isPending
