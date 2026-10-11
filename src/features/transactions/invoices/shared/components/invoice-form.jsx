@@ -2,15 +2,18 @@
 import { Controller, useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-// -- UI primitives 
+// -- UI primitives
 import FormInput from '../../../../../shared/ui/input';
 import DateInput from '../../../../../shared/ui/date-input';
 import NormalSelect from '../../../../../shared/ui/NormalSelect';
 import PartySearchSelect from '../../../../../shared/ui/party-search-select';
 
-// -- Domain logic 
+// -- Domain logic
 import { invoiceSchema } from '../validation/invoice.validation';
-import { useNextInvoiceNumber, useInvoiceStatuses } from '../hooks/invoices.queries';
+import {
+  useNextInvoiceNumber,
+  useInvoiceStatuses,
+} from '../hooks/invoices.queries';
 import useDropdowns from '../hooks/dropdowns';
 import {
   buildInvoicePayload,
@@ -23,8 +26,7 @@ import {
   buildStatusOptions,
 } from '../utils/invoice-form-utils';
 
-// -- Composed sub-components 
-import InvoiceSummaryCards from './invoice-summary-cards';
+// -- Composed sub-components
 import InvoiceDetailsTable from './invoice-details-table';
 import InvoiceTotals from './invoice-totals';
 
@@ -40,21 +42,21 @@ const InvoiceForm = ({
   onSubmit,
   isLoading,
   invoiceType,
+  onTotalsChange,
 }) => {
   // Derived state
   const isEditMode = Boolean(initialData?.invoiceID);
 
   // Data fetching
-  const {
-    financialPeriods,
-    invoiceTypes,
-    productsServices,
-  } = useDropdowns();
+  const { financialPeriods, invoiceTypes, productsServices } = useDropdowns();
   const { data: nextInvoiceNumberData } = useNextInvoiceNumber(!isEditMode);
   const { data: invoiceStatuses = EMPTY_STATUSES } = useInvoiceStatuses();
 
   // Status option mapping
-  const statusOptions = buildStatusOptions(invoiceStatuses, INVOICE_STATUS_OPTIONS);
+  const statusOptions = buildStatusOptions(
+    invoiceStatuses,
+    INVOICE_STATUS_OPTIONS
+  );
 
   // React Hook Form
   const {
@@ -62,9 +64,11 @@ const InvoiceForm = ({
     handleSubmit,
     reset,
     setValue,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm({
-    defaultValues,
+    defaultValues: isEditMode
+      ? mapInvoiceToFormValues(initialData, invoiceStatuses)
+      : defaultValues,
     resolver: zodResolver(invoiceSchema),
     shouldUnregister: false,
   });
@@ -86,13 +90,38 @@ const InvoiceForm = ({
   );
   const dueDateError =
     errors.dueDate?.message ||
-    (isDueBeforeIssue ? 'تاريخ الاستحقاق لا يمكن أن يكون قبل تاريخ الإصدار' : undefined);
+    (isDueBeforeIssue
+      ? 'تاريخ الاستحقاق لا يمكن أن يكون قبل تاريخ الإصدار'
+      : undefined);
 
   const { totalAmount, totalDiscounts, netAmount } = calculateTotals(
     watchedDetails,
     watchedDiscountAmount,
-    watchedTaxAmount,
+    watchedTaxAmount
   );
+
+  useEffect(() => {
+    if (
+      !isDirty &&
+      !initialData.details?.length &&
+      !initialData.invoiceDetails?.length
+    )
+      return;
+    onTotalsChange?.({
+      totalAmount,
+      totalDiscounts,
+      netAmount,
+      taxAmount: Number(watchedTaxAmount) || 0,
+    });
+  }, [
+    onTotalsChange,
+    totalAmount,
+    totalDiscounts,
+    netAmount,
+    watchedTaxAmount,
+    initialData,
+    isDirty,
+  ]);
 
   // Side-effects
   const hasSetInvoiceNumber = useRef(false);
@@ -141,10 +170,7 @@ const InvoiceForm = ({
 
   // JSX
   return (
-    <form
-      onSubmit={handleFormSubmit}
-      className="space-y-8"
-    >
+    <form onSubmit={handleFormSubmit} className="space-y-8">
       {/* Header fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Controller
@@ -160,7 +186,9 @@ const InvoiceForm = ({
               readOnly={!isEditMode}
               required
               className={
-                !isEditMode ? 'bg-gray-100 text-gray-600 cursor-not-allowed' : ''
+                !isEditMode
+                  ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
+                  : ''
               }
             />
           )}
@@ -227,6 +255,10 @@ const InvoiceForm = ({
                 <PartySearchSelect
                   type="customer"
                   value={field.value ?? ''}
+                  selectedOption={{
+                    value: initialData.customerID,
+                    label: initialData.customerNameAr || initialData.customerName || initialData.customerNameEn || '',
+                  }}
                   onChange={(event) => {
                     field.onChange(event.target.value);
                     if (event.target.value) {
@@ -255,6 +287,10 @@ const InvoiceForm = ({
                 <PartySearchSelect
                   type="supplier"
                   value={field.value ?? ''}
+                  selectedOption={{
+                    value: initialData.supplierID,
+                    label: initialData.supplierNameAr || initialData.supplierName || initialData.supplierNameEn || '',
+                  }}
                   onChange={(event) => {
                     field.onChange(event.target.value);
                     if (event.target.value) {
@@ -358,9 +394,6 @@ const InvoiceForm = ({
         />
       </div>
 
-      {/* Summary cards (edit mode only)*/}
-      {isEditMode && <InvoiceSummaryCards invoice={initialData} />}
-
       {/* Detail rows */}
       <InvoiceDetailsTable
         control={control}
@@ -379,6 +412,7 @@ const InvoiceForm = ({
         netAmount={netAmount}
         isLoading={isLoading}
         disabled={isDueBeforeIssue}
+        showSummary={!isEditMode}
       />
     </form>
   );
