@@ -1,6 +1,6 @@
 // Edit/view any invoice by id (type-agnostic).
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DollarSign, FileText, BookOpen } from 'lucide-react';
 import PageLoader from '../../../../../shared/ui/page-loader';
@@ -8,6 +8,7 @@ import Breadcrumb from '../../../../../shared/ui/breadcrumb';
 import JournalEntryForm from '../../../entries/components/journal-entry-form';
 import { useJournalEntry } from '../../../entries/hooks/entries.queries';
 import InvoiceForm from '../components/invoice-form';
+import InvoiceSummaryCards from '../components/invoice-summary-cards';
 import PayInvoiceModal from '../components/pay-invoice-modal';
 import { useUpdateInvoice } from '../hooks/invoices.mutations';
 import { useInvoice } from '../hooks/invoices.queries';
@@ -24,6 +25,13 @@ const EditInvoice = () => {
   const [activeTab, setActiveTab] = useState('details');
 
   const { data: invoice, isLoading: isFetching, refetch } = useInvoice(id);
+  const [summary, setSummary] = useState(null);
+  const handleTotalsChange = useCallback(
+    (totals) => {
+      setSummary({ invoice, totals });
+    },
+    [invoice]
+  );
 
   const journalEntryId =
     invoice?.journalEntryID || invoice?.journalEntry?.journalEntryID || null;
@@ -79,12 +87,12 @@ const EditInvoice = () => {
       ];
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 sm:p-6">
       <Breadcrumb items={breadcrumbItems} />
 
       <div className="overflow-hidden rounded-2xl">
         <div className="px-8 py-6 bg-linear-to-r from-primary to-primary/80">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="text-white">
               <h1 className="text-2xl font-bold">
                 {invoice?.invoiceNumber || 'فاتورة'}
@@ -106,6 +114,11 @@ const EditInvoice = () => {
           </div>
         </div>
       </div>
+
+      <InvoiceSummaryCards
+        invoice={invoice}
+        totals={summary?.invoice === invoice ? summary.totals : undefined}
+      />
 
       <PayInvoiceModal
         invoiceId={id}
@@ -144,6 +157,7 @@ const EditInvoice = () => {
               initialData={invoice}
               onSubmit={handleUpdate}
               isLoading={updateInvoiceMutation.isPending}
+              onTotalsChange={handleTotalsChange}
               invoiceType={
                 invoice?.customerID
                   ? 'customer'
