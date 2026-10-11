@@ -31,6 +31,7 @@ export const chequeSchema = z
     counterAccountID: z.string().optional().default(''),
     costCenterID: z.string().optional().default(''),
     invoiceID: z.string().optional().default(''),
+    invoices: z.array(z.number().int().positive()).optional().default([]),
     statusID: z.string().optional().default(''),
     isNonCashable: z.boolean().optional().default(false),
     isBearerOnly: z.boolean().optional().default(false),
@@ -47,11 +48,11 @@ export const chequeSchema = z
         message: 'يجب اختيار عميل',
       });
     }
-    if (data.chequeType === '1' && !data.supplierID) {
+    if (data.chequeType === '1' && !data.supplierID && data.invoices.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['supplierID'],
-        message: 'يجب اختيار مورد',
+        message: 'اختر فاتورة لتحديد المورد أو اختر المورد',
       });
     }
     // Date ordering (YYYY-MM-DD strings compare chronologically)

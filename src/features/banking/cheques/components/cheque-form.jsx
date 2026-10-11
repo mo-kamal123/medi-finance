@@ -70,6 +70,7 @@ const getInitialValues = (defaultValues) => {
       : '',
     invoiceID: defaultValues?.invoiceID ? String(defaultValues.invoiceID) : '',
     invoiceNumber: defaultValues?.invoiceNumber ?? '',
+    invoices: [],
     isNonCashable: defaultValues?.isNonCashable ?? false,
     isBearerOnly: defaultValues?.isBearerOnly ?? false,
     hasAttachmentPage: defaultValues?.hasAttachmentPage ?? false,
@@ -182,7 +183,6 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
     control,
     handleSubmit,
     setValue,
-    getValues,
     formState: { errors },
   } = useForm({
     defaultValues: formDefaults,
@@ -235,9 +235,8 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
   const handleBatchInvoicesChange = (batches) => {
     setBatchInvoices(batches);
     const suppliedSupplierID = batches.find((batch) => batch.supplierID)?.supplierID;
-    const supplierID = suppliedSupplierID
-      ? String(suppliedSupplierID)
-      : batches.length > 0 && batchInvoices.length > 0 ? getValues('supplierID') : '';
+    const supplierID = suppliedSupplierID ? String(suppliedSupplierID) : '';
+    setValue('invoices', batches.map((batch) => batch.invoiceID), { shouldDirty: true });
     setValue('supplierID', supplierID, {
       shouldDirty: true,
       shouldValidate: true,
@@ -256,7 +255,8 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
     const payload = buildPayload(data);
     if (usesBatchInvoices) {
       delete payload.invoiceID;
-      payload.invoices = batchInvoices.map((batch) => batch.batchNumber);
+      payload.invoices = batchInvoices.map((batch) => batch.invoiceID);
+      payload.supplierID = batchInvoices.find((batch) => batch.supplierID)?.supplierID ?? payload.supplierID;
     }
     if (onSubmit) {
       onSubmit(payload);
@@ -366,28 +366,15 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
                     {partyLabel} <span className="text-red-500">*</span>
                   </label>
                   {usesBatchInvoices && batchInvoices.length > 0 ? (
-                    <div className="space-y-2">
                     <FormInput
                       aria-label="المورد"
                       value={batchSupplierName}
                       title={batchSupplierName}
                       readOnly
                       className="bg-gray-50 text-gray-700"
+                      placeholder="يُملأ تلقائياً عند اختيار الفاتورة"
+                      error={errors.supplierID?.message}
                     />
-                    {!batchInvoices.some((batch) => batch.supplierID) ? (
-                      <>
-                        <p className="text-xs text-gray-500">اختر المورد لربط الشيك؛ ملخص الفاتورة يحتوي على الاسم فقط.</p>
-                        <PartySearchSelect
-                          type="supplier"
-                          value={field.value ?? ''}
-                          onChange={(event) => field.onChange(event.target.value)}
-                          onBlur={field.onBlur}
-                          placeholder="اختر المورد للحفظ"
-                          error={errors.supplierID?.message}
-                        />
-                      </>
-                    ) : null}
-                    </div>
                   ) : <PartySearchSelect
                     type={isReceipt ? 'customer' : 'supplier'}
                     value={field.value ?? ''}
