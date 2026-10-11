@@ -43,6 +43,7 @@ const PartySearchSelect = ({
   type = 'customer',
   placeholder,
   searchHint,
+  selectedOption,
 }) => {
   const isCustomer = type === 'customer';
 
@@ -77,13 +78,20 @@ const PartySearchSelect = ({
     [searchResults, value, idKey]
   );
 
+  const suppliedName = String(selectedOption?.value) === String(value)
+    ? selectedOption?.label?.trim() || ''
+    : '';
+  const lastSelectedName = lastSelected && String(lastSelected.id) === String(value)
+    ? lastSelected.name
+    : '';
+
   const { data: selectedEntity } = useQuery({
     queryKey: [queryKey, value],
     queryFn: async () => {
       const res = await getByIdFn(value);
       return res?.data ?? res;
     },
-    enabled: !!value && !selectedInResults,
+    enabled: !!value && !selectedInResults && !suppliedName && !lastSelectedName,
   });
 
   // Priority: live search hit → the name the user just picked → server
@@ -91,7 +99,8 @@ const PartySearchSelect = ({
   // shadow the confirmed selection, otherwise the input falls back to the id.
   const selectedName =
     getEntityName(selectedInResults) ||
-    (lastSelected && String(lastSelected.id) === String(value) ? lastSelected.name : '') ||
+    lastSelectedName ||
+    suppliedName ||
     getEntityName(selectedEntity);
 
   const displayLabel = selectedName || (value ? String(value) : '');
