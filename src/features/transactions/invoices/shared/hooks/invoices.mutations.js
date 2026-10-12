@@ -1,9 +1,31 @@
 // Invoice react-query mutation hooks.
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createBatchInvoice, createInvoice, deleteInvoice, updateInvoice } from '../api/invoices-api';
+import { closeBatch, createBatchInvoice, createInvoice, deleteInvoice, updateInvoice } from '../api/invoices-api';
 import { invoicesKeys } from './invoices.keys';
 import { getErrorMessage, toast } from '../../../../../shared/lib/toast';
+
+export const useCloseBatch = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: closeBatch,
+    retry: false,
+    onSuccess: async (_, batchNumber) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: invoicesKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: invoicesKeys.details() }),
+        queryClient.invalidateQueries({ queryKey: invoicesKeys.batch(batchNumber) }),
+        queryClient.invalidateQueries({ queryKey: ['journalEntries'] }),
+        queryClient.invalidateQueries({ queryKey: ['journalEntry'] }),
+      ]);
+      toast.success('تم إنشاء قيد إقفال الدفعة بنجاح');
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, 'تعذر إنشاء قيد إقفال الدفعة'));
+    },
+  });
+};
 
 export const useCreateInvoice = () => {
   const queryClient = useQueryClient();

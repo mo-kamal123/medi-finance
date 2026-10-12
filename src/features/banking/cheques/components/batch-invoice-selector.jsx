@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { FileText, Plus, Search, Trash2, X } from 'lucide-react';
+import { FileText, Plus, Search, Trash2 } from 'lucide-react';
 import FormInput from '../../../../shared/ui/input';
 import { formatCurrency } from '../../../transactions/invoices/shared/utils/format-currency';
 import { getBatchInvoiceSummary } from '../api/cheques.api';
@@ -53,66 +53,85 @@ const BatchInvoiceSelector = ({ batches, onChange, onLoadingChange }) => {
   };
 
   return (
-    <section className="space-y-4 rounded-xl border border-gray-200 p-5" aria-label="فواتير الدفعات">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <section className="overflow-hidden rounded-xl border border-primary/15 bg-white shadow-sm" aria-label="فواتير الدفعات">
+      <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[1fr_minmax(320px,440px)] lg:items-center">
         <div>
-        <h3 className="flex items-center gap-2 font-bold text-gray-900"><FileText size={18} className="text-primary" />فواتير الدفعات</h3>
-        <p className="mt-1 text-sm text-gray-500">أضف الدفعات التي سيغطيها الشيك. تُحتسب قيمة الشيك من مجموع صافي الفواتير.</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <FileText size={20} aria-hidden="true" />
+            </span>
+            <h2 className="text-lg font-bold text-gray-900">فواتير الدفعات</h2>
+            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">المحدد: {batches.length}</span>
+          </div>
+          <p className="mt-2 text-sm leading-relaxed text-gray-500">أضف الدفعات التي سيغطيها شيك الصرف. تُملأ قيمة الشيك والمورد تلقائياً من الفواتير المحددة.</p>
         </div>
-        <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">المحدد: {batches.length}</span>
-      </div>
-      <div className="space-y-4 rounded-xl border border-gray-200 bg-gray-50/50 p-4">
-        <div aria-live="polite">
-          <p className="mb-2 text-sm font-medium text-gray-700">الفواتير المحددة</p>
-          {batches.length > 0 ? (
-            <ul className="flex flex-wrap gap-2" aria-label="أرقام الفواتير المحددة">
-              {batches.map((batch) => (
-                <li key={batch.batchNumber} className="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-white px-3 py-2 text-sm text-primary">
-                  <FileText size={14} aria-hidden="true" />
-                  <span dir="ltr" className="font-semibold" title={`الدفعة: ${batch.batchNumber}`}>{batch.invoiceNumber}</span>
-                  <button type="button" disabled={isLoading} onClick={() => removeBatch(batch.batchNumber)} aria-label={`إزالة الدفعة ${batch.batchNumber}`} className="rounded p-1 hover:bg-primary/10 disabled:opacity-50">
-                    <X size={14} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-gray-400">لم يتم اختيار فواتير بعد</p>
-          )}
+
+        <div>
+          <label htmlFor="batch-invoice-number" className="mb-1.5 block text-sm font-medium text-gray-700">رقم الدفعة</label>
+          <div className="flex items-start gap-2">
+            <FormInput
+              id="batch-invoice-number"
+              icon={Search}
+              value={batchNumber}
+              onChange={(event) => { setBatchNumber(event.target.value); setError(''); }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  addBatch();
+                }
+              }}
+              placeholder="أدخل رقم الدفعة"
+              disabled={isLoading}
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? 'batch-invoice-error' : undefined}
+              inputClass={error ? 'border-red-400' : ''}
+            />
+            <button type="button" onClick={addBatch} disabled={isLoading} className="flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50">
+              <Plus size={16} />{isLoading ? 'جاري التحميل...' : 'إضافة'}
+            </button>
+          </div>
+          {error ? <p id="batch-invoice-error" role="alert" className="mt-2 text-sm text-red-500">{error}</p> : null}
         </div>
-      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end">
-        <FormInput
-          label="إضافة فاتورة دفعة"
-          icon={Search}
-          value={batchNumber}
-          onChange={(event) => { setBatchNumber(event.target.value); setError(''); }}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              addBatch();
-            }
-          }}
-          placeholder="أدخل رقم الدفعة ثم اضغط Enter"
-          disabled={isLoading}
-          aria-invalid={Boolean(error)}
-          aria-describedby={error ? 'batch-invoice-error' : undefined}
-          inputClass={error ? 'border-red-400' : ''}
-        />
-        <button type="button" onClick={addBatch} disabled={isLoading} className="flex shrink-0 items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-white disabled:opacity-50">
-          <Plus size={16} />{isLoading ? 'جاري التحميل...' : 'إضافة دفعة'}
-        </button>
       </div>
-      {error ? <p id="batch-invoice-error" role="alert" className="text-sm text-red-500">{error}</p> : null}
-      </div>
-      {batches.map((batch) => (
-        <div key={batch.batchNumber} className="grid grid-cols-1 items-end gap-3 border-t border-gray-100 pt-4 sm:grid-cols-[1fr_2fr_1fr_auto]">
-          <FormInput label="رقم الفاتورة" value={batch.invoiceNumber} title={`الدفعة: ${batch.batchNumber}`} readOnly />
-          <FormInput label="اسم المورد" value={batch.supplierName} readOnly />
-          <FormInput label="صافي الفاتورة" value={batch.netAmount.toFixed(2)} readOnly />
-          <button type="button" disabled={isLoading} onClick={() => removeBatch(batch.batchNumber)} aria-label={`حذف الدفعة ${batch.batchNumber}`} className="rounded-lg p-3 text-red-500 hover:bg-red-50 disabled:opacity-50"><Trash2 size={18} /></button>
-        </div>
-      ))}
-      {batches.length > 0 ? <p className="border-t border-gray-200 pt-4 font-semibold text-primary">إجمالي قيمة الشيك: {formatCurrency(totalBatchInvoiceAmount(batches))}</p> : null}
+
+      {batches.length > 0 ? (
+        <>
+          <div className="max-h-64 overflow-auto border-t border-gray-100">
+            <table className="w-full text-start text-sm">
+              <thead className="sticky top-0 bg-gray-50 text-gray-500">
+                <tr>
+                  <th scope="col" className="whitespace-nowrap px-5 py-3 text-start font-medium">رقم الدفعة</th>
+                  <th scope="col" className="whitespace-nowrap px-5 py-3 text-start font-medium">رقم الفاتورة</th>
+                  <th scope="col" className="whitespace-nowrap px-5 py-3 text-start font-medium">المورد</th>
+                  <th scope="col" className="whitespace-nowrap px-5 py-3 text-start font-medium">صافي الفاتورة</th>
+                  <th scope="col" className="px-4 py-3"><span className="sr-only">حذف</span></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {batches.map((batch) => (
+                  <tr key={batch.batchNumber} className="hover:bg-gray-50/50">
+                    <td className="whitespace-nowrap px-5 py-2.5"><span dir="ltr" className="text-gray-500">{batch.batchNumber}</span></td>
+                    <td className="whitespace-nowrap px-5 py-2.5"><span dir="ltr" className="font-semibold text-primary">{batch.invoiceNumber}</span></td>
+                    <td className="min-w-40 px-5 py-2.5 text-gray-700">{batch.supplierName}</td>
+                    <td className="whitespace-nowrap px-5 py-2.5 font-medium tabular-nums text-gray-900">{formatCurrency(batch.netAmount)}</td>
+                    <td className="px-4 py-2.5 text-end">
+                      <button type="button" disabled={isLoading} onClick={() => removeBatch(batch.batchNumber)} aria-label={`حذف الدفعة ${batch.batchNumber}`} className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-50">
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-primary/10 bg-primary/5 px-5 py-3" aria-live="polite">
+            <span className="text-sm font-medium text-gray-600">إجمالي قيمة الشيك</span>
+            <span className="text-lg font-bold tabular-nums text-primary">{formatCurrency(totalBatchInvoiceAmount(batches))}</span>
+          </div>
+        </>
+      ) : (
+        <p className="border-t border-gray-100 bg-gray-50/50 px-5 py-3 text-sm text-gray-400" aria-live="polite">لم يتم اختيار فواتير بعد. أضف رقم دفعة للبدء.</p>
+      )}
     </section>
   );
 };

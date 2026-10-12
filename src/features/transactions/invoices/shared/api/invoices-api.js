@@ -2,6 +2,13 @@
 
 import { axiosInstance } from '../../../../../app/api/axiosInstance';
 
+export const normalizeInvoiceResponse = (response) => {
+  if (response?.success === false) {
+    throw new Error(response.message || 'تعذر تحميل الفاتورة');
+  }
+  return response?.data?.invoice ?? response?.invoice ?? response?.data ?? response;
+};
+
 export const normalizeInvoicesResponse = (data) => {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.data)) return data.data;
@@ -50,7 +57,7 @@ export const getAllInvoices = async (params = {}, type) => {
 
 export const getInvoiceById = async (id) => {
   const { data } = await axiosInstance.get(`/invoices/${id}`);
-  return data;
+  return normalizeInvoiceResponse(data);
 };
 
 export const getInvoiceByNumber = async (invoiceNumber) => {
@@ -84,6 +91,14 @@ export const createBatchInvoice = async (formData) => {
   const { data } = await axiosInstance.post('/batches/create-invoice', formData, {
     headers: { 'Content-Type': 'application/json' },
   });
+  return normalizeInvoiceResponse(data);
+};
+
+export const closeBatch = async (batchNumber) => {
+  const { data } = await axiosInstance.post(`/batches/${encodeURIComponent(batchNumber)}/close`);
+  if (data?.success === false) {
+    throw new Error(data.message || 'تعذر إنشاء قيد إقفال الدفعة');
+  }
   return data;
 };
 
