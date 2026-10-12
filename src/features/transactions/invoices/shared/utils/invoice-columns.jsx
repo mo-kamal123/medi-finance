@@ -1,6 +1,6 @@
 // Table column factories for the invoice list pages.
 
-import { Eye, Trash2 } from 'lucide-react';
+import { BookCheck, Eye, Trash2 } from 'lucide-react';
 import { formatDate } from '../../../../../shared/utils/formatters';
 import { formatCurrency } from './format-currency';
 import { getStatusStyle } from './status-style';
@@ -114,7 +114,7 @@ const getBatchNumber = (row) => {
   if (row.invoiceNumber?.startsWith('INV-BATCH-')) {
     return row.invoiceNumber.replace('INV-BATCH-', '');
   }
-  return '-';
+  return '';
 };
 
 /**
@@ -132,7 +132,7 @@ export const buildBatchPageColumns = ({ navigate }) => [
     header: 'رقم الدفعة',
     key: 'batchNumber',
     type: 'custom',
-    render: (row) => getBatchNumber(row),
+    render: (row) => getBatchNumber(row) || '-',
   },
   {
     header: 'المورد',
@@ -218,6 +218,21 @@ export const buildBatchPageColumns = ({ navigate }) => [
           title="عرض"
         >
           <Eye size={18} />
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            navigate(`/invoices/${row.invoiceID}`, {
+              state: {
+                openClosingEntry: true,
+              },
+            })
+          }
+          className="text-primary hover:text-primary/80"
+          title="إنشاء قيد إقفال"
+          aria-label="إنشاء قيد إقفال"
+        >
+          <BookCheck size={18} />
         </button>
       </div>
     ),
