@@ -6,46 +6,50 @@ import { bankingRoutes } from '../../features/banking/routes';
 import { masterDataRoutes } from '../../features/master-data/routes';
 import { transactionsRoutes } from '../../features/transactions/routes';
 import { reportsRoutes } from '../../features/reports/routes';
+import RouteErrorPage from '../../shared/ui/route-error-page';
 
 export const router = createBrowserRouter([
   {
-    path: '/auth',
-    element: lazyPage(
-      () => import('../layouts/auth-layout'),
-      'جاري تحميل صفحة تسجيل الدخول...'
-    ),
-    children: [...authRoutes],
-  },
-  {
-    path: '/',
-    element: lazyPage(
-      () => import('../layouts/root-layout'),
-      'جاري تحميل التطبيق...'
-    ),
+    errorElement: <RouteErrorPage />,
     children: [
       {
-        index: true,
+        path: '/auth',
         element: lazyPage(
-          () => import('../../features/dashboard/pages/home'),
-          'جاري تحميل الصفحة الرئيسية...'
+          () => import('../layouts/auth-layout'),
+          'جاري تحميل صفحة تسجيل الدخول...'
         ),
+        children: [...authRoutes],
       },
-      // accounting routes
-      ...accountingRoutes,
+      {
+        path: '/',
+        element: lazyPage(
+          () => import('../layouts/root-layout'),
+          'جاري تحميل التطبيق...'
+        ),
+        children: [
+          {
+            index: true,
+            element: lazyPage(
+              () => import('../../features/dashboard/pages/home'),
+              'جاري تحميل الصفحة الرئيسية...'
+            ),
+          },
+          // accounting routes
+          ...accountingRoutes,
 
-      // banking routes
-      ...bankingRoutes,
+          // banking routes
+          ...bankingRoutes,
 
-      // master data routes
-      ...masterDataRoutes,
+          // master data routes
+          ...masterDataRoutes,
 
-      // transactions routes
-      ...transactionsRoutes,
+          // transactions routes
+          ...transactionsRoutes,
 
-      // reports routes
-      ...reportsRoutes
-     
+          // reports routes
+          ...reportsRoutes,
+        ],
+      },
     ],
   },
 ]);
-

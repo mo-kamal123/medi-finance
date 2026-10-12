@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -162,7 +163,7 @@ const getInvoiceParty = (invoice) => {
   return null;
 };
 
-const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activeTab }) => {
+const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activeTab, batchInvoiceContainer }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const bankIdFromUrl = searchParams.get('bankId');
@@ -451,7 +452,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
           </div>
         </div>
 
-        {usesBatchInvoices ? (
+        {usesBatchInvoices && !batchInvoiceContainer ? (
           <BatchInvoiceSelector
             batches={batchInvoices}
             onChange={handleBatchInvoicesChange}
@@ -548,6 +549,14 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
 
   return (
     <div className={isTabMode ? '' : 'p-6 bg-white rounded-xl shadow-sm border border-gray-300 space-y-6'}>
+      {usesBatchInvoices && batchInvoiceContainer ? createPortal(
+        <BatchInvoiceSelector
+          batches={batchInvoices}
+          onChange={handleBatchInvoicesChange}
+          onLoadingChange={setIsLoadingBatch}
+        />,
+        batchInvoiceContainer
+      ) : null}
       {!isTabMode && (
         <div>
           <h2 className="text-xl font-bold">

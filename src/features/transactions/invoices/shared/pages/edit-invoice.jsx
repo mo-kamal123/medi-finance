@@ -1,8 +1,8 @@
 // Edit/view any invoice by id (type-agnostic).
 
 import { useCallback, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { DollarSign, FileText, BookOpen } from 'lucide-react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { BookCheck, DollarSign, FileText, BookOpen } from 'lucide-react';
 import PageLoader from '../../../../../shared/ui/page-loader';
 import Breadcrumb from '../../../../../shared/ui/breadcrumb';
 import JournalEntryForm from '../../../entries/components/journal-entry-form';
@@ -12,6 +12,8 @@ import InvoiceSummaryCards from '../components/invoice-summary-cards';
 import PayInvoiceModal from '../components/pay-invoice-modal';
 import { useUpdateInvoice } from '../hooks/invoices.mutations';
 import { useInvoice } from '../hooks/invoices.queries';
+import CloseBatchModal from '../../batch-invoices/close-batch-modal';
+import BatchInvoiceDetails from '../components/batch-invoice-details';
 
 const TABS = [
   { key: 'details', label: 'تفاصيل الفاتورة', icon: FileText },
@@ -21,10 +23,22 @@ const TABS = [
 const EditInvoice = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isCloseModalOpen, setIsCloseModalOpen] = useState(
+    Boolean(location.state?.openClosingEntry)
+  );
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('details');
+  const [activeTab, setActiveTab] = useState(
+    location.state?.openClosingEntry ? 'closing' : 'details'
+  );
+  const [createdClosure, setCreatedClosure] = useState(null);
 
-  const { data: invoice, isLoading: isFetching, refetch } = useInvoice(id);
+  const {
+    data: invoice,
+    isLoading: isFetching,
+    error: invoiceError,
+    refetch,
+  } = useInvoice(id);
   const [summary, setSummary] = useState(null);
   const handleTotalsChange = useCallback(
     (totals) => {
@@ -39,17 +53,55 @@ const EditInvoice = () => {
   const { data: journalEntry, isLoading: isLoadingJournalEntry } =
     useJournalEntry(journalEntryId);
 
+  const closingEntryId =
+    invoice?.batchClosureJournalEntryID ||
+    (createdClosure?.invoiceID === invoice?.invoiceID
+      ? createdClosure?.journalEntryID
+      : null);
+  const selectedTab =
+    activeTab === 'closing' && !closingEntryId ? 'details' : activeTab;
+  const tabs = closingEntryId
+    ? [...TABS, { key: 'closing', label: 'قيد الإقفال', icon: BookCheck }]
+    : TABS;
+  const {
+    data: closingEntry,
+    isLoading: isLoadingClosingEntry,
+    refetch: refetchClosingEntry,
+  } = useJournalEntry(selectedTab === 'closing' ? closingEntryId : null);
+
+  const handleClosingSuccess = (response) => {
+    const closure = response?.data ?? response;
+    const entry = closure?.journalEntries?.find((item) =>
+      item.invoiceIDs?.some(
+        (invoiceID) => String(invoiceID) === String(invoice.invoiceID)
+      )
+    );
+    if (entry?.journalEntryID) {
+      setCreatedClosure({
+        invoiceID: invoice.invoiceID,
+        journalEntryID: entry.journalEntryID,
+      });
+    }
+    setActiveTab('closing');
+  };
+
   const updateInvoiceMutation = useUpdateInvoice();
+  const isBatchInvoice = Boolean(invoice?.batchID);
 
   const remainingAmount =
     invoice?.remainingAmount ??
     (invoice?.netAmount ?? 0) - (invoice?.paidAmount ?? 0);
 
-  const invoiceTypeName = invoice?.customerID ? 'فاتورة عميل' : 'فاتورة مورد';
+  const invoiceTypeName =
+    invoice?.invoiceTypeNameAr ||
+    invoice?.invoiceTypeNameEn ||
+    (invoice?.customerID ? 'فاتورة عميل' : 'فاتورة مورد');
   const partyName =
     invoice?.customerNameAr ||
+    invoice?.customerName ||
     invoice?.customerNameEn ||
     invoice?.supplierNameAr ||
+    invoice?.supplierName ||
     invoice?.supplierNameEn ||
     '';
 
@@ -76,15 +128,38 @@ const EditInvoice = () => {
     return <PageLoader label="جاري تحميل الفاتورة..." />;
   }
 
-  const breadcrumbItems = invoice?.customerID
+  if (invoiceError || !invoice?.invoiceID) {
+    return (
+      <div
+        role="alert"
+        className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-800"
+      >
+        <p>تعذر تحميل تفاصيل الفاتورة.</p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="mt-3 font-semibold underline"
+        >
+          إعادة المحاولة
+        </button>
+      </div>
+    );
+  }
+
+  const breadcrumbItems = isBatchInvoice
     ? [
-        { label: 'فواتير العملاء', to: '/customers-invoices' },
-        { label: invoice?.invoiceNumber || 'تفاصيل الفاتورة' },
+        { label: 'فواتير المطالبات', to: '/batches-invoices' },
+        { label: invoice.invoiceNumber || 'تفاصيل الفاتورة' },
       ]
-    : [
-        { label: 'فواتير الموردين', to: '/suppliers-invoices' },
-        { label: invoice?.invoiceNumber || 'تفاصيل الفاتورة' },
-      ];
+    : invoice?.customerID
+      ? [
+          { label: 'فواتير العملاء', to: '/customers-invoices' },
+          { label: invoice?.invoiceNumber || 'تفاصيل الفاتورة' },
+        ]
+      : [
+          { label: 'فواتير الموردين', to: '/suppliers-invoices' },
+          { label: invoice?.invoiceNumber || 'تفاصيل الفاتورة' },
+        ];
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
@@ -102,7 +177,21 @@ const EditInvoice = () => {
                 {partyName ? ` — ${partyName}` : ''}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {isBatchInvoice && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    closingEntryId
+                      ? setActiveTab('closing')
+                      : setIsCloseModalOpen(true)
+                  }
+                  className="flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/30"
+                >
+                  <BookCheck size={16} />
+                  {closingEntryId ? 'عرض قيد الإقفال' : 'إنشاء قيد إقفال'}
+                </button>
+              )}
               <button
                 onClick={() => setIsPayModalOpen(true)}
                 className="flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/30"
@@ -117,22 +206,37 @@ const EditInvoice = () => {
 
       <InvoiceSummaryCards
         invoice={invoice}
-        totals={summary?.invoice === invoice ? summary.totals : undefined}
+        totals={
+          !isBatchInvoice && summary?.invoice === invoice
+            ? summary.totals
+            : undefined
+        }
       />
 
-      <PayInvoiceModal
-        invoiceId={id}
-        remainingAmount={remainingAmount}
-        isOpen={isPayModalOpen}
-        onClose={() => setIsPayModalOpen(false)}
-        onSuccess={refetch}
-      />
+      {isPayModalOpen && (
+        <PayInvoiceModal
+          invoiceId={id}
+          remainingAmount={remainingAmount}
+          isOpen={isPayModalOpen}
+          onClose={() => setIsPayModalOpen(false)}
+          onSuccess={refetch}
+        />
+      )}
+
+      {isBatchInvoice && !closingEntryId && isCloseModalOpen && (
+        <CloseBatchModal
+          batchID={invoice.batchID}
+          invoiceNumber={invoice.invoiceNumber}
+          onSuccess={handleClosingSuccess}
+          onClose={() => setIsCloseModalOpen(false)}
+        />
+      )}
 
       <div className="rounded-xl border border-gray-200 bg-white">
         <div className="flex gap-1 overflow-x-auto border-b border-gray-200 px-4 pt-3">
-          {TABS.map((tab) => {
+          {tabs.map((tab) => {
             const Icon = tab.icon;
-            const isActive = activeTab === tab.key;
+            const isActive = selectedTab === tab.key;
             return (
               <button
                 key={tab.key}
@@ -152,23 +256,26 @@ const EditInvoice = () => {
         </div>
 
         <div className="p-6">
-          {activeTab === 'details' && (
-            <InvoiceForm
-              initialData={invoice}
-              onSubmit={handleUpdate}
-              isLoading={updateInvoiceMutation.isPending}
-              onTotalsChange={handleTotalsChange}
-              invoiceType={
-                invoice?.customerID
-                  ? 'customer'
-                  : invoice?.supplierID
-                    ? 'supplier'
-                    : undefined
-              }
-            />
-          )}
+          {selectedTab === 'details' &&
+            (isBatchInvoice ? (
+              <BatchInvoiceDetails invoice={invoice} />
+            ) : (
+              <InvoiceForm
+                initialData={invoice}
+                onSubmit={handleUpdate}
+                isLoading={updateInvoiceMutation.isPending}
+                onTotalsChange={handleTotalsChange}
+                invoiceType={
+                  invoice?.customerID
+                    ? 'customer'
+                    : invoice?.supplierID
+                      ? 'supplier'
+                      : undefined
+                }
+              />
+            ))}
 
-          {activeTab === 'journal' && (
+          {selectedTab === 'journal' && (
             <>
               {isLoadingJournalEntry ? (
                 <PageLoader label="جاري تحميل القيد المرتبط..." />
@@ -186,6 +293,34 @@ const EditInvoice = () => {
               )}
             </>
           )}
+
+          {selectedTab === 'closing' &&
+            closingEntryId &&
+            (isLoadingClosingEntry ? (
+              <PageLoader label="جاري تحميل قيد الإقفال..." />
+            ) : closingEntry ? (
+              <JournalEntryForm
+                key={closingEntryId}
+                defaultValues={closingEntry}
+                mode="edit"
+                showEntryDetailsButton
+                viewOnly
+              />
+            ) : (
+              <div
+                role="alert"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700"
+              >
+                <span>تعذر تحميل قيد الإقفال المرتبط بهذه الفاتورة.</span>
+                <button
+                  type="button"
+                  onClick={() => refetchClosingEntry()}
+                  className="font-semibold underline"
+                >
+                  إعادة المحاولة
+                </button>
+              </div>
+            ))}
         </div>
       </div>
     </div>
