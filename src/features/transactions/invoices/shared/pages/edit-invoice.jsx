@@ -86,7 +86,7 @@ const EditInvoice = () => {
   };
 
   const updateInvoiceMutation = useUpdateInvoice();
-  const isBatchInvoice = Boolean(invoice?.batchID);
+  const isBatchInvoice = Boolean(invoice?.batchID || invoice?.batchNumber);
 
   const remainingAmount =
     invoice?.remainingAmount ??
@@ -225,7 +225,7 @@ const EditInvoice = () => {
 
       {isBatchInvoice && !closingEntryId && isCloseModalOpen && (
         <CloseBatchModal
-          batchID={invoice.batchID}
+          batchNumber={invoice.batchNumber}
           invoiceNumber={invoice.invoiceNumber}
           onSuccess={handleClosingSuccess}
           onClose={() => setIsCloseModalOpen(false)}

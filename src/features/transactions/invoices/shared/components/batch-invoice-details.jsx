@@ -47,7 +47,7 @@ const BatchInvoiceDetails = ({ invoice }) => {
           <table className="w-full text-sm">
             <thead className="bg-primary text-white">
               <tr>
-                {['الخدمة', 'العميل', 'رقم الوثيقة', 'الإجمالي'].map(
+                {['الخدمة', 'العميل', 'الإجمالي'].map(
                   (label) => (
                     <th
                       key={label}
@@ -78,7 +78,6 @@ const BatchInvoiceDetails = ({ invoice }) => {
                       detail.customerNameEn ||
                       '',
                   ],
-                  ['رقم الوثيقة', detail.policyId ?? detail.policyID ?? ''],
                   ['الإجمالي', formatCurrency(detail.totalAmount ?? 0)],
                 ];
                 return (
@@ -106,7 +105,7 @@ const BatchInvoiceDetails = ({ invoice }) => {
               })}
               {details.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="p-6 text-center text-gray-500">
+                  <td colSpan={3} className="p-6 text-center text-gray-500">
                     لا توجد تفاصيل خدمات لهذه الفاتورة.
                   </td>
                 </tr>
