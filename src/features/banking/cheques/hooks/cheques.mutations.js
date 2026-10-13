@@ -4,9 +4,25 @@ import {
   updateCheque,
   deleteCheque,
   updateChequeStatus,
+  uploadChequeAttachment,
 } from '../api/cheques.api';
 import { chequesKeys } from './cheques.keys';
 import { getErrorMessage, toast } from '../../../../shared/lib/toast';
+
+export const useUploadChequeAttachment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: uploadChequeAttachment,
+    retry: false,
+    onSuccess: async (_, { id }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: chequesKeys.detail(id) }),
+        queryClient.invalidateQueries({ queryKey: ['cheques', 'list'] }),
+      ]);
+      toast.success('تم رفع مرفق الشيك بنجاح');
+    },
+  });
+};
 
 export const useCreateCheque = () => {
   const queryClient = useQueryClient();

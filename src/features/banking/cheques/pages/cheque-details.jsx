@@ -7,6 +7,7 @@ import {
   CreditCard,
   FileText,
   ListChecks,
+  Paperclip,
   RefreshCw,
   Settings,
   X,
@@ -15,6 +16,7 @@ import PageLoader from '../../../../shared/ui/page-loader';
 import Dropdown from '../../../../shared/ui/dropdown';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import ChequeForm from '../components/cheque-form';
+import ChequeAttachmentModal from '../components/cheque-attachment-modal';
 import { useCheque, useChequeStatuses } from '../hooks/cheques.queries';
 import {
   useUpdateChequeStatus,
@@ -171,6 +173,7 @@ const ChequeDetails = () => {
   const [activeTab, setActiveTab] = useState('info');
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [entriesOpen, setEntriesOpen] = useState(false);
+  const [attachmentOpen, setAttachmentOpen] = useState(false);
   const statusBtnRef = useRef(null);
 
   const statusOptions = useMemo(
@@ -251,7 +254,16 @@ const ChequeDetails = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setAttachmentOpen(true)}
+                className="flex items-center gap-2 rounded-xl bg-white/20 px-3 py-1.5 text-base font-semibold text-white transition-colors hover:bg-white/30"
+              >
+                <Paperclip size={16} />
+                المرفقات (
+                {data.attachment ? 1 : 0})
+              </button>
               {/* Entries button */}
               <button
                 type="button"
@@ -372,6 +384,14 @@ const ChequeDetails = () => {
         onClose={() => setEntriesOpen(false)}
         entries={entries}
       />
+      {attachmentOpen && (
+        <ChequeAttachmentModal
+          chequeId={id}
+          chequeNumber={title}
+          attachment={data.attachment}
+          onClose={() => setAttachmentOpen(false)}
+        />
+      )}
     </div>
   );
 };
