@@ -4,7 +4,7 @@ import { BookCheck, LoaderCircle, X } from 'lucide-react';
 import { getErrorMessage } from '../../../../shared/lib/toast';
 import { useCloseBatch } from '../shared/hooks/invoices.mutations';
 
-const CloseBatchModal = ({ onClose, onSuccess, batchID, invoiceNumber }) => {
+const CloseBatchModal = ({ onClose, onSuccess, batchNumber, invoiceNumber }) => {
   const [error, setError] = useState('');
   const submitting = useRef(false);
   const closeMutation = useCloseBatch();
@@ -12,7 +12,7 @@ const CloseBatchModal = ({ onClose, onSuccess, batchID, invoiceNumber }) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (submitting.current) return;
-    const number = String(batchID ?? '').trim();
+    const number = String(batchNumber ?? '').trim();
     if (!number) {
       setError('تعذر تحديد الدفعة المرتبطة بالفاتورة');
       return;
@@ -62,7 +62,7 @@ const CloseBatchModal = ({ onClose, onSuccess, batchID, invoiceNumber }) => {
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
           <p className="text-sm text-gray-500">
             هل تريد إنشاء قيد إقفال الدفعة رقم{' '}
-            <span className="font-semibold text-gray-900">{batchID}</span>
+            <span className="font-semibold text-gray-900">{batchNumber}</span>
             {invoiceNumber ? ` المرتبطة بالفاتورة ${invoiceNumber}` : ''}؟
           </p>
           {error && (
@@ -85,7 +85,7 @@ const CloseBatchModal = ({ onClose, onSuccess, batchID, invoiceNumber }) => {
             </button>
             <button
               type="submit"
-              disabled={closeMutation.isPending || !batchID}
+              disabled={closeMutation.isPending || !String(batchNumber ?? '').trim()}
               className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary/90 disabled:opacity-60"
             >
               {closeMutation.isPending && (
