@@ -9,6 +9,7 @@ import NormalSelect from '../../../../shared/ui/NormalSelect';
 import PartySearchSelect from '../../../../shared/ui/party-search-select';
 import InvoiceSearch from './invoice-search';
 import BatchInvoiceSelector from './batch-invoice-selector';
+import ChequeInvoicePayments from './cheque-invoice-payments';
 import { totalBatchInvoiceAmount } from '../utils/batch-invoice-summaries';
 import { useCreateCheque } from '../hooks/cheques.mutations';
 import { useChequeBanks, useChequeCurrencies } from '../hooks/cheques.queries';
@@ -71,7 +72,9 @@ const getInitialValues = (defaultValues) => {
       : '',
     invoiceID: defaultValues?.invoiceID ? String(defaultValues.invoiceID) : '',
     invoiceNumber: defaultValues?.invoiceNumber ?? '',
-    invoices: [],
+    invoices: Array.isArray(defaultValues?.invoicePayments)
+      ? defaultValues.invoicePayments.map((payment) => Number(payment.invoiceID))
+      : [],
     isNonCashable: defaultValues?.isNonCashable ?? false,
     isBearerOnly: defaultValues?.isBearerOnly ?? false,
     hasAttachmentPage: defaultValues?.hasAttachmentPage ?? false,
@@ -194,6 +197,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
 
   const chequeType = useWatch({ control, name: 'chequeType' });
   const usesBatchInvoices = mode === 'create' && chequeType === '1';
+  const hasInvoicePayments = mode !== 'create' && Array.isArray(defaultValues?.invoicePayments);
   const batchSupplierName = [...new Set(batchInvoices.map((batch) => batch.supplierName))].join('، ');
   const watchedBankID = useWatch({ control, name: 'bankID' });
 
@@ -258,6 +262,10 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
       delete payload.invoiceID;
       payload.invoices = batchInvoices.map((batch) => batch.invoiceID);
       payload.supplierID = batchInvoices.find((batch) => batch.supplierID)?.supplierID ?? payload.supplierID;
+    }
+    if (hasInvoicePayments) {
+      delete payload.invoiceID;
+      payload.invoices = defaultValues.invoicePayments.map((payment) => Number(payment.invoiceID));
     }
     if (onSubmit) {
       onSubmit(payload);
@@ -416,7 +424,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               readOnly={isViewMode}
               placeholder="1"
             />
-            {!usesBatchInvoices ? <div>
+            {!usesBatchInvoices && !hasInvoicePayments ? <div>
               <label className="mb-1 block font-medium text-gray-700">
                 الفاتورة
               </label>
@@ -459,6 +467,8 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
             onLoadingChange={setIsLoadingBatch}
           />
         ) : null}
+
+        {hasInvoicePayments && <ChequeInvoicePayments payments={defaultValues.invoicePayments} />}
 
         <div>
           <SectionHeader title="بيانات إضافية" />

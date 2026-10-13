@@ -44,6 +44,18 @@ export const updateCheque = async ({ id, ...payload }) => {
   return data;
 };
 
+export const uploadChequeAttachment = async ({ id, file }) => {
+  const body = new FormData();
+  body.append('Attachment', file);
+  const { data } = await axiosInstance.post(`/cheques/${encodeURIComponent(id)}/attachment`, body, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  if (data?.success === false) {
+    throw new Error(data.message || 'تعذر رفع مرفق الشيك');
+  }
+  return data;
+};
+
 export const deleteCheque = async (id) => {
   const { data } = await axiosInstance.delete(`/cheques/${id}`);
   return data;
