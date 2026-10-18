@@ -27,11 +27,11 @@ const InvoiceSummaryCards = ({ invoice, totals }) => {
   return (
     <section
       aria-label="ملخص مبالغ الفاتورة"
-      className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+      className="overflow-hidden rounded-2xl border border-gray-200 bg-white"
     >
       <div className="flex flex-col lg:flex-row">
         <div className="flex shrink-0 items-center gap-4 border-b border-primary/10 bg-primary/5 px-6 py-6 lg:w-72 lg:border-b-0 lg:border-e">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-primary shadow-sm">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-primary">
             <Wallet size={24} aria-hidden="true" />
           </span>
           <div className="min-w-0">
@@ -49,7 +49,7 @@ const InvoiceSummaryCards = ({ invoice, totals }) => {
             <div key={label} className="min-w-0">
               <dt className="text-sm text-gray-500">{label}</dt>
               <dd
-                className={`mt-2 w-fit max-w-full break-words text-lg font-semibold tabular-nums ${color}`}
+                className={`mt-2 w-fit max-w-full wrap-break-word text-lg font-semibold tabular-nums ${color}`}
                 dir="ltr"
               >
                 {formatCurrency(value)}

@@ -1,12 +1,15 @@
 ﻿import { useMemo, useState } from 'react';
-import { Eye, Plus, Trash2 } from 'lucide-react';
+import { Eye, Plus, Search, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import FormInput from '../../../../shared/ui/input';
 import NormalSelect from '../../../../shared/ui/NormalSelect';
 import Pagination from '../../../../shared/ui/pagination';
 import Table from '../../../../shared/ui/table';
-import { matchesSearch, paginateItems } from '../../../../shared/utils/list-utils';
+import {
+  matchesSearch,
+  paginateItems,
+} from '../../../../shared/utils/list-utils';
 import { formatDate } from '../../../../shared/utils/formatters';
 import { useCheques, useChequeStatuses } from '../hooks/cheques.queries';
 import { useDeleteCheque } from '../hooks/cheques.mutations';
@@ -41,7 +44,9 @@ const STATUS_STYLES = {
 };
 
 const getStatusStyle = (statusName) => {
-  const key = String(statusName || '').trim().toLowerCase();
+  const key = String(statusName || '')
+    .trim()
+    .toLowerCase();
   if (!key) return 'bg-gray-100 text-gray-700';
   if (STATUS_STYLES[key]) return STATUS_STYLES[key];
   const hash = [...key].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
@@ -112,12 +117,20 @@ const ChequesPage = () => {
       type: 'custom',
       render: (row) => formatDate(row.chequeDate),
     },
-    { header: 'القيمة', key: 'amount', type: 'custom', render: (row) => <span className='font-bold text-main'>{row.amount ?? 0}</span> },
+    {
+      header: 'القيمة',
+      key: 'amount',
+      type: 'custom',
+      render: (row) => (
+        <span className="font-bold text-main">{row.amount ?? 0}</span>
+      ),
+    },
     {
       header: 'العميل/المورد',
       key: 'partyNameAr',
       type: 'custom',
-      render: (row) => row.partyName || row.customerNameAr || row.supplierNameAr || '-',
+      render: (row) =>
+        row.partyName || row.customerNameAr || row.supplierNameAr || '-',
     },
     { header: 'البنك', key: 'bankNameAr' },
     {
@@ -149,7 +162,7 @@ const ChequesPage = () => {
         <div className="flex gap-4 justify-center">
           <button
             onClick={() => navigate(`/cheques/${row.chequeID}`)}
-            className="text-blue-600 hover:text-blue-800"
+            className="text-gray-500 hover:text-blue-800"
             title="فتح"
           >
             <Eye size={18} />
@@ -175,7 +188,7 @@ const ChequesPage = () => {
       <Breadcrumb items={[{ label: 'الشيكات' }]} />
 
       <div className="flex justify-between items-center bg-white rounded-xl p-6 border border-gray-200">
-        <div className='flex flex-col gap-1'>
+        <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold">الشيكات</h1>
           <p className="text-sm text-gray-600">إدارة ومتابعة الشيكات</p>
         </div>
@@ -192,6 +205,7 @@ const ChequesPage = () => {
         <FormInput
           label="بحث"
           value={search}
+          icon={Search}
           onChange={(event) => {
             setSearch(event.target.value);
             setPageNumber(1);
@@ -220,7 +234,12 @@ const ChequesPage = () => {
         />
       </div>
 
-      <Table columns={columns} data={pagination.items} loading={isLoading} onRowClick={(row) => navigate(`/cheques/${row.chequeID}`)} />
+      <Table
+        columns={columns}
+        data={pagination.items}
+        loading={isLoading}
+        onRowClick={(row) => navigate(`/cheques/${row.chequeID}`)}
+      />
 
       <Pagination
         currentPage={pagination.currentPage}

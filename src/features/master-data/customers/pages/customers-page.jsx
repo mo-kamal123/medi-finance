@@ -6,6 +6,7 @@ import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import { useDebounce } from '../../../../shared/lib/use-debounce';
 import CustomerTable from '../components/customer-table';
 import { useCustomers } from '../hooks/customers.queries';
+import { Search } from 'lucide-react';
 
 const CustomersPage = () => {
   const [search, setSearch] = useState('');
@@ -17,7 +18,10 @@ const CustomersPage = () => {
   const isFirstRender = useRef(true);
 
   useEffect(() => {
-    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     setDebouncedSearch(debouncedSearchTerm);
     setPageNumber(1);
   }, [debouncedSearchTerm]);
@@ -33,19 +37,20 @@ const CustomersPage = () => {
   if (isLoading) return <PageLoader label="جاري تحميل العملاء..." />;
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-6 p-6">
       <Breadcrumb items={[{ label: 'العملاء' }]} />
       <div className="rounded-xl border border-gray-200 bg-white p-6">
-      <div className='flex flex-col gap-1'>
-        <h1 className="text-2xl font-bold">العملاء</h1>
-        <p className="text-sm text-gray-600">إدارة جميع العملاء</p>
-      </div>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold">العملاء</h1>
+          <p className="text-sm text-gray-600">إدارة جميع العملاء</p>
+        </div>
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white p-4">
         <FormInput
           label="بحث"
           value={search}
+          icon={Search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="ابحث بالكود أو الاسم"
           autoFocus
@@ -59,7 +64,10 @@ const CustomersPage = () => {
         totalPages={totalPages}
         pageSize={pageSize}
         onPageChange={setPageNumber}
-        onPageSizeChange={(value) => { setPageSize(value); setPageNumber(1); }}
+        onPageSizeChange={(value) => {
+          setPageSize(value);
+          setPageNumber(1);
+        }}
       />
     </div>
   );

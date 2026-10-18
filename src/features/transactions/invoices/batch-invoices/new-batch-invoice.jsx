@@ -6,6 +6,7 @@ import {
   BadgePercent,
   FileText,
   Percent,
+  Paperclip,
   Search,
   Users,
 } from 'lucide-react';
@@ -24,6 +25,7 @@ import { invoicesKeys } from '../shared/hooks/invoices.keys';
 import { getBatchByNumber } from '../shared/api/invoices-api';
 import { toDateInputValue } from '../shared/utils/mapInvoiceToFormValues';
 import { formatCurrency, formatNumber } from '../shared/utils/format-currency';
+import BatchAttachmentsTab from './batch-attachments-tab';
 import {
   DISCOUNT_SOURCE_OPTIONS,
   buildFinanceDiscountPayload,
@@ -230,6 +232,7 @@ const TABS = [
     icon: Percent,
     countKey: 'discounts',
   },
+  { key: 'attachments', label: 'المرفقات', icon: Paperclip },
 ];
 
 const getDefaultFinancialPeriodId = (periods) => {
@@ -272,8 +275,8 @@ const mapBatchToFormData = (batch) => {
     financialPeriodID: batch.financialPeriodID
       ? String(batch.financialPeriodID)
       : '',
-    invoiceDate: toDateInputValue(batch.batchDate),
-    dueDate: toDateInputValue(batch.batchDate),
+    invoiceDate: toDateInputValue(batch.batchDate ?? batch.date),
+    dueDate: toDateInputValue(batch.batchDate ?? batch.date),
     discounts,
     details,
     summary,
@@ -393,18 +396,19 @@ const DiscountsTab = ({ discounts, onDiscountChange }) => {
   );
 };
 
-const NewBatchInvoicePage = () => {
+const NewBatchInvoicePage = ({ initialBatch = null, previewOnly = false }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const createBatchInvoiceMutation = useCreateBatchInvoice();
   const { data: financialPeriods = [] } = useFinancialPeriods();
 
-  const [batchNumberInput, setBatchNumberInput] = useState('');
-  const [batchData, setBatchData] = useState(null);
-  const [formData, setFormData] = useState(createEmptyBatchForm);
+  const [batchNumberInput, setBatchNumberInput] = useState(() => String(initialBatch?.batchNumber ?? ''));
+  const [batchData, setBatchData] = useState(initialBatch);
+  const [formData, setFormData] = useState(() => initialBatch ? mapBatchToFormData(initialBatch) : createEmptyBatchForm());
   const [isLoadingBatch, setIsLoadingBatch] = useState(false);
   const [batchLoadError, setBatchLoadError] = useState(null);
   const [activeTab, setActiveTab] = useState('info');
+  const attachments = Array.isArray(batchData?.attachments) ? batchData.attachments : [];
 
   // Default to the latest open financial period (e.g. 2026) once loaded.
   useEffect(() => {
@@ -544,7 +548,7 @@ const NewBatchInvoicePage = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!canSubmit) {
+    if (previewOnly || !canSubmit) {
       toast.error('أكمل بيانات الفاتورة قبل التأكيد');
       return;
     }
@@ -573,16 +577,21 @@ const NewBatchInvoicePage = () => {
     <div className="min-h-screen space-y-6 p-6 md:p-10">
       <Breadcrumb
         items={[
-          { label: 'فواتير المطالبات', to: '/batches-invoices' },
-          { label: 'إنشاء فاتورة دفعة' },
+          { label: initialBatch ? 'الدفعات' : 'فواتير المطالبات', to: initialBatch ? '/batches' : '/batches-invoices' },
+          { label: initialBatch ? `دفعة رقم ${initialBatch.batchNumber}` : 'إنشاء فاتورة دفعة' },
         ]}
       />
+      {previewOnly ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          دفعة تجريبية لعرض المرفقات فقط
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-6 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              إنشاء فاتورة دفعة
+              {initialBatch ? 'تفاصيل الدفعة' : 'إنشاء فاتورة دفعة'}
             </h1>
             <p className="text-sm text-gray-600">
               أدخل رقم الدفعة لتحميل بياناتها ثم عدّل القيم قبل التأكيد
@@ -590,7 +599,7 @@ const NewBatchInvoicePage = () => {
           </div>
         </div>
 
-        <form
+        {!previewOnly ? <form
           onSubmit={handleLoadBatch}
           className="flex w-full flex-col gap-3 md:w-auto md:flex-row"
         >
@@ -610,7 +619,7 @@ const NewBatchInvoicePage = () => {
             <Search size={16} />
             {isLoadingBatch ? 'جاري التحميل...' : 'تحميل'}
           </button>
-        </form>
+        </form> : null}
       </div>
 
       {isLoadingBatch ? (
@@ -694,7 +703,7 @@ const NewBatchInvoicePage = () => {
               {TABS.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.key;
-                const count = tab.countKey
+                const count = tab.key === 'attachments' ? attachments.length : tab.countKey
                   ? formData[tab.countKey].length
                   : null;
 
@@ -741,7 +750,7 @@ const NewBatchInvoicePage = () => {
 
                   <FormInput
                     label="تاريخ الدفعة"
-                    value={toDateInputValue(batchData.batchDate)}
+                    value={toDateInputValue(batchData.batchDate ?? batchData.date)}
                     readOnly
                     className="bg-gray-50 text-gray-600"
                   />
@@ -808,19 +817,20 @@ const NewBatchInvoicePage = () => {
                   onDiscountChange={handleDiscountChange}
                 />
               ) : null}
+              {activeTab === 'attachments' ? <BatchAttachmentsTab attachments={attachments} /> : null}
             </div>
           </div>
 
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
               type="button"
-              onClick={() => navigate('/batches-invoices')}
+              onClick={() => navigate(initialBatch ? '/batches' : '/batches-invoices')}
               className="rounded-xl border border-gray-300 px-6 py-3 text-gray-700"
             >
               إلغاء
             </button>
 
-            <button
+            {!previewOnly ? <button
               type="submit"
               disabled={!canSubmit || createBatchInvoiceMutation.isPending}
               className="rounded-xl bg-primary px-6 py-3 text-white hover:bg-primary/90 disabled:opacity-60"
@@ -828,7 +838,7 @@ const NewBatchInvoicePage = () => {
               {createBatchInvoiceMutation.isPending
                 ? 'جاري إنشاء الفاتورة...'
                 : 'تأكيد وإنشاء الفاتورة'}
-            </button>
+            </button> : null}
           </div>
         </form>
       ) : null}

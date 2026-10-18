@@ -1,5 +1,5 @@
 ﻿import { useMemo, useRef, useState } from 'react';
-import { Trash2, Columns3, Check } from 'lucide-react';
+import { Trash2, Columns3, Check, RotateCcw } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import Spinner from './spinner';
 import SearchableSelect from './searchable-select';
@@ -19,6 +19,8 @@ const Table = ({
   const [showColPicker, setShowColPicker] = useState(false);
   const pickerBtnRef = useRef(null);
   const [dropdownStyle, setDropdownStyle] = useState(null);
+  const hasActions = !!onDelete;
+  const nonActionColumns = hasActions ? columns.slice(0, -1) : columns;
 
   const storageKey = useMemo(
     () => `mfc-table-cols:${columns.map((col) => col.header).join('|')}`,
@@ -28,15 +30,21 @@ const Table = ({
   const [hiddenCols, setHiddenCols] = useState(() => {
     try {
       const raw = localStorage.getItem(storageKey);
-      if (raw) return new Set(JSON.parse(raw));
+      if (raw) {
+        const saved = JSON.parse(raw);
+        const hidden = new Set(Array.isArray(saved) ? saved.filter((index) => Number.isInteger(index) && index >= 0 && index < nonActionColumns.length) : []);
+        if (nonActionColumns.length > 0 && nonActionColumns.every((_, index) => hidden.has(index))) {
+          hidden.delete(0);
+        }
+        return hidden;
+      }
     } catch {
       /* ignore */
     }
     return new Set();
   });
 
-  const hasActions = !!onDelete;
-  const nonActionColumns = hasActions ? columns.slice(0, -1) : columns;
+  const visibleSelectableCount = nonActionColumns.filter((_, index) => !hiddenCols.has(index)).length;
   const visibleColumns = columns.filter(
     (_, i) => !hiddenCols.has(i) || (hasActions && i === columns.length - 1)
   );
@@ -48,6 +56,7 @@ const Table = ({
       if (next.has(index)) {
         next.delete(index);
       } else {
+        if (nonActionColumns.filter((_, columnIndex) => !prev.has(columnIndex)).length <= 1) return prev;
         next.add(index);
       }
       try {
@@ -57,6 +66,15 @@ const Table = ({
       }
       return next;
     });
+  };
+
+  const resetColumns = () => {
+    setHiddenCols(new Set());
+    try {
+      localStorage.removeItem(storageKey);
+    } catch {
+      /* Column reset still works when storage is unavailable. */
+    }
   };
 
   const openPicker = () => {
@@ -106,10 +124,19 @@ const Table = ({
                 style={dropdownStyle}
                 className="w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl"
               >
-                <div className="border-b border-gray-100 px-4 py-3">
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                   <p className="text-sm font-semibold text-gray-800">
                     الأعمدة
                   </p>
+                  <button
+                    type="button"
+                    onClick={resetColumns}
+                    title="إعادة تعيين الأعمدة"
+                    aria-label="إعادة تعيين الأعمدة"
+                    className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary"
+                  >
+                    <RotateCcw size={16} />
+                  </button>
                 </div>
                 <div className="max-h-72 overflow-y-auto p-2">
                   {nonActionColumns.map((col, index) => {
@@ -118,8 +145,10 @@ const Table = ({
                       <button
                         key={index}
                         type="button"
+                        disabled={isVisible && visibleSelectableCount <= 1}
+                        aria-pressed={isVisible}
                         onClick={() => toggleCol(index)}
-                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-gray-50"
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <span
                           className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
@@ -187,7 +216,7 @@ const Table = ({
                       key={colIndex}
                       className="border border-gray-200 p-3 align-middle text-center"
                     >
-                      {renderCell(col, row, rowIndex, onChange, extraRenderArg)}
+                      {withEmptyCellPlaceholder(renderCell(col, row, rowIndex, onChange, extraRenderArg))}
                     </td>
                   );
                 })}
@@ -223,6 +252,13 @@ const Table = ({
       </div>
     </div>
   );
+};
+
+const withEmptyCellPlaceholder = (content) => {
+  if (content == null || typeof content === 'boolean' || (typeof content === 'string' && content.trim() === '')) {
+    return '-';
+  }
+  return content;
 };
 
 const renderCell = (col, row, rowIndex, onChange, extraRenderArg) => {

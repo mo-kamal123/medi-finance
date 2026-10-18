@@ -83,7 +83,7 @@ export const createInvoice = async (formData) => {
 };
 
 export const getBatchByNumber = async (batchNumber) => {
-  const { data } = await axiosInstance.get(`/batches/${batchNumber}`);
+  const { data } = await axiosInstance.get(`/batches/${encodeURIComponent(batchNumber)}`);
   return data;
 };
 

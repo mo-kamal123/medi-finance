@@ -8,6 +8,7 @@ import FilterBar from '../../../../../shared/ui/filter-bar';
 import { useDebounce } from '../../../../../shared/lib/use-debounce';
 import { useInvoiceStatuses } from '../hooks/invoices.queries';
 import { INVOICE_STATUS_OPTIONS } from '../utils/mapInvoiceToFormValues';
+import { Search } from 'lucide-react';
 
 const DEFAULT_INVOICE_FILTERS = {
   invoiceNumber: '',
@@ -130,6 +131,7 @@ const InvoiceFilters = ({
     <FormInput
       key="invoiceNumber"
       label="رقم الفاتورة"
+      icon={Search}
       value={localInvoiceNumber}
       onChange={(event) => setLocalInvoiceNumber(event.target.value)}
       placeholder="ابحث برقم الفاتورة"

@@ -52,9 +52,33 @@ const CashTransactionsPage = () => {
         type: 'custom',
         render: (row) => (
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate(`/cash-transactions/${row.journalEntryID}`)} className="text-blue-600 hover:text-blue-800"><Eye size={18} /></button>
-            <button onClick={() => navigate(`/cash-transactions/${row.journalEntryID}`)} className="text-green-600 hover:text-green-800"><Pencil size={18} /></button>
-            <button onClick={() => deleteMutation.mutate({ id: row.journalEntryID, reason: 'Deleted from UI' })} className="text-red-600 hover:text-red-800"><Trash2 size={18} /></button>
+            <button
+              onClick={() =>
+                navigate(`/cash-transactions/${row.journalEntryID}`)
+              }
+              className="text-gray-500 hover:text-blue-800"
+            >
+              <Eye size={18} />
+            </button>
+            <button
+              onClick={() =>
+                navigate(`/cash-transactions/${row.journalEntryID}`)
+              }
+              className="text-green-600 hover:text-green-800"
+            >
+              <Pencil size={18} />
+            </button>
+            <button
+              onClick={() =>
+                deleteMutation.mutate({
+                  id: row.journalEntryID,
+                  reason: 'Deleted from UI',
+                })
+              }
+              className="text-red-600 hover:text-red-800"
+            >
+              <Trash2 size={18} />
+            </button>
           </div>
         ),
       },

@@ -54,7 +54,9 @@ const CashVouchersPage = () => {
         render: (row) => (
           <span
             className={`rounded-full px-2 py-1 text-xs ${
-              row.isReceipt ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+              row.isReceipt
+                ? 'bg-green-100 text-green-700'
+                : 'bg-orange-100 text-orange-700'
             }`}
           >
             {row.isReceipt ? 'سند قبض' : 'سند صرف'}
@@ -79,14 +81,17 @@ const CashVouchersPage = () => {
         header: 'المبلغ',
         key: 'amount',
         type: 'custom',
-        render: (row) => formatNumber(row.amount || 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        render: (row) =>
+          formatNumber(row.amount || 0, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }),
       },
       {
         header: 'التاريخ',
         key: 'date',
         type: 'custom',
-        render: (row) =>
-          formatDate(row.date || row.voucherDate),
+        render: (row) => formatDate(row.date || row.voucherDate),
       },
       {
         header: 'الإجراءات',
@@ -99,7 +104,7 @@ const CashVouchersPage = () => {
               onClick={() =>
                 navigate(`/cash-vouchers/${row.voucherID || row.id}`)
               }
-              className="text-blue-600"
+              className="text-gray-500"
               title="عرض"
             >
               <Eye size={18} />

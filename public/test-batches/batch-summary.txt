@@ -1,0 +1,6 @@
+Test batch attachment
+Batch: TEST-ATTACHMENTS
+Supplier: Test supplier
+Claims: 2
+Total amount: 1234 EGP
+Status: closed

@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import {
   Download,
   FileText,
-  RotateCcw,
   ArrowDownLeft,
   ArrowUpRight,
   ExternalLink,
@@ -11,6 +10,7 @@ import DateInput from '../../../../../shared/ui/date-input';
 import SearchableSelect from '../../../../../shared/ui/searchable-select';
 import Pagination from '../../../../../shared/ui/pagination';
 import Table from '../../../../../shared/ui/table';
+import FilterBar from '../../../../../shared/ui/filter-bar';
 import PageLoader from '../../../../../shared/ui/page-loader';
 import {
   formatCurrency,
@@ -287,11 +287,11 @@ const BankTransactionsReportPage = () => {
         },
       },
     ],
-    []
+    [navigate]
   );
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="min-w-0 space-y-6 p-6">
       <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6 ">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -315,17 +315,19 @@ const BankTransactionsReportPage = () => {
         </button>
       </div>
 
-      <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 ">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-6 ">
+      <FilterBar
+        primaryFilters={[
           <SearchableSelect
+            key="bankId"
             label="البنك"
             value={filters.bankId || ''}
             onChange={(event) => handleChange('bankId', event.target.value)}
             placeholder="اختر البنك..."
             options={bankOptions}
-          />
+          />,
 
           <SearchableSelect
+            key="bankAccountId"
             label="الحساب البنكي"
             value={filters.bankAccountId || ''}
             onChange={(event) =>
@@ -334,54 +336,51 @@ const BankTransactionsReportPage = () => {
             placeholder="اختر الحساب البنكي..."
             options={bankAccountOptions}
             disabled={!filters.bankId}
-          />
+          />,
 
           <SearchableSelect
+            key="status"
             label="الحالة"
             value={filters.status || ''}
             onChange={(event) => handleChange('status', event.target.value)}
             placeholder="كل الحالات"
             options={STATUS_OPTIONS}
-          />
+          />,
 
           <SearchableSelect
+            key="direction"
             label="الاتجاه"
             value={filters.direction || ''}
             onChange={(event) => handleChange('direction', event.target.value)}
             placeholder="الكل"
             options={DIRECTION_OPTIONS}
-          />
-
+          />,
+        ]}
+        extraFilters={[
           <DateInput
+            key="fromDate"
             label="من تاريخ"
             value={filters.fromDate || ''}
             onChange={(event) => handleChange('fromDate', event.target.value)}
-          />
+          />,
 
           <DateInput
+            key="toDate"
             label="إلى تاريخ"
             value={filters.toDate || ''}
             onChange={(event) => handleChange('toDate', event.target.value)}
-          />
-        </div>
-
-        <div className="flex items-center justify-end">
-          <button
-            type="button"
-            onClick={handleReset}
-            className="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
-          >
-            <RotateCcw size={16} />
-            مسح الفلاتر
-          </button>
-        </div>
-      </div>
+          />,
+        ]}
+        onReset={handleReset}
+        activeCount={[filters.bankId, filters.bankAccountId, filters.status, filters.direction, filters.fromDate, filters.toDate].filter(Boolean).length}
+        extraCount={[filters.fromDate, filters.toDate].filter(Boolean).length}
+      />
 
       {isLoading ? (
         <PageLoader label="جاري تحميل حركات البنوك..." />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl">
+          <div className="min-w-0 overflow-hidden rounded-xl [&_th]:whitespace-nowrap [&_td]:whitespace-nowrap">
             <Table
               columns={columns}
               data={transactions}
