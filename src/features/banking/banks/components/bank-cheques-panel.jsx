@@ -220,7 +220,8 @@ const BankChequesPanel = ({ bankId }) => {
         <div>
           <h2 className="text-xl font-bold text-gray-900">الشيكات</h2>
           <p className="mt-1 text-sm text-gray-500">
-            جميع الشيكات{filteredCheques.length ? ` (${filteredCheques.length} شيك)` : ''}
+            جميع الشيكات
+            {filteredCheques.length ? ` (${filteredCheques.length} شيك)` : ''}
           </p>
         </div>
         {bankId && (
@@ -278,21 +279,32 @@ const BankChequesPanel = ({ bankId }) => {
                   <td className="whitespace-nowrap p-3 font-medium text-primary">
                     {chq.chequeNumber}
                   </td>
-                  <td className="whitespace-nowrap p-3">{formatDate(chq.chequeDate)}</td>
+                  <td className="whitespace-nowrap p-3">
+                    {formatDate(chq.chequeDate)}
+                  </td>
                   <td className="whitespace-nowrap p-3 font-medium">
                     {formatCurrency(chq.amount)}
                   </td>
                   <td className="whitespace-nowrap p-3">
-                    {chq.partyNameAr || chq.customerNameAr || chq.supplierNameAr || '-'}
+                    {chq.partyNameAr ||
+                      chq.customerNameAr ||
+                      chq.supplierNameAr ||
+                      '-'}
                   </td>
                   <td className="whitespace-nowrap p-3">
                     <PrimaryBadge>
                       {chq.transactionTypeNameAr ||
-                        (Number(chq.transactionType ?? chq.type) === 1 ? 'صرف' : 'قبض')}
+                        (Number(chq.transactionType ?? chq.type) === 1
+                          ? 'صرف'
+                          : 'قبض')}
                     </PrimaryBadge>
                   </td>
-                  <td className="whitespace-nowrap p-3">{formatDate(chq.receiptDate)}</td>
-                  <td className="whitespace-nowrap p-3">{formatDate(chq.dueDate)}</td>
+                  <td className="whitespace-nowrap p-3">
+                    {formatDate(chq.receiptDate)}
+                  </td>
+                  <td className="whitespace-nowrap p-3">
+                    {formatDate(chq.dueDate)}
+                  </td>
                   <td className="whitespace-nowrap p-3">
                     <StatusBadge>{chq.statusNameAr || chq.status}</StatusBadge>
                   </td>
@@ -301,7 +313,7 @@ const BankChequesPanel = ({ bankId }) => {
                       <button
                         type="button"
                         onClick={() => navigate(`/cheques/${chq.chequeID}`)}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-gray-500 hover:text-blue-800"
                         title="فتح"
                       >
                         <Eye size={18} />

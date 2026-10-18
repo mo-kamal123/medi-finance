@@ -66,7 +66,7 @@ export const links = [
       sub: [
         { name: 'البنوك المتاحه', link: '/banks', icon: Landmark },
         { name: 'الشيكات', link: '/cheques', icon: CreditCard },
-        { name: 'تسويات البنك', link: '/reconciliations', icon: FileCheck },
+        // { name: 'تسويات البنك', link: '/reconciliations', icon: FileCheck },
       ],
     },
     {
@@ -76,6 +76,7 @@ export const links = [
       sub: [
         { name: 'العملاء', link: '/customers', icon: Users },
         { name: 'المورديين', link: '/suppliers', icon: Users },
+        { name: 'الدفعات', link: '/batches', icon: FileText },
       ],
     },
     {

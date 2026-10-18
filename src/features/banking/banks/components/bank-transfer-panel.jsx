@@ -25,7 +25,7 @@ const EMPTY_FILTERS = {
 };
 
 const STATUS_STYLES = {
-  Draft: 'bg-amber-100 text-amber-700',
+  Draft: 'bg-gray-100 text-gray-700',
   Posted: 'bg-emerald-100 text-emerald-700',
   Reconciled: 'bg-sky-100 text-sky-700',
   Cancelled: 'bg-red-100 text-red-700',

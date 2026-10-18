@@ -16,6 +16,7 @@ export const useCloseBatch = () => {
         queryClient.invalidateQueries({ queryKey: invoicesKeys.lists() }),
         queryClient.invalidateQueries({ queryKey: invoicesKeys.details() }),
         queryClient.invalidateQueries({ queryKey: invoicesKeys.batch(batchNumber) }),
+        queryClient.invalidateQueries({ queryKey: ['batches', 'list'] }),
         queryClient.invalidateQueries({ queryKey: ['journalEntries'] }),
         queryClient.invalidateQueries({ queryKey: ['journalEntry'] }),
       ]);
@@ -93,10 +94,14 @@ export const useCreateBatchInvoice = () => {
 
   return useMutation({
     mutationFn: createBatchInvoice,
-    onSuccess: async () => {
+    onSuccess: async (_, payload) => {
       await queryClient.invalidateQueries({
         queryKey: invoicesKeys.lists(),
       });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['batches', 'list'] }),
+        queryClient.invalidateQueries({ queryKey: invoicesKeys.batch(payload.batchNumber) }),
+      ]);
       toast.success('تم إنشاء فاتورة المطالبة بنجاح');
     },
     onError: (error) => {

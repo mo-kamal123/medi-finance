@@ -133,7 +133,9 @@ const PartyAccountStatement = ({
             </div>
           ) : null}
           <h3 className="text-lg font-semibold text-gray-600">{emptyTitle}</h3>
-          <p className="mt-1.5 max-w-sm text-sm text-gray-400">{emptyDescription}</p>
+          <p className="mt-1.5 max-w-sm text-sm text-gray-400">
+            {emptyDescription}
+          </p>
         </div>
       ) : isLoading ? (
         <PageLoader label={`جاري تحميل كشف حساب ${partyLabel}...`} />
@@ -185,7 +187,7 @@ const PartyAccountStatement = ({
                   <p className="text-xs text-gray-500">صافي الرصيد</p>
                   <p
                     className={`text-sm font-bold ${
-                      netBalance >= 0 ? 'text-blue-600' : 'text-red-600'
+                      netBalance >= 0 ? 'text-gray-500' : 'text-red-600'
                     }`}
                   >
                     {formatCurrency(Math.abs(netBalance))}

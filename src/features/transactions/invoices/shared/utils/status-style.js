@@ -1,7 +1,11 @@
 // Status → Tailwind badge classes helper.
 
 export const getStatusStyle = (status) => {
-  const normalized = String(status || '').toLowerCase();
+  const normalized = String(status || '').trim().toLowerCase();
+
+  if (normalized.includes('مسود') || normalized === 'draft') {
+    return 'bg-gray-100 text-gray-700';
+  }
 
   if (
     normalized.includes('مدفو') ||
@@ -21,9 +25,7 @@ export const getStatusStyle = (status) => {
 
   if (
     normalized.includes('انتظ') ||
-    normalized.includes('مسود') ||
-    normalized === 'pending' ||
-    normalized === 'draft'
+    normalized === 'pending'
   ) {
     return 'bg-yellow-100 text-yellow-700';
   }

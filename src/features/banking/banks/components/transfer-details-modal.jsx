@@ -151,7 +151,9 @@ const TransferDetailsModal = ({ open, transferId, onClose }) => {
                       ? 'bg-emerald-400 text-emerald-950 shadow'
                       : data.status === 'Cancelled'
                         ? 'bg-red-500 text-white shadow'
-                        : 'bg-white/15 text-white'
+                        : data.status === 'Draft'
+                          ? 'bg-gray-100 text-gray-700'
+                          : 'bg-white/15 text-white'
                   }`}
                 >
                   {statusLabel}

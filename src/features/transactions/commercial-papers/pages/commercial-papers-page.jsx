@@ -101,15 +101,13 @@ const CommercialPapersPage = ({ paperType }) => {
         header: 'تاريخ الإصدار',
         key: 'issueDate',
         type: 'custom',
-        render: (row) =>
-          formatDate(row.issueDate),
+        render: (row) => formatDate(row.issueDate),
       },
       {
         header: 'تاريخ الاستحقاق',
         key: 'maturityDate',
         type: 'custom',
-        render: (row) =>
-          formatDate(row.maturityDate),
+        render: (row) => formatDate(row.maturityDate),
       },
       {
         header: 'الحالة',
@@ -143,7 +141,7 @@ const CommercialPapersPage = ({ paperType }) => {
           <div className="flex gap-2 justify-center">
             <button
               onClick={() => navigate(`/commercial-papers/${row.paperID}`)}
-              className="text-blue-600"
+              className="text-gray-500"
             >
               <Eye size={18} />
             </button>

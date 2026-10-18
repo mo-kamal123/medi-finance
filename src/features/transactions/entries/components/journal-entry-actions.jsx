@@ -59,7 +59,7 @@ const JournalEntryActions = ({ entry }) => {
     <div className="flex items-center justify-center gap-3">
       <Link
         to={`/entries/${entry.journalEntryID}`}
-        className="text-blue-600 transition-colors hover:text-blue-800"
+        className="text-gray-500 transition-colors hover:text-blue-800"
         title="عرض"
       >
         <Eye size={18} />
