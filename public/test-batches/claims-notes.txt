@@ -1,0 +1,3 @@
+Test claims attachment
+This sample file verifies the batch attachment download button.
+No real claims are included.

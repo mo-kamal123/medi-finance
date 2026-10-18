@@ -88,18 +88,20 @@ export const buildStandardPageColumns = ({
       <div className="flex items-center gap-3 justify-center">
         <button
           onClick={() => navigate(`/invoices/${row.invoiceID}`)}
-          className="text-blue-600 hover:text-blue-800"
+          className="text-gray-500 hover:text-blue-800"
           title="عرض"
         >
           <Eye size={18} />
         </button>
-        <button
-          onClick={() => setDeleteTarget(row)}
-          className="text-red-600 hover:text-red-800"
-          title="حذف"
-        >
-          <Trash2 size={18} />
-        </button>
+        {setDeleteTarget ? (
+          <button
+            onClick={() => setDeleteTarget(row)}
+            className="text-red-600 hover:text-red-800"
+            title="حذف"
+          >
+            <Trash2 size={18} />
+          </button>
+        ) : null}
       </div>
     ),
   },
@@ -214,7 +216,7 @@ export const buildBatchPageColumns = ({ navigate }) => [
       <div className="flex items-center justify-center gap-3">
         <button
           onClick={() => navigate(`/invoices/${row.invoiceID}`)}
-          className="text-blue-600 hover:text-blue-800"
+          className="text-gray-500 hover:text-blue-800"
           title="عرض"
         >
           <Eye size={18} />

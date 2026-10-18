@@ -113,6 +113,11 @@ export const isJournalEntryReversed = (entry = {}) =>
 
 export const getJournalEntryStatusMeta = (entry = {}) => {
   const statusName = entry.statusName || entry.status || '-';
+  const normalizedStatus = String(statusName).trim().toLowerCase();
+
+  if (normalizedStatus.includes('مسود') || normalizedStatus === 'draft') {
+    return { badgeClass: 'bg-gray-100 text-gray-700 main-font', label: statusName };
+  }
 
   if (isJournalEntryReversed(entry)) {
     return { badgeClass: 'bg-red-100 text-red-700 main-font', label: statusName };

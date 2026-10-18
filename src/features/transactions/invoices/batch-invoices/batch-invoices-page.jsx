@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import InvoiceFilters from '../shared/components/invoice-filter';
 import Pagination from '../../../../shared/ui/pagination';
 import Table from '../../../../shared/ui/table';
+import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import {
   useCustomers,
   useInvoices,
@@ -34,8 +35,9 @@ const BatchInvoicesPage = () => {
   );
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+    <div className="min-w-0 space-y-6 p-6">
+      <Breadcrumb items={[{ label: 'فواتير المطالبات' }]} />
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white p-6">
         <div>
           <h1 className="text-2xl font-bold">فواتير المطالبات</h1>
           <p className="text-sm text-gray-600">
@@ -62,12 +64,14 @@ const BatchInvoicesPage = () => {
         suppliers={suppliers}
       />
 
-      <Table
-        columns={columns}
-        data={items}
-        loading={isLoading}
-        onRowClick={(row) => navigate(`/invoices/${row.invoiceID}`)}
-      />
+      <div className="min-w-0 [&_th]:whitespace-nowrap [&_td]:whitespace-nowrap">
+        <Table
+          columns={columns}
+          data={items}
+          loading={isLoading}
+          onRowClick={(row) => navigate(`/invoices/${row.invoiceID}`)}
+        />
+      </div>
 
       <Pagination
         currentPage={filters.pageNumber}

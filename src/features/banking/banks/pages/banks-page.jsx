@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react';
-import { Eye, Plus, RotateCcw, Trash2 } from 'lucide-react';
+import { Eye, Plus, RotateCcw, Search, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import FormInput from '../../../../shared/ui/input';
@@ -65,7 +65,7 @@ const BanksPage = () => {
         <div className="flex gap-4 justify-center">
           <button
             onClick={() => navigate(`/banks/${row.bankID}`)}
-            className="text-blue-600 hover:text-blue-800"
+            className="text-gray-500 hover:text-blue-800"
             title="عرض"
           >
             <Eye size={18} />
@@ -90,7 +90,7 @@ const BanksPage = () => {
       <Breadcrumb items={[{ label: 'البنوك' }]} />
 
       <div className="flex justify-between items-center bg-white rounded-xl p-6 border border-gray-200">
-      <div className='flex flex-col gap-1'>
+        <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold">البنوك</h1>
           <p className="text-sm text-gray-600">إدارة بيانات البنوك</p>
         </div>
@@ -103,14 +103,16 @@ const BanksPage = () => {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_14rem_auto] gap-4">
         <FormInput
           label="بحث"
           value={search}
+          icon={Search}
           onChange={(event) => {
             setSearch(event.target.value);
             setPageNumber(1);
           }}
+          containerClass="min-w-0"
           placeholder="اسم البنك أو الكود"
         />
 
@@ -142,7 +144,12 @@ const BanksPage = () => {
         </div>
       </div>
 
-      <Table columns={columns} data={pagination.items} loading={isLoading} onRowClick={(row) => navigate(`/banks/${row.bankID}`)} />
+      <Table
+        columns={columns}
+        data={pagination.items}
+        loading={isLoading}
+        onRowClick={(row) => navigate(`/banks/${row.bankID}`)}
+      />
 
       <Pagination
         currentPage={pagination.currentPage}

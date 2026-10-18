@@ -455,7 +455,8 @@ const ReconciliationDetails = ({ reconciliationId, onBack }) => {
 
   const headerStatusClass = (() => {
     if (status === 'Reconciled') return 'bg-emerald-100 text-emerald-700';
-    if (status === 'InProgress' || status === 'Draft')
+    if (status === 'Draft') return 'bg-gray-100 text-gray-700';
+    if (status === 'InProgress')
       return 'bg-amber-100 text-amber-700';
     if (status === 'Cancelled') return 'bg-red-100 text-red-700';
     if (status === 'Matched') return 'bg-sky-100 text-sky-700';

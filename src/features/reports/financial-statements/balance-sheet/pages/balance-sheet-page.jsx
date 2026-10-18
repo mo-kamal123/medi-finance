@@ -23,7 +23,7 @@ const summaryCards = [
     label: 'إجمالي الخصوم وحقوق الملكية',
     icon: Scale,
     iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-600',
+    iconColor: 'text-gray-500',
     valueColor: 'text-blue-700',
     bar: 'bg-blue-500',
   },
