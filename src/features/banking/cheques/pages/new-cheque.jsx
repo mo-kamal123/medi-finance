@@ -10,7 +10,7 @@ const TABS = [
 
 const NewCheque = () => {
   const [activeTab, setActiveTab] = useState('info');
-  const [batchInvoiceContainer, setBatchInvoiceContainer] = useState(null);
+  const [invoiceSelectionContainer, setInvoiceSelectionContainer] = useState(null);
 
   return (
     <div className="space-y-6 p-6">
@@ -20,9 +20,7 @@ const NewCheque = () => {
           { label: 'إضافة شيك' },
         ]}
       />
-
-      <div ref={setBatchInvoiceContainer} className="empty:hidden" />
-
+      <div ref={setInvoiceSelectionContainer} className="empty:hidden" />
       <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
         <div className="flex gap-1 overflow-x-auto border-b border-gray-100 px-4 pt-3">
           {TABS.map((tab) => {
@@ -47,7 +45,7 @@ const NewCheque = () => {
         </div>
 
         <div className="p-6">
-          <ChequeForm activeTab={activeTab} batchInvoiceContainer={batchInvoiceContainer} />
+          <ChequeForm activeTab={activeTab} invoiceSelectionContainer={invoiceSelectionContainer} />
         </div>
       </div>
     </div>

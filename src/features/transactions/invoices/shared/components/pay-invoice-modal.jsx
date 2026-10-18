@@ -1,7 +1,7 @@
 // Invoice payment modal UI.
 
 import { useMemo } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { X } from 'lucide-react';
@@ -10,7 +10,6 @@ import { X } from 'lucide-react';
 import FormInput from '../../../../../shared/ui/input';
 import DateInput from '../../../../../shared/ui/date-input';
 import SearchableSelect from '../../../../../shared/ui/searchable-select';
-import AccountSearchSelect from '../../../entries/components/account-search-select';
 
 // -- Domain logic
 import { useBanks, useAllBankAccounts } from '../../../../banking/banks/hooks/banks.queries';
@@ -34,24 +33,23 @@ const PayInvoiceModal = ({ invoiceId, remainingAmount, isOpen, onClose, onSucces
   const { data: banksResponse = [] } = useBanks();
   const { data: allBankAccountsRes = [] } = useAllBankAccounts();
 
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
   // React Hook Form
   const {
     control,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors },
   } = useForm({
     defaultValues: {
-      paymentMode: '2',
+      paymentMode: '3',
       amount: remainingAmount ?? '',
       paymentDate: today,
-      referenceNumber: '',
+      dueDate: today,
       bankID: '',
       bankAccountID: '',
-      accountID: '',
       checkNumber: '',
       fromBankAccountID: '',
       toBankAccountID: '',
@@ -59,8 +57,8 @@ const PayInvoiceModal = ({ invoiceId, remainingAmount, isOpen, onClose, onSucces
     resolver: zodResolver(payInvoiceSchema),
   });
 
-  const watchedPaymentMode = watch('paymentMode');
-  const watchedBankID = watch('bankID');
+  const watchedPaymentMode = useWatch({ control, name: 'paymentMode' });
+  const watchedBankID = useWatch({ control, name: 'bankID' });
 
   // Mutation
   const payMutation = useMutation({
@@ -116,7 +114,8 @@ const PayInvoiceModal = ({ invoiceId, remainingAmount, isOpen, onClose, onSucces
                 <FormInput
                   as="select"
                   label="طريقة الدفع"
-                  value={field.value ?? '2'}
+                  value={field.value ?? '3'}
+                  error={errors.paymentMode?.message}
                   onChange={(e) => {
                     field.onChange(e.target.value);
                     setValue('bankID', '');
@@ -166,16 +165,19 @@ const PayInvoiceModal = ({ invoiceId, remainingAmount, isOpen, onClose, onSucces
             />
 
             <Controller
-              name="referenceNumber"
+              name="dueDate"
               control={control}
               render={({ field }) => (
-                <FormInput
-                  label="رقم المرجع"
+                <DateInput
+                  label="تاريخ الاستحقاق"
                   value={field.value ?? ''}
-                  onChange={field.onChange}
+                  onChange={(event) => field.onChange(event.target.value)}
+                  error={errors.dueDate?.message}
+                  required
                 />
               )}
             />
+
           </div>
 
           {/* Check (شيك) fields */}
@@ -245,26 +247,6 @@ const PayInvoiceModal = ({ invoiceId, remainingAmount, isOpen, onClose, onSucces
             </div>
           ) : null}
 
-          {/* Cash (نقدي) fields */}
-          {watchedPaymentMode === '2' ? (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-1">
-              <Controller
-                name="accountID"
-                control={control}
-                render={({ field }) => (
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">الحساب</label>
-                    <AccountSearchSelect
-                      value={field.value ?? ''}
-                      onChange={(event) => field.onChange(event.target.value)}
-                      error={errors.accountID?.message}
-                    />
-                  </div>
-                )}
-              />
-            </div>
-          ) : null}
-
           {/* Bank transfer (تحويل بنكي) fields */}
           {watchedPaymentMode === '3' ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -279,6 +261,7 @@ const PayInvoiceModal = ({ invoiceId, remainingAmount, isOpen, onClose, onSucces
                     placeholder="اختر الحساب المحول منه"
                     label="من حساب"
                     error={errors.fromBankAccountID?.message}
+                    required
                   />
                 )}
               />
@@ -294,6 +277,7 @@ const PayInvoiceModal = ({ invoiceId, remainingAmount, isOpen, onClose, onSucces
                     placeholder="اختر الحساب المحول إليه"
                     label="إلى حساب"
                     error={errors.toBankAccountID?.message}
+                    required
                   />
                 )}
               />

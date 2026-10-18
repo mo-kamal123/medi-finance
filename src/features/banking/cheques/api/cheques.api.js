@@ -1,6 +1,7 @@
 ﻿import { axiosInstance } from '../../../../app/api/axiosInstance';
 
-import { getInvoiceByNumber } from '../../../transactions/invoices/shared/api/invoices-api';
+import { getInvoiceByNumber, getInvoiceById } from '../../../transactions/invoices/shared/api/invoices-api';
+import { normalizeChequeInvoices, getChequeErrorMessage } from '../utils/cheque-payload';
 
 const extractArray = (data) => {
   if (Array.isArray(data)) return data;
@@ -31,7 +32,20 @@ export const getChequeById = async (id) => {
 
 export const createCheque = async (payload) => {
   const { data } = await axiosInstance.post('/cheques', payload);
+  if (data?.success === false) {
+    const error = Object.assign(new Error(), { response: { data } });
+    error.message = getChequeErrorMessage(error);
+    throw error;
+  }
   return data;
+};
+
+export const getChequeInvoices = async (params, signal) => {
+  const { data } = await axiosInstance.get('/invoices', { params, signal });
+  if (data?.success === false) {
+    throw Object.assign(new Error(data.message || 'تعذر تحميل الفواتير'), { response: { data } });
+  }
+  return normalizeChequeInvoices(data, params);
 };
 
 export const getBatchInvoiceSummary = async (batchNumber) => {
@@ -99,4 +113,4 @@ export const getCurrencies = async () => {
   return extractArray(data);
 };
 
-export { getInvoiceByNumber };
+export { getInvoiceByNumber, getInvoiceById };

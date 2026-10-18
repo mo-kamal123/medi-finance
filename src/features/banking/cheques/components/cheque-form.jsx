@@ -7,10 +7,8 @@ import FormInput from '../../../../shared/ui/input';
 import DateInput from '../../../../shared/ui/date-input';
 import NormalSelect from '../../../../shared/ui/NormalSelect';
 import PartySearchSelect from '../../../../shared/ui/party-search-select';
-import InvoiceSearch from './invoice-search';
-import BatchInvoiceSelector from './batch-invoice-selector';
-import ChequeInvoicePayments from './cheque-invoice-payments';
-import { totalBatchInvoiceAmount } from '../utils/batch-invoice-summaries';
+import ChequeInvoiceSelector from './cheque-invoice-selector';
+import { buildChequePayload, totalInvoicePayments, getChequeErrorMessage, getChequeInvoiceParty } from '../utils/cheque-payload';
 import { useCreateCheque } from '../hooks/cheques.mutations';
 import { useChequeBanks, useChequeCurrencies } from '../hooks/cheques.queries';
 import { useBankAccounts } from '../../banks/hooks/banks.queries';
@@ -22,7 +20,7 @@ const toDateValue = (value) => {
 };
 
 const getInitialValues = (defaultValues) => {
-  const rawType = String(defaultValues?.transactionType ?? '');
+  const rawType = String(defaultValues?.transactionType ?? defaultValues?.type ?? '');
   const derivedChequeType =
     rawType === 'PAYMENT' || rawType === '1'
       ? '1'
@@ -32,6 +30,11 @@ const getInitialValues = (defaultValues) => {
           ? String(defaultValues.chequeType)
           : '0';
 
+  const initialParty = getChequeInvoiceParty(defaultValues, derivedChequeType);
+  const initialPartyFields = initialParty ? {
+    [derivedChequeType === '0' ? 'customerID' : 'supplierID']: initialParty.id,
+    partyName: initialParty.name,
+  } : {};
   return {
     chequeType: derivedChequeType,
     chequeNumber: defaultValues?.chequeNumber ?? '',
@@ -40,7 +43,7 @@ const getInitialValues = (defaultValues) => {
     dueDate: toDateValue(defaultValues?.dueDate),
     voucherDate: toDateValue(defaultValues?.voucherDate),
     amount: defaultValues?.amount ?? '',
-    currencyID: defaultValues?.currencyID ? String(defaultValues.currencyID) : '',
+    currencyID: defaultValues?.currencyID ? String(defaultValues.currencyID) : '1',
     exchangeRate: defaultValues?.exchangeRate ?? 1,
     customerID: defaultValues?.customerID
       ? String(defaultValues.customerID)
@@ -70,11 +73,10 @@ const getInitialValues = (defaultValues) => {
     costCenterID: defaultValues?.costCenterID
       ? String(defaultValues.costCenterID)
       : '',
-    invoiceID: defaultValues?.invoiceID ? String(defaultValues.invoiceID) : '',
-    invoiceNumber: defaultValues?.invoiceNumber ?? '',
-    invoices: Array.isArray(defaultValues?.invoicePayments)
-      ? defaultValues.invoicePayments.map((payment) => Number(payment.invoiceID))
-      : [],
+    invoiceAllocationMode: 'partial',
+    invoicePayments: Array.isArray(defaultValues?.invoicePayments)
+      ? defaultValues.invoicePayments.map((payment) => ({ ...initialPartyFields, ...payment, invoiceID: Number(payment.invoiceID), amount: payment.amount }))
+      : defaultValues?.invoiceID ? [{ ...initialPartyFields, invoiceID: Number(defaultValues.invoiceID), invoiceNumber: defaultValues.invoiceNumber, amount: defaultValues.amount }] : [],
     isNonCashable: defaultValues?.isNonCashable ?? false,
     isBearerOnly: defaultValues?.isBearerOnly ?? false,
     hasAttachmentPage: defaultValues?.hasAttachmentPage ?? false,
@@ -84,38 +86,6 @@ const getInitialValues = (defaultValues) => {
     notes: defaultValues?.notes ?? '',
   };
 };
-
-const buildPayload = (data) => ({
-  customerID: data.customerID ? Number(data.customerID) : null,
-  supplierID: data.supplierID ? Number(data.supplierID) : null,
-  chequeNumber: data.chequeNumber,
-  dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
-  receiptDate: data.receiptDate
-    ? new Date(data.receiptDate).toISOString()
-    : null,
-  amount: Number(data.amount),
-  currencyID: data.currencyID ? Number(data.currencyID) : 0,
-  exchangeRate: Number(data.exchangeRate) || 1,
-  bankID: Number(data.bankID),
-  collectionAccountID: data.collectionAccountID
-    ? Number(data.collectionAccountID)
-    : 0,
-  counterAccountID: data.counterAccountID
-    ? Number(data.counterAccountID)
-    : 0,
-  costCenterID: data.costCenterID ? Number(data.costCenterID) : 0,
-  invoiceID: data.invoiceID ? Number(data.invoiceID) : 0,
-  underDeliveryAccountID: data.underDeliveryAccountID
-    ? Number(data.underDeliveryAccountID)
-    : 0,
-  isBearerOnly: Boolean(data.isBearerOnly),
-  bankAccountID: data.bankAccountID ? Number(data.bankAccountID) : 0,
-  beneficiaryName: data.beneficiaryName || '',
-  branchName: data.branchName || '',
-  notes: data.notes || '',
-  type: Number(data.chequeType),
-  cashVoucherID: 0,
-});
 
 const SectionHeader = ({ title }) => (
   <div className="flex items-center gap-2 mb-8">
@@ -135,38 +105,7 @@ const toOptions = (list, valueKey, labelKey) => {
   ];
 };
 
-const getInvoiceParty = (invoice) => {
-  const customerID = invoice?.customerID ?? invoice?.customerId;
-  const supplierID = invoice?.supplierID ?? invoice?.supplierId;
-
-  if (customerID) {
-    return {
-      type: 'customer',
-      value: String(customerID),
-      label:
-        invoice.customerNameAr ||
-        invoice.customerNameEn ||
-        invoice.customerName ||
-        String(customerID),
-    };
-  }
-
-  if (supplierID) {
-    return {
-      type: 'supplier',
-      value: String(supplierID),
-      label:
-        invoice.supplierNameAr ||
-        invoice.supplierNameEn ||
-        invoice.supplierName ||
-        String(supplierID),
-    };
-  }
-
-  return null;
-};
-
-const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activeTab, batchInvoiceContainer }) => {
+const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activeTab, invoiceSelectionContainer }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const bankIdFromUrl = searchParams.get('bankId');
@@ -174,8 +113,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
   const { data: banks = [] } = useChequeBanks();
   const { data: currencies = [] } = useChequeCurrencies();
   const isViewMode = mode === 'view';
-  const [batchInvoices, setBatchInvoices] = useState([]);
-  const [isLoadingBatch, setIsLoadingBatch] = useState(false);
+  const [isResolvingInvoice, setIsResolvingInvoice] = useState(false);
 
   const formDefaults = useMemo(
     () => getInitialValues(defaultValues),
@@ -196,9 +134,10 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
   });
 
   const chequeType = useWatch({ control, name: 'chequeType' });
-  const usesBatchInvoices = mode === 'create' && chequeType === '1';
-  const hasInvoicePayments = mode !== 'create' && Array.isArray(defaultValues?.invoicePayments);
-  const batchSupplierName = [...new Set(batchInvoices.map((batch) => batch.supplierName))].join('، ');
+  const customerID = useWatch({ control, name: 'customerID' });
+  const supplierID = useWatch({ control, name: 'supplierID' });
+  const invoicePayments = useWatch({ control, name: 'invoicePayments' }) ?? [];
+  const partyID = chequeType === '0' ? customerID : supplierID;
   const watchedBankID = useWatch({ control, name: 'bankID' });
 
   const { data: bankAccountsRes = [], isLoading: loadingBankAccounts } =
@@ -237,42 +176,33 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
   const bankOptions = toOptions(banks, 'bankID', 'bankNameAr');
   const currencyOptions = toOptions(currencies, 'currencyID', 'currencyNameAr');
 
-  const handleBatchInvoicesChange = (batches) => {
-    setBatchInvoices(batches);
-    const suppliedSupplierID = batches.find((batch) => batch.supplierID)?.supplierID;
-    const supplierID = suppliedSupplierID ? String(suppliedSupplierID) : '';
-    setValue('invoices', batches.map((batch) => batch.invoiceID), { shouldDirty: true });
-    setValue('supplierID', supplierID, {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
-    setValue('customerID', '');
-    setValue('amount', batches.length > 0 ? totalBatchInvoiceAmount(batches) : '', {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
-    setValue('invoiceID', '');
-    setValue('invoiceNumber', '');
+  const clearInvoicePayments = () => {
+    setValue('invoicePayments', [], { shouldDirty: true, shouldValidate: true });
+    createMutation.reset();
+  };
+
+  const handleInvoicePaymentsChange = (payments) => {
+    setValue('invoiceAllocationMode', 'partial');
+    if (payments.length) {
+      const party = getChequeInvoiceParty(payments[0], chequeType);
+      if (party) {
+        setValue(chequeType === '0' ? 'customerID' : 'supplierID', String(party.id), { shouldDirty: true, shouldValidate: true });
+        setValue(chequeType === '0' ? 'supplierID' : 'customerID', '');
+      }
+      setValue('currencyID', '1', { shouldValidate: true });
+      setValue('exchangeRate', 1, { shouldValidate: true });
+    }
+    setValue('invoicePayments', payments, { shouldDirty: true, shouldValidate: true });
+    setValue('amount', payments.length ? totalInvoicePayments(payments) : '', { shouldDirty: true, shouldValidate: true });
+    createMutation.reset();
   };
 
   const handleFormSubmit = (data) => {
-    if (isLoadingBatch) return;
-    const payload = buildPayload(data);
-    if (usesBatchInvoices) {
-      delete payload.invoiceID;
-      payload.invoices = batchInvoices.map((batch) => batch.invoiceID);
-      payload.supplierID = batchInvoices.find((batch) => batch.supplierID)?.supplierID ?? payload.supplierID;
-    }
-    if (hasInvoicePayments) {
-      delete payload.invoiceID;
-      payload.invoices = defaultValues.invoicePayments.map((payment) => Number(payment.invoiceID));
-    }
+    const payload = buildChequePayload(data);
     if (onSubmit) {
       onSubmit(payload);
     } else {
-      createMutation.mutate(payload, {
-        onSuccess: () => navigate('/cheques'),
-      });
+      createMutation.mutate(payload, { onSuccess: () => navigate('/cheques') });
     }
   };
 
@@ -316,6 +246,18 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
   );
 
   const isTabMode = !!activeTab;
+  const invoiceSelector = (
+    <ChequeInvoiceSelector
+      key={`${chequeType}-${partyID || ''}`}
+      chequeType={chequeType}
+      partyID={invoicePayments.length ? partyID : undefined}
+      payments={invoicePayments}
+      onChange={handleInvoicePaymentsChange}
+      onLoadingChange={setIsResolvingInvoice}
+      errors={errors.invoicePayments}
+      disabled={isViewMode}
+    />
+  );
 
   const renderInfoTab = () => {
     const isReceipt = chequeType === '0';
@@ -333,7 +275,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               {...register('chequeNumber')}
               error={errors.chequeNumber?.message}
               readOnly={isViewMode}
-              placeholder="أدخل رقم الشيك (أرقام فقط)"
+              placeholder="أدخل رقم الشيك"
             />
             <FormInput
               type="number"
@@ -341,7 +283,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               required
               {...register('amount')}
               error={errors.amount?.message}
-              readOnly={isViewMode || (usesBatchInvoices && batchInvoices.length > 0)}
+              readOnly={isViewMode}
               step="0.01"
               placeholder="أدخل قيمة الشيك"
             />
@@ -350,11 +292,10 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               { value: '1', label: 'شيك صرف' },
             ], {
               required: true,
-              disabled: isLoadingBatch,
               onChange: () => {
                 setValue('customerID', '');
                 setValue('supplierID', '');
-                if (batchInvoices.length > 0) handleBatchInvoicesChange([]);
+                clearInvoicePayments();
               },
             })}
             {renderDate('chequeDate', 'تاريخ الشيك', true)}
@@ -374,22 +315,14 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
                   <label className="mb-1 block font-medium text-gray-700 text-[15px]">
                     {partyLabel} <span className="text-red-500">*</span>
                   </label>
-                  {usesBatchInvoices && batchInvoices.length > 0 ? (
-                    <FormInput
-                      aria-label="المورد"
-                      value={batchSupplierName}
-                      title={batchSupplierName}
-                      readOnly
-                      className="bg-gray-50 text-gray-700"
-                      placeholder="يُملأ تلقائياً عند اختيار الفاتورة"
-                      error={errors.supplierID?.message}
-                    />
-                  ) : <PartySearchSelect
+                  <PartySearchSelect
+                    selectedOption={invoicePayments.length ? { value: partyID, label: invoicePayments[0].partyName } : undefined}
                     type={isReceipt ? 'customer' : 'supplier'}
                     value={field.value ?? ''}
                     onBlur={field.onBlur}
                     onChange={(e) => {
                       field.onChange(e.target.value);
+                      clearInvoicePayments();
                       if (isReceipt) {
                         setValue('supplierID', '');
                       } else {
@@ -397,8 +330,8 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
                       }
                     }}
                     error={errors[partyField]?.message}
-                    disabled={isViewMode}
-                  />}
+                    disabled={isViewMode || invoicePayments.length > 0}
+                  />
                 </div>
               )}
             />
@@ -413,6 +346,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               disabled: !watchedBankID || loadingBankAccounts,
             })}
             {renderSelect('currencyID', 'العملة', currencyOptions, {
+              disabled: invoicePayments.length > 0,
               placeholder: 'اختر العملة',
             })}
             <FormInput
@@ -421,54 +355,13 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               label="سعر الصرف"
               {...register('exchangeRate')}
               error={errors.exchangeRate?.message}
-              readOnly={isViewMode}
+              readOnly={isViewMode || invoicePayments.length > 0}
               placeholder="1"
             />
-            {!usesBatchInvoices && !hasInvoicePayments ? <div>
-              <label className="mb-1 block font-medium text-gray-700">
-                الفاتورة
-              </label>
-              <Controller
-                name="invoiceID"
-                control={control}
-                render={({ field }) => (
-                  <InvoiceSearch
-                    value={field.value ?? ''}
-                    onChange={field.onChange}
-                    onBlur={field.onBlur}
-                    displayValue={formDefaults.invoiceNumber}
-                    onInvoiceSelect={(invoice) => {
-                      const party = getInvoiceParty(invoice);
-                      setValue('invoiceNumber', invoice.invoiceNumber || '');
-                      if (invoice.netAmount)
-                        setValue('amount', invoice.netAmount);
-                      if (party?.type === 'customer') {
-                        setValue('customerID', party.value);
-                        setValue('supplierID', '');
-                      }
-                      if (party?.type === 'supplier') {
-                        setValue('supplierID', party.value);
-                        setValue('customerID', '');
-                      }
-                    }}
-                    disabled={isViewMode}
-                    error={errors.invoiceID?.message}
-                  />
-                )}
-              />
-            </div> : null}
           </div>
         </div>
 
-        {usesBatchInvoices && !batchInvoiceContainer ? (
-          <BatchInvoiceSelector
-            batches={batchInvoices}
-            onChange={handleBatchInvoicesChange}
-            onLoadingChange={setIsLoadingBatch}
-          />
-        ) : null}
-
-        {hasInvoicePayments && <ChequeInvoicePayments payments={defaultValues.invoicePayments} />}
+        {!invoiceSelectionContainer ? invoiceSelector : null}
 
         <div>
           <SectionHeader title="بيانات إضافية" />
@@ -559,14 +452,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
 
   return (
     <div className={isTabMode ? '' : 'p-6 bg-white rounded-xl shadow-sm border border-gray-300 space-y-6'}>
-      {usesBatchInvoices && batchInvoiceContainer ? createPortal(
-        <BatchInvoiceSelector
-          batches={batchInvoices}
-          onChange={handleBatchInvoicesChange}
-          onLoadingChange={setIsLoadingBatch}
-        />,
-        batchInvoiceContainer
-      ) : null}
+      {invoiceSelectionContainer ? createPortal(invoiceSelector, invoiceSelectionContainer) : null}
       {!isTabMode && (
         <div>
           <h2 className="text-xl font-bold">
@@ -587,6 +473,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
         className="space-y-6"
       >
         {renderTabContent()}
+        {createMutation.isError ? <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{getChequeErrorMessage(createMutation.error)}</div> : null}
 
         <div className="flex justify-end gap-3">
           <button
@@ -600,7 +487,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
           {!isViewMode && (
             <button
               type="submit"
-              disabled={isPending || createMutation.isPending || isLoadingBatch}
+              disabled={isPending || createMutation.isPending || isResolvingInvoice}
               className="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg disabled:opacity-50"
             >
               {isPending
