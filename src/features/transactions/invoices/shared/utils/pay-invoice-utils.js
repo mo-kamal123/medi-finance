@@ -8,7 +8,6 @@ import { z } from 'zod';
 
 export const PAYMENT_MODE_OPTIONS = [
   { value: '1', label: 'شيك' },
-  { value: '2', label: 'نقدي' },
   { value: '3', label: 'تحويل بنكي' },
 ];
 
@@ -18,7 +17,7 @@ export const PAYMENT_MODE_OPTIONS = [
 
 export const payInvoiceSchema = z
   .object({
-    paymentMode: z.string().min(1, 'طريقة الدفع مطلوبة'),
+    paymentMode: z.enum(['1', '3'], { error: 'اختر شيك أو تحويل بنكي' }),
     amount: z
       .union([z.string(), z.number()])
       .refine(
@@ -26,15 +25,14 @@ export const payInvoiceSchema = z
           value !== '' &&
           value !== null &&
           value !== undefined &&
-          !Number.isNaN(Number(value)) &&
+          Number.isFinite(Number(value)) &&
           Number(value) > 0,
         'المبلغ مطلوب'
       ),
-    paymentDate: z.string().min(1, 'تاريخ الدفع مطلوب'),
-    referenceNumber: z.string().optional().default(''),
+    paymentDate: z.iso.date({ error: 'تاريخ الدفع غير صالح أو غير مكتمل' }),
+    dueDate: z.iso.date({ error: 'تاريخ الاستحقاق غير صالح أو غير مكتمل' }),
     bankID: z.string().optional().default(''),
     bankAccountID: z.string().optional().default(''),
-    accountID: z.string().optional().default(''),
     checkNumber: z.string().optional().default(''),
     fromBankAccountID: z.string().optional().default(''),
     toBankAccountID: z.string().optional().default(''),
@@ -47,12 +45,9 @@ export const payInvoiceSchema = z
       if (!data.bankAccountID) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['bankAccountID'], message: 'حساب البنك مطلوب' });
       }
-      if (!data.checkNumber) {
+      if (!data.checkNumber.trim()) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['checkNumber'], message: 'رقم الشيك مطلوب' });
       }
-    }
-    if (data.paymentMode === '2' && !data.accountID) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['accountID'], message: 'الحساب مطلوب' });
     }
     if (data.paymentMode === '3') {
       if (!data.fromBankAccountID) {
@@ -60,6 +55,9 @@ export const payInvoiceSchema = z
       }
       if (!data.toBankAccountID) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['toBankAccountID'], message: 'إلى حساب مطلوب' });
+      }
+      if (data.fromBankAccountID && data.fromBankAccountID === data.toBankAccountID) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['toBankAccountID'], message: 'يجب أن يختلف الحساب المحول إليه عن الحساب المحول منه' });
       }
     }
   });
@@ -82,17 +80,12 @@ export const normalizeCollection = (value) => {
  */
 export const buildPaymentPayload = (data) => ({
   amount: Number(data.amount),
-  paymentMode:
-    data.paymentMode === '1'
-      ? 'Check'
-      : data.paymentMode === '2'
-        ? 'Cash'
-        : 'BankTransfer',
+  paymentMode: data.paymentMode === '1' ? 'Check' : 'BankTransfer',
+  paymentMethodID: null,
   paymentDate: `${data.paymentDate}T00:00:00`,
-  referenceNumber: data.referenceNumber || null,
+  dueDate: `${data.dueDate}T00:00:00`,
   bankID: data.paymentMode === '1' ? Number(data.bankID) : null,
   bankAccountID: data.paymentMode === '1' ? Number(data.bankAccountID) : null,
-  accountID: data.paymentMode === '2' ? Number(data.accountID) : null,
   checkNumber: data.paymentMode === '1' ? data.checkNumber : null,
   fromBankAccountID: data.paymentMode === '3' ? Number(data.fromBankAccountID) : null,
   toBankAccountID: data.paymentMode === '3' ? Number(data.toBankAccountID) : null,

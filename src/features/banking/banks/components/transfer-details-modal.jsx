@@ -127,6 +127,11 @@ const TransferDetailsModal = ({ open, transferId, onClose }) => {
 
     const statusLabel =
       STATUS_LABELS[data.status] || data.statusName || data.status;
+    const destinationName = data.transferType === 'Internal'
+      ? data.toBankNameAr || '-'
+      : `${PARTY_TYPE_LABELS[data.partyType] || data.partyType || 'طرف'}${
+          data.partyName ? ` - ${data.partyName}` : ''
+        }`;
 
     return (
       <>
@@ -205,16 +210,20 @@ const TransferDetailsModal = ({ open, transferId, onClose }) => {
           {/* Transfer path */}
           <div className="rounded-3xl border border-gray-200 bg-white p-5">
             <div className="flex items-stretch gap-3">
-              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3.5">
+              <div
+                role="group"
+                aria-label={`من حساب: ${data.fromBankNameAr || '-'} - ${data.bankAccountName || '-'}`}
+                className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3.5"
+              >
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
                   <Landmark size={19} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs text-gray-500">من حساب</div>
-                  <div className="truncate text-sm font-semibold text-gray-900">
+                  <div title={data.fromBankNameAr || '-'} className="truncate text-sm font-semibold text-gray-900">
                     {data.fromBankNameAr || '-'}
                   </div>
-                  <div className="truncate text-xs text-gray-400" >
+                  <div title={data.bankAccountName || '-'} className="truncate text-xs text-gray-400" >
                     {data.bankAccountName}
                   </div>
                 </div>
@@ -224,7 +233,11 @@ const TransferDetailsModal = ({ open, transferId, onClose }) => {
                 <ArrowLeft size={18} className="text-gray-400" />
               </div>
 
-              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3.5">
+              <div
+                role="group"
+                aria-label={`${data.transferType === 'Internal' ? 'إلى حساب' : 'إلى'}: ${destinationName}${data.toBankAccountName ? ` - ${data.toBankAccountName}` : ''}`}
+                className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3.5"
+              >
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700">
                   {data.transferType === 'Internal' ? (
                     <Landmark size={19} />
@@ -236,15 +249,11 @@ const TransferDetailsModal = ({ open, transferId, onClose }) => {
                   <div className="text-xs text-gray-500">
                     {data.transferType === 'Internal' ? 'إلى حساب' : 'إلى'}
                   </div>
-                  <div className="truncate text-sm font-semibold text-gray-900">
-                    {data.transferType === 'Internal'
-                      ? data.toBankNameAr || '-'
-                      : `${PARTY_TYPE_LABELS[data.partyType] || data.partyType || 'طرف'}${
-                          data.partyName ? ` - ${data.partyName}` : ''
-                        }`}
+                  <div title={destinationName} className="truncate text-sm font-semibold text-gray-900">
+                    {destinationName}
                   </div>
                   {data.toBankAccountName ? (
-                    <div className="truncate text-xs text-gray-400">
+                    <div title={data.toBankAccountName} className="truncate text-xs text-gray-400">
                       {data.toBankAccountName}
                     </div>
                   ) : null}
