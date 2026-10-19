@@ -82,18 +82,8 @@ const BankBalancesPage = () => {
         key: 'openingBalance',
         type: 'custom',
         render: (row) => (
-          <span className="font-semibold text-gray-900" dir="ltr">
+          <span className="font-bold text-main" dir="ltr">
             {formatCurrency(row.openingBalance)}
-          </span>
-        ),
-      },
-      {
-        header: 'إجمالي وارد',
-        key: 'totalIncoming',
-        type: 'custom',
-        render: (row) => (
-          <span className="font-semibold text-emerald-700" dir="ltr">
-            {formatCurrency(row.totalIncoming)}
           </span>
         ),
       },
@@ -108,11 +98,28 @@ const BankBalancesPage = () => {
         ),
       },
       {
+        header: 'إجمالي وارد',
+        key: 'totalIncoming',
+        type: 'custom',
+        render: (row) => (
+          <span className="font-semibold text-emerald-700" dir="ltr">
+            {formatCurrency(row.totalIncoming)}
+          </span>
+        ),
+      },
+      {
         header: 'الرصيد الختامي',
         key: 'closingBalance',
         type: 'custom',
         render: (row) => (
-          <span className="font-bold text-primary" dir="ltr">
+          <span
+            className={`font-bold ${
+              Number(row.closingBalance) >= 0
+                ? 'text-emerald-700'
+                : 'text-red-600'
+            }`}
+            dir="ltr"
+          >
             {formatCurrency(row.closingBalance)}
           </span>
         ),
@@ -170,28 +177,28 @@ const BankBalancesPage = () => {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-xl border border-gray-200 bg-white p-5">
           <div className="text-sm text-gray-500">إجمالي الرصيد الافتتاحي</div>
-          <div className="mt-2 text-2xl font-bold text-gray-900">
+          <div className="mt-2 text-lg font-semibold text-gray-900">
             {formatCurrency(totalOpening)}
           </div>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-5">
           <div className="text-sm text-gray-500">إجمالي الوارد</div>
-          <div className="mt-2 text-2xl font-bold text-emerald-700">
+          <div className="mt-2 text-lg font-semibold text-emerald-700">
             {formatCurrency(totalIncoming)}
           </div>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-5">
           <div className="text-sm text-gray-500">إجمالي الصادر</div>
-          <div className="mt-2 text-2xl font-bold text-red-600">
+          <div className="mt-2 text-lg font-semibold text-red-600">
             {formatCurrency(totalOutgoing)}
           </div>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-5">
           <div className="text-sm text-gray-500">الرصيد الختامي</div>
-          <div className="mt-2 text-2xl font-bold text-primary">
+          <div className="mt-2 text-lg font-semibold text-primary">
             {formatCurrency(totalClosing)}
           </div>
         </div>
