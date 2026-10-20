@@ -254,7 +254,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
       onChange={handleInvoicePaymentsChange}
       onLoadingChange={setIsResolvingInvoice}
       errors={errors.invoicePayments}
-      disabled={isViewMode}
+      disabled={mode !== 'create'}
     />
   );
 
@@ -297,6 +297,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               { value: '1', label: 'شيك صرف' },
             ], {
               required: true,
+              disabled: mode !== 'create' && invoicePayments.length > 0,
               onChange: () => {
                 setValue('customerID', '');
                 setValue('supplierID', '');

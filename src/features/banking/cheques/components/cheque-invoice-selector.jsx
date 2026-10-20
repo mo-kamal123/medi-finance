@@ -170,12 +170,12 @@ const ChequeInvoiceSelector = ({
               المحدد: {payments.length}
             </span>
           </div>
-          <p className="mt-2 text-sm text-gray-500">
+          {!disabled && <p className="mt-2 text-sm text-gray-500">
             ابحث برقم الفاتورة أو الدفعة واختر الفاتورة لتعبئة {chequeType === '0' ? 'العميل' : 'المورد'}{' '}
             تلقائياً، ثم حدد المبلغ كاملاً أو جزئياً.
-          </p>
+          </p>}
         </div>
-        <div>
+        {!disabled && <div>
           <label
             htmlFor="cheque-invoice-number"
             className="mb-1.5 block text-sm font-medium text-gray-700"
@@ -225,9 +225,9 @@ const ChequeInvoiceSelector = ({
               {error}
             </p>
           ) : null}
-        </div>
+        </div>}
       </div>
-      {searchResults?.items.length ? (
+      {!disabled && searchResults?.items.length ? (
         <div
           className="space-y-3 border-b border-gray-100 p-4 sm:p-6"
           aria-label="نتائج بحث الفواتير"
