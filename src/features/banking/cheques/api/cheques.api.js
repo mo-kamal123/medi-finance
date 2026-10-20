@@ -41,7 +41,7 @@ export const createCheque = async (payload) => {
 };
 
 export const getChequeInvoices = async (params, signal) => {
-  const { data } = await axiosInstance.get('/invoices', { params, signal });
+  const { data } = await axiosInstance.get('/invoices/search', { params, signal });
   if (data?.success === false) {
     throw Object.assign(new Error(data.message || 'تعذر تحميل الفواتير'), { response: { data } });
   }

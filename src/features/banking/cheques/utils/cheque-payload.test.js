@@ -9,6 +9,7 @@ import {
   totalInvoicePayments,
   getChequeInvoiceParty,
   getChequeInvoiceSelectionError,
+  getInvoiceRemaining,
   findChequeInvoiceByNumber,
 } from './cheque-payload.js';
 
@@ -27,7 +28,7 @@ test('number lookup loads only the exact invoice and follows response pagination
   });
   assert.deepEqual(result, invoice);
   assert.deepEqual(requests.map((params) => params.pageNumber), [1, 2]);
-  assert.equal(requests[0].invoiceNumber, 'INV-1261');
+  assert.equal(requests[0].searchTerm, 'INV-1261');
   assert.equal('supplierId' in requests[0], false);
 });
 
@@ -182,7 +183,7 @@ test('selected invoices must belong to the selected customer or supplier', () =>
   );
 });
 
-test('invoice lookup uses chequeType including zero and the appropriate party ID', () => {
+test('invoice search sends searchTerm, chequeType including zero, and pagination', () => {
   assert.deepEqual(
     buildChequeInvoiceQuery({
       chequeType: '0',
@@ -191,8 +192,7 @@ test('invoice lookup uses chequeType including zero and the appropriate party ID
     }),
     {
       chequeType: 0,
-      customerId: 120,
-      invoiceNumber: 'RCV-1',
+      searchTerm: 'RCV-1',
       pageNumber: 1,
       pageSize: 20,
     }
@@ -207,8 +207,7 @@ test('invoice lookup uses chequeType including zero and the appropriate party ID
     }),
     {
       chequeType: 1,
-      supplierId: 999,
-      invoiceNumber: 'INV',
+      searchTerm: 'INV',
       pageNumber: 3,
       pageSize: 10,
     }
@@ -226,7 +225,7 @@ test('invoice search works before choosing a customer or supplier and never send
         }),
         {
           chequeType: Number(chequeType),
-          invoiceNumber: 'INV-1',
+          searchTerm: 'INV-1',
           pageNumber: 1,
           pageSize: 20,
         }
@@ -308,6 +307,32 @@ test('invoice results use response pagination for top-level and nested envelopes
       .totalPages,
     4
   );
+});
+
+test('search response maps a batch search to invoice details and remaining amount', () => {
+  const params = buildChequeInvoiceQuery({ chequeType: '1', invoiceNumber: '4633' });
+  const invoice = {
+    invoiceID: 1264,
+    invoiceNumber: 'CLAIMS-202610-0009',
+    batchNumber: '4633',
+    customerID: null,
+    customerNameAr: null,
+    supplierID: 6905,
+    supplierNameAr: 'مستشفى الشرقية العسكرى',
+    remainingAmount: 145.50,
+    netAmount: 145.50,
+    paidAmount: 0,
+  };
+  const result = normalizeChequeInvoices({
+    data: [invoice], totalCount: 1, pageNumber: 1, pageSize: 20, totalPages: 1,
+  }, params);
+  assert.equal(params.searchTerm, '4633');
+  assert.deepEqual(result.items, [invoice]);
+  assert.equal(result.totalPages, 1);
+  assert.deepEqual(getChequeInvoiceParty(result.items[0], '1'), {
+    id: 6905, name: 'مستشفى الشرقية العسكرى',
+  });
+  assert.equal(getInvoiceRemaining(result.items[0]), 145.50);
 });
 
 test('API rejection details and validation errors remain visible', () => {

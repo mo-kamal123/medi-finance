@@ -250,7 +250,6 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
     <ChequeInvoiceSelector
       key={`${chequeType}-${partyID || ''}`}
       chequeType={chequeType}
-      partyID={invoicePayments.length ? partyID : undefined}
       payments={invoicePayments}
       onChange={handleInvoicePaymentsChange}
       onLoadingChange={setIsResolvingInvoice}
@@ -263,6 +262,12 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
     const isReceipt = chequeType === '0';
     const partyField = isReceipt ? 'customerID' : 'supplierID';
     const partyLabel = isReceipt ? 'العميل' : 'المورد';
+    const defaultParty = getChequeInvoiceParty(defaultValues, chequeType);
+    const selectedPartyOption = invoicePayments.length
+      ? { value: partyID, label: invoicePayments[0].partyName }
+      : defaultParty
+        ? { value: String(defaultParty.id), label: defaultParty.name }
+        : undefined;
 
     return (
       <div className="space-y-10">
@@ -316,7 +321,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
                     {partyLabel} <span className="text-red-500">*</span>
                   </label>
                   <PartySearchSelect
-                    selectedOption={invoicePayments.length ? { value: partyID, label: invoicePayments[0].partyName } : undefined}
+                    selectedOption={selectedPartyOption}
                     type={isReceipt ? 'customer' : 'supplier'}
                     value={field.value ?? ''}
                     onBlur={field.onBlur}

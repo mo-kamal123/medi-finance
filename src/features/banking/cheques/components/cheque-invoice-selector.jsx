@@ -1,10 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { FileText, Search, Trash2 } from 'lucide-react';
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Plus,
+  Search,
+  Trash2,
+} from 'lucide-react';
 import FormInput from '../../../../shared/ui/input';
 import { formatCurrency } from '../../../../shared/utils/formatters';
 import { getChequeInvoices, getInvoiceById } from '../api/cheques.api';
 import {
-  findChequeInvoiceByNumber,
+  buildChequeInvoiceQuery,
   getChequeErrorMessage,
   getInvoiceRemaining,
   totalInvoicePayments,
@@ -14,7 +22,6 @@ import {
 
 const ChequeInvoiceSelector = ({
   chequeType,
-  partyID,
   payments,
   onChange,
   onLoadingChange,
@@ -24,6 +31,8 @@ const ChequeInvoiceSelector = ({
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const requestPending = useRef(false);
   const mounted = useRef(true);
   const requestController = useRef(null);
@@ -36,21 +45,11 @@ const ChequeInvoiceSelector = ({
     };
   }, [onLoadingChange]);
 
-  const searchInvoice = async () => {
+  const searchInvoice = async (pageNumber = 1) => {
     if (disabled || requestPending.current) return;
-    const number = invoiceNumber.trim();
+    const number = pageNumber === 1 ? invoiceNumber.trim() : searchTerm;
     if (!number) {
-      setError('أدخل رقم الفاتورة');
-      return;
-    }
-    if (
-      payments.some(
-        (row) =>
-          String(row.invoiceNumber).trim().toLowerCase() ===
-          number.toLowerCase()
-      )
-    ) {
-      setError('تمت إضافة هذه الفاتورة بالفعل');
+      setError('أدخل رقم الفاتورة أو الدفعة');
       return;
     }
     requestPending.current = true;
@@ -60,17 +59,38 @@ const ChequeInvoiceSelector = ({
     const controller = new AbortController();
     requestController.current = controller;
     try {
-      let invoice = await findChequeInvoiceByNumber(
-        { chequeType, partyID, invoiceNumber: number },
-        (params) => getChequeInvoices(params, controller.signal)
+      const results = await getChequeInvoices(
+        buildChequeInvoiceQuery({
+          chequeType,
+          invoiceNumber: number,
+          pageNumber,
+        }),
+        controller.signal
       );
       if (!mounted.current) return;
-      if (!invoice) {
-        setError(
-          'لم يتم العثور على فاتورة مؤهلة بهذا الرقم لنفس نوع الشيك والطرف'
-        );
-        return;
+      setSearchTerm(number);
+      setSearchResults(results);
+      if (!results.items.length) setError('لم يتم العثور على فواتير');
+    } catch (requestError) {
+      if (mounted.current && !controller.signal.aborted)
+        setError(getChequeErrorMessage(requestError));
+    } finally {
+      requestPending.current = false;
+      if (mounted.current) {
+        setIsLoading(false);
+        onLoadingChange?.(false);
       }
+    }
+  };
+
+  const addInvoice = async (selectedInvoice) => {
+    if (disabled || requestPending.current) return;
+    requestPending.current = true;
+    setIsLoading(true);
+    setError('');
+    onLoadingChange?.(true);
+    try {
+      let invoice = selectedInvoice;
       const invoiceID = Number(
         invoice.invoiceID ?? invoice.invoiceId ?? invoice.id
       );
@@ -111,7 +131,7 @@ const ChequeInvoiceSelector = ({
         ...payments,
         {
           invoiceID,
-          invoiceNumber: invoice.invoiceNumber || number,
+          invoiceNumber: invoice.invoiceNumber || String(invoiceID),
           partyName: party.name,
           amount,
           remainingAmount,
@@ -122,9 +142,9 @@ const ChequeInvoiceSelector = ({
         },
       ]);
       setInvoiceNumber('');
+      setSearchResults(null);
     } catch (requestError) {
-      if (mounted.current && !controller.signal.aborted)
-        setError(getChequeErrorMessage(requestError));
+      if (mounted.current) setError(getChequeErrorMessage(requestError));
     } finally {
       requestPending.current = false;
       if (mounted.current) {
@@ -151,7 +171,7 @@ const ChequeInvoiceSelector = ({
             </span>
           </div>
           <p className="mt-2 text-sm text-gray-500">
-            أضف رقم الفاتورة لتعبئة {chequeType === '0' ? 'العميل' : 'المورد'}{' '}
+            ابحث برقم الفاتورة أو الدفعة واختر الفاتورة لتعبئة {chequeType === '0' ? 'العميل' : 'المورد'}{' '}
             تلقائياً، ثم حدد المبلغ كاملاً أو جزئياً.
           </p>
         </div>
@@ -160,7 +180,7 @@ const ChequeInvoiceSelector = ({
             htmlFor="cheque-invoice-number"
             className="mb-1.5 block text-sm font-medium text-gray-700"
           >
-            رقم الفاتورة
+            رقم الفاتورة أو الدفعة
           </label>
           <div className="flex items-start gap-2">
             <FormInput
@@ -170,6 +190,7 @@ const ChequeInvoiceSelector = ({
               onChange={(event) => {
                 setInvoiceNumber(event.target.value);
                 setError('');
+                setSearchResults(null);
               }}
               onKeyDown={(event) => {
                 if (event.key === 'Enter') {
@@ -178,7 +199,7 @@ const ChequeInvoiceSelector = ({
                   searchInvoice();
                 }
               }}
-              placeholder="أدخل رقم الفاتورة"
+              placeholder="أدخل رقم الفاتورة أو الدفعة"
               disabled={disabled || isLoading}
               aria-invalid={Boolean(error)}
               aria-describedby={
@@ -187,7 +208,7 @@ const ChequeInvoiceSelector = ({
             />
             <button
               type="button"
-              onClick={searchInvoice}
+              onClick={() => searchInvoice()}
               disabled={disabled || isLoading}
               className="flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
             >
@@ -206,6 +227,125 @@ const ChequeInvoiceSelector = ({
           ) : null}
         </div>
       </div>
+      {searchResults?.items.length ? (
+        <div
+          className="space-y-3 border-b border-gray-100 p-4 sm:p-6"
+          aria-label="نتائج بحث الفواتير"
+          aria-busy={isLoading}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-sm font-bold text-gray-900">نتائج البحث</h3>
+            <span className="text-xs text-gray-500">
+              الصفحة {searchResults.pageNumber} من {searchResults.totalPages}
+            </span>
+          </div>
+          <div className="overflow-x-auto rounded-xl border border-gray-200">
+            <table
+              className="w-full whitespace-nowrap text-right text-sm"
+              aria-label="نتائج بحث الفواتير"
+            >
+              <thead className="border-b border-gray-200 bg-gray-50 text-xs text-gray-500">
+                <tr>
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    الفاتورة
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    {chequeType === '0' ? 'العميل' : 'المورد'}
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    رقم الدفعة
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    المبلغ المتبقي
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    <span className="sr-only">إضافة الفاتورة</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {searchResults.items.map((invoice) => {
+                  const invoiceID = Number(
+                    invoice.invoiceID ?? invoice.invoiceId ?? invoice.id
+                  );
+                  const isAdded = payments.some(
+                    (row) => row.invoiceID === invoiceID
+                  );
+                  return (
+                    <tr
+                      key={invoiceID}
+                      className="transition-colors hover:bg-gray-50/70"
+                    >
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-gray-900">
+                          <bdi>{invoice.invoiceNumber}</bdi>
+                        </div>
+                        <div className="mt-1 text-xs text-gray-500">
+                          {invoice.invoiceTypeNameAr || 'فاتورة'}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">
+                        {getChequeInvoiceParty(invoice, chequeType)?.name ||
+                          '-'}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">
+                        <bdi>{invoice.batchNumber || '-'}</bdi>
+                      </td>
+                      <td className="px-4 py-3 font-semibold tabular-nums text-gray-900">
+                        {formatCurrency(getInvoiceRemaining(invoice))}
+                      </td>
+                      <td className="px-4 py-3 text-left">
+                        <button
+                          type="button"
+                          disabled={disabled || isLoading || isAdded}
+                          onClick={() => addInvoice(invoice)}
+                          aria-label={`إضافة الفاتورة ${invoice.invoiceNumber || invoiceID}`}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/20 focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
+                        >
+                          {isAdded ? (
+                            <Check size={15} aria-hidden="true" />
+                          ) : (
+                            <Plus size={15} aria-hidden="true" />
+                          )}
+                          {isAdded ? 'تمت الإضافة' : 'إضافة'}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {searchResults.totalPages > 1 ? (
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium hover:bg-gray-50 disabled:opacity-40"
+                disabled={
+                  disabled || isLoading || searchResults.pageNumber <= 1
+                }
+                onClick={() => searchInvoice(searchResults.pageNumber - 1)}
+              >
+                <ChevronRight size={14} aria-hidden="true" />
+                السابق
+              </button>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium hover:bg-gray-50 disabled:opacity-40"
+                disabled={
+                  disabled ||
+                  isLoading ||
+                  searchResults.pageNumber >= searchResults.totalPages
+                }
+                onClick={() => searchInvoice(searchResults.pageNumber + 1)}
+              >
+                التالي
+                <ChevronLeft size={14} aria-hidden="true" />
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       {payments.length ? (
         <div className="space-y-3 border-t border-gray-100 p-4 sm:p-5">
           <div className="overflow-x-auto rounded-xl border border-gray-200">

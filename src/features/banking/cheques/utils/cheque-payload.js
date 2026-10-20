@@ -53,18 +53,12 @@ export const buildChequePayload = (data) => {
 
 export const buildChequeInvoiceQuery = ({
   chequeType,
-  partyID,
   invoiceNumber = '',
   pageNumber = 1,
   pageSize = 20,
 }) => ({
   chequeType: Number(chequeType),
-  ...(optionalId(partyID)
-    ? String(chequeType) === '0'
-      ? { customerId: Number(partyID) }
-      : { supplierId: Number(partyID) }
-    : {}),
-  invoiceNumber: invoiceNumber.trim(),
+  searchTerm: invoiceNumber.trim(),
   pageNumber,
   pageSize,
 });
