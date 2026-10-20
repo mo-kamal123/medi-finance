@@ -1,6 +1,7 @@
 // Table column factories for the invoice list pages.
 
-import { BookCheck, Eye, Trash2 } from 'lucide-react';
+import { Eye, Trash2 } from 'lucide-react';
+import ReturnBatchButton from '../../../../master-data/batches/components/return-batch-button';
 import { formatDate } from '../../../../../shared/utils/formatters';
 import { formatCurrency } from './format-currency';
 import { getStatusStyle } from './status-style';
@@ -221,21 +222,7 @@ export const buildBatchPageColumns = ({ navigate }) => [
         >
           <Eye size={18} />
         </button>
-        <button
-          type="button"
-          onClick={() =>
-            navigate(`/invoices/${row.invoiceID}`, {
-              state: {
-                openClosingEntry: true,
-              },
-            })
-          }
-          className="text-primary hover:text-primary/80"
-          title="إنشاء قيد إقفال"
-          aria-label="إنشاء قيد إقفال"
-        >
-          <BookCheck size={18} />
-        </button>
+        <ReturnBatchButton batchNumber={getBatchNumber(row)} statusID={row.batchStatusID ?? row.batchStatusId} iconOnly className="text-primary hover:bg-primary/10" />
       </div>
     ),
   },

@@ -1,5 +1,15 @@
 import { axiosInstance } from '../../../../app/api/axiosInstance';
 
+export const updateBatchStatus = async ({ batchNumber, statusID }) => {
+  const number = String(batchNumber ?? '').trim();
+  if (!number) throw new Error('تعذر تحديد رقم الدفعة');
+  const { data } = await axiosInstance.patch(`/batches/${encodeURIComponent(number)}/status`, { statusID });
+  if (data?.success === false) {
+    throw new Error(data.message || 'تعذر تحديث حالة الدفعة');
+  }
+  return data;
+};
+
 export const getBatchStatuses = async () => {
   const { data: response } = await axiosInstance.get('/batches/statuses');
   if (response?.success === false) {

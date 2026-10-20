@@ -12,7 +12,7 @@ import InvoiceSummaryCards from '../components/invoice-summary-cards';
 import PayInvoiceModal from '../components/pay-invoice-modal';
 import { useUpdateInvoice } from '../hooks/invoices.mutations';
 import { useInvoice } from '../hooks/invoices.queries';
-import CloseBatchModal from '../../batch-invoices/close-batch-modal';
+import ReturnBatchButton from '../../../../master-data/batches/components/return-batch-button';
 import BatchInvoiceDetails from '../components/batch-invoice-details';
 
 const TABS = [
@@ -24,14 +24,10 @@ const EditInvoice = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isCloseModalOpen, setIsCloseModalOpen] = useState(
-    Boolean(location.state?.openClosingEntry)
-  );
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(
     location.state?.openClosingEntry ? 'closing' : 'details'
   );
-  const [createdClosure, setCreatedClosure] = useState(null);
 
   const {
     data: invoice,
@@ -53,11 +49,7 @@ const EditInvoice = () => {
   const { data: journalEntry, isLoading: isLoadingJournalEntry } =
     useJournalEntry(journalEntryId);
 
-  const closingEntryId =
-    invoice?.batchClosureJournalEntryID ||
-    (createdClosure?.invoiceID === invoice?.invoiceID
-      ? createdClosure?.journalEntryID
-      : null);
+  const closingEntryId = invoice?.batchClosureJournalEntryID;
   const selectedTab =
     activeTab === 'closing' && !closingEntryId ? 'details' : activeTab;
   const tabs = closingEntryId
@@ -68,22 +60,6 @@ const EditInvoice = () => {
     isLoading: isLoadingClosingEntry,
     refetch: refetchClosingEntry,
   } = useJournalEntry(selectedTab === 'closing' ? closingEntryId : null);
-
-  const handleClosingSuccess = (response) => {
-    const closure = response?.data ?? response;
-    const entry = closure?.journalEntries?.find((item) =>
-      item.invoiceIDs?.some(
-        (invoiceID) => String(invoiceID) === String(invoice.invoiceID)
-      )
-    );
-    if (entry?.journalEntryID) {
-      setCreatedClosure({
-        invoiceID: invoice.invoiceID,
-        journalEntryID: entry.journalEntryID,
-      });
-    }
-    setActiveTab('closing');
-  };
 
   const updateInvoiceMutation = useUpdateInvoice();
   const isBatchInvoice = Boolean(invoice?.batchID || invoice?.batchNumber);
@@ -179,18 +155,7 @@ const EditInvoice = () => {
             </div>
             <div className="flex flex-wrap items-center gap-3">
               {isBatchInvoice && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    closingEntryId
-                      ? setActiveTab('closing')
-                      : setIsCloseModalOpen(true)
-                  }
-                  className="flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/30"
-                >
-                  <BookCheck size={16} />
-                  {closingEntryId ? 'عرض قيد الإقفال' : 'إنشاء قيد إقفال'}
-                </button>
+                <ReturnBatchButton batchNumber={invoice.batchNumber} statusID={invoice.batchStatusID ?? invoice.batchStatusId} className="rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/30" />
               )}
               <button
                 onClick={() => setIsPayModalOpen(true)}
@@ -220,15 +185,6 @@ const EditInvoice = () => {
           isOpen={isPayModalOpen}
           onClose={() => setIsPayModalOpen(false)}
           onSuccess={refetch}
-        />
-      )}
-
-      {isBatchInvoice && !closingEntryId && isCloseModalOpen && (
-        <CloseBatchModal
-          batchNumber={invoice.batchNumber}
-          invoiceNumber={invoice.invoiceNumber}
-          onSuccess={handleClosingSuccess}
-          onClose={() => setIsCloseModalOpen(false)}
         />
       )}
 

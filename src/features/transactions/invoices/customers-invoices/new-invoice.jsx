@@ -1,6 +1,6 @@
 // New customer invoice page.
 
-import { ArrowLeft } from 'lucide-react';
+import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import { useNavigate } from 'react-router-dom';
 import { useCreateInvoice } from '../shared/hooks/invoices.mutations';
 import InvoiceForm from '../shared/components/invoice-form';
@@ -25,24 +25,24 @@ const NewCustomerInvoice = () => {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="rounded-xl border border-gray-200 bg-white">
-        <div className="px-8 py-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold">
-            إنشاء فاتورة جديدة - {typeLabel}
-          </h1>
-          <p className="mt-0.5 text-gray-500">
-            إضافة فاتورة {typeLabel} جديدة إلى النظام
-          </p>
-        </div>
+      <Breadcrumb
+        items={[
+          { label: 'فواتير العملاء', to: redirectPath },
+          { label: 'إنشاء فاتورة جديدة' },
+        ]}
+      />
+      <header className="rounded-2xl bg-linear-to-r from-primary to-primary/80 px-6 py-6 text-white sm:px-8">
+        <h1 className="text-2xl font-bold">إنشاء فاتورة جديدة - {typeLabel}</h1>
+        <p className="mt-1 text-white/80">
+          إضافة فاتورة {typeLabel} جديدة إلى النظام
+        </p>
+      </header>
 
-        <div className="p-6">
-          <InvoiceForm
-            invoiceType={type}
-            onSubmit={handleCreate}
-            isLoading={createInvoiceMutation.isPending}
-          />
-        </div>
-      </div>
+      <InvoiceForm
+        invoiceType={type}
+        onSubmit={handleCreate}
+        isLoading={createInvoiceMutation.isPending}
+      />
     </div>
   );
 };

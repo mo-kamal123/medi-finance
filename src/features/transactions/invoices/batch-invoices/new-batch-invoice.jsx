@@ -26,6 +26,7 @@ import { getBatchByNumber } from '../shared/api/invoices-api';
 import { toDateInputValue } from '../shared/utils/mapInvoiceToFormValues';
 import { formatCurrency, formatNumber } from '../shared/utils/format-currency';
 import BatchAttachmentsTab from './batch-attachments-tab';
+import ReturnBatchButton from '../../../master-data/batches/components/return-batch-button';
 import {
   DISCOUNT_SOURCE_OPTIONS,
   buildFinanceDiscountPayload,
@@ -822,13 +823,15 @@ const NewBatchInvoicePage = ({ initialBatch = null, previewOnly = false }) => {
           </div>
 
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <button
+            {initialBatch && !previewOnly ? (
+              <ReturnBatchButton batchNumber={batchData.batchNumber} status={batchData.status} statusID={batchData.statusID ?? batchData.statusId} className="rounded-xl border border-gray-300 px-6 py-3 text-gray-700 hover:bg-gray-50" />
+            ) : <button
               type="button"
               onClick={() => navigate(initialBatch ? '/batches' : '/batches-invoices')}
               className="rounded-xl border border-gray-300 px-6 py-3 text-gray-700"
             >
               إلغاء
-            </button>
+            </button>}
 
             {!previewOnly ? <button
               type="submit"

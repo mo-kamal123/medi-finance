@@ -14,6 +14,7 @@ import {
   useSuppliers,
 } from '../shared/hooks/invoices.queries';
 import { buildStandardPageColumns } from '../shared/utils/invoice-columns';
+import Breadcrumb from '../../../../shared/ui/breadcrumb';
 
 const pageType = 'supplier';
 
@@ -44,6 +45,7 @@ const SupplierInvoicesPage = () => {
 
   return (
     <div className="min-w-0 space-y-6 p-6">
+            <Breadcrumb items={[{ label: 'فواتير المورديين' }]} />
       <div className="flex justify-between items-center bg-white rounded-xl p-6 border border-gray-200">
         <div>
           <h1 className="text-2xl font-bold">فواتير الموردين</h1>

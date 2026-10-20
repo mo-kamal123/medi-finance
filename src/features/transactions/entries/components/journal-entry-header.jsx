@@ -63,7 +63,7 @@ const JournalEntryHeader = ({
                 !isPosted ||
                 isReversed
               }
-              className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <RotateCcw size={16} />
               عكس القيد

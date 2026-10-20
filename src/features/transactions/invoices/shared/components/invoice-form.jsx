@@ -29,6 +29,7 @@ import {
 // -- Composed sub-components
 import InvoiceDetailsTable from './invoice-details-table';
 import InvoiceTotals from './invoice-totals';
+import InvoiceSummaryCards from './invoice-summary-cards';
 
 // Constants
 
@@ -64,6 +65,7 @@ const InvoiceForm = ({
     handleSubmit,
     reset,
     setValue,
+    getValues,
     formState: { errors, isDirty },
   } = useForm({
     defaultValues: isEditMode
@@ -126,6 +128,39 @@ const InvoiceForm = ({
   // Side-effects
   const hasSetInvoiceNumber = useRef(false);
 
+  useEffect(() => {
+    if (isEditMode) return;
+    const salesType = invoiceTypes?.find(
+      (type) =>
+        String(type.nameAr || type.invoiceTypeNameAr || '').trim() === 'مبيعات'
+    );
+    const period2026 = financialPeriods?.find((period) =>
+      ['الفترة المالية 2026', '2026'].includes(
+        String(
+          period.nameAr || period.financialPeriodNameAr || period.nameEn || ''
+        ).trim()
+      )
+    );
+    if (salesType && !getValues('invoiceTypeID')) {
+      setValue('invoiceTypeID', String(salesType.invoiceTypeID));
+    }
+    if (period2026 && !getValues('financialPeriodID')) {
+      setValue('financialPeriodID', String(period2026.financialPeriodID));
+    }
+    const draftStatus = buildStatusOptions(
+      invoiceStatuses,
+      INVOICE_STATUS_OPTIONS
+    ).find((status) => status.label === 'مسودة');
+    if (draftStatus) setValue('statusId', draftStatus.value);
+  }, [
+    isEditMode,
+    invoiceTypes,
+    financialPeriods,
+    invoiceStatuses,
+    getValues,
+    setValue,
+  ]);
+
   /** Auto-populate the next invoice number in create mode. */
   useEffect(() => {
     if (
@@ -171,239 +206,286 @@ const InvoiceForm = ({
   // JSX
   return (
     <form onSubmit={handleFormSubmit} className="space-y-8">
+      {!isEditMode && (
+        <InvoiceSummaryCards
+          showPayments={false}
+          totals={{
+            totalAmount,
+            totalDiscounts,
+            netAmount,
+            taxAmount: Number(watchedTaxAmount) || 0,
+          }}
+        />
+      )}
       {/* Header fields */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Controller
-          name="invoiceNumber"
-          control={control}
-          render={({ field }) => (
-            <FormInput
-              label="رقم الفاتورة"
-              value={field.value ?? ''}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              error={errors.invoiceNumber?.message}
-              readOnly={!isEditMode}
-              required
-              className={
-                !isEditMode
-                  ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
-                  : ''
-              }
+      <section
+        className={
+          isEditMode ? '' : 'rounded-xl border border-gray-200 bg-white p-6'
+        }
+      >
+        {!isEditMode && (
+          <h2 className="mb-6 text-lg font-bold text-gray-900">
+            بيانات الفاتورة
+          </h2>
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {isEditMode && (
+            <Controller
+              name="invoiceNumber"
+              control={control}
+              render={({ field }) => (
+                <FormInput
+                  label="رقم الفاتورة"
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  error={errors.invoiceNumber?.message}
+                  readOnly={!isEditMode}
+                  required
+                  className={
+                    !isEditMode
+                      ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
+                      : ''
+                  }
+                />
+              )}
             />
           )}
-        />
 
-        <Controller
-          name="invoiceTypeID"
-          control={control}
-          render={({ field }) => (
-            <NormalSelect
-              label="نوع الفاتورة"
-              value={field.value ?? ''}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              error={errors.invoiceTypeID?.message}
-              required
-              options={[
-                { value: '', label: 'اختر' },
-                ...(invoiceTypes?.map((t) => ({
-                  value: String(t.invoiceTypeID),
-                  label: t.nameAr || t.invoiceTypeNameAr || t.nameEn,
-                })) || []),
-              ]}
+          {isEditMode && (
+            <Controller
+              name="invoiceTypeID"
+              control={control}
+              render={({ field }) => (
+                <NormalSelect
+                  label="نوع الفاتورة"
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  error={errors.invoiceTypeID?.message}
+                  required
+                  options={[
+                    { value: '', label: 'اختر' },
+                    ...(invoiceTypes?.map((t) => ({
+                      value: String(t.invoiceTypeID),
+                      label: t.nameAr || t.invoiceTypeNameAr || t.nameEn,
+                    })) || []),
+                  ]}
+                />
+              )}
             />
           )}
-        />
 
-        <Controller
-          name="invoiceDate"
-          control={control}
-          render={({ field }) => (
-            <DateInput
-              label="تاريخ الإصدار"
-              error={errors.invoiceDate?.message}
-              required
-              {...field}
-            />
-          )}
-        />
-        <Controller
-          name="dueDate"
-          control={control}
-          render={({ field }) => (
-            <DateInput
-              label="تاريخ الاستحقاق"
-              error={dueDateError}
-              required
-              minDate={watchedInvoiceDate || undefined}
-              {...field}
-            />
-          )}
-        />
-
-        {invoiceType !== 'supplier' && (
           <Controller
-            name="customerID"
+            name="invoiceDate"
             control={control}
             render={({ field }) => (
-              <div>
-                <label className="mb-1 block font-medium text-gray-700 text-[15px]">
-                  العميل
-                  <span className="text-red-500 mr-1"> *</span>
-                </label>
-                <PartySearchSelect
-                  type="customer"
-                  value={field.value ?? ''}
-                  selectedOption={{
-                    value: initialData.customerID,
-                    label: initialData.customerNameAr || initialData.customerName || initialData.customerNameEn || '',
-                  }}
-                  onChange={(event) => {
-                    field.onChange(event.target.value);
-                    if (event.target.value) {
-                      setValue('supplierID', '');
-                    }
-                  }}
-                  onBlur={field.onBlur}
-                  error={errors.customerID?.message}
-                  placeholder="ابحث عن عميل بالاسم"
-                />
-              </div>
+              <DateInput
+                label="تاريخ الإصدار"
+                error={errors.invoiceDate?.message}
+                required
+                {...field}
+              />
             )}
           />
-        )}
-
-        {invoiceType !== 'customer' && (
           <Controller
-            name="supplierID"
+            name="dueDate"
             control={control}
             render={({ field }) => (
-              <div>
-                <label className="mb-1 block font-medium text-gray-700 text-[15px]">
-                  المورد
-                  <span className="text-red-500 mr-1"> *</span>
-                </label>
-                <PartySearchSelect
-                  type="supplier"
-                  value={field.value ?? ''}
-                  selectedOption={{
-                    value: initialData.supplierID,
-                    label: initialData.supplierNameAr || initialData.supplierName || initialData.supplierNameEn || '',
-                  }}
-                  onChange={(event) => {
-                    field.onChange(event.target.value);
-                    if (event.target.value) {
-                      setValue('customerID', '');
-                    }
-                  }}
-                  onBlur={field.onBlur}
-                  error={errors.supplierID?.message}
-                  placeholder="ابحث عن مورد بالاسم"
-                />
-              </div>
+              <DateInput
+                label="تاريخ الاستحقاق"
+                error={dueDateError}
+                required
+                minDate={watchedInvoiceDate || undefined}
+                {...field}
+              />
             )}
           />
-        )}
 
-        <Controller
-          name="taxAmount"
-          control={control}
-          render={({ field }) => (
-            <FormInput
-              type="number"
-              min="0"
-              step="any"
-              inputMode="decimal"
-              label="المبلغ الضريبي"
-              value={field.value ?? ''}
-              onChange={(event) => {
-                const raw = event.target.value;
-                field.onChange(raw === '' ? '' : raw.replace(/^0+(?=\d)/, ''));
-              }}
-              onFocus={(event) => event.target.select()}
-              onBlur={field.onBlur}
-              error={errors.taxAmount?.message}
+          {invoiceType !== 'supplier' && (
+            <Controller
+              name="customerID"
+              control={control}
+              render={({ field }) => (
+                <div>
+                  <label className="mb-1 block font-medium text-gray-700 text-[15px]">
+                    العميل
+                    <span className="text-red-500 mr-1"> *</span>
+                  </label>
+                  <PartySearchSelect
+                    type="customer"
+                    value={field.value ?? ''}
+                    selectedOption={{
+                      value: initialData.customerID,
+                      label:
+                        initialData.customerNameAr ||
+                        initialData.customerName ||
+                        initialData.customerNameEn ||
+                        '',
+                    }}
+                    onChange={(event) => {
+                      field.onChange(event.target.value);
+                      if (event.target.value) {
+                        setValue('supplierID', '');
+                      }
+                    }}
+                    onBlur={field.onBlur}
+                    error={errors.customerID?.message}
+                    placeholder="ابحث عن عميل بالاسم"
+                  />
+                </div>
+              )}
             />
           )}
-        />
-        <Controller
-          name="discountAmount"
-          control={control}
-          render={({ field }) => (
-            <FormInput
-              type="number"
-              min="0"
-              step="any"
-              inputMode="decimal"
-              label="الخصم"
-              value={field.value ?? ''}
-              onChange={(event) => {
-                const raw = event.target.value;
-                field.onChange(raw === '' ? '' : raw.replace(/^0+(?=\d)/, ''));
-              }}
-              onFocus={(event) => event.target.select()}
-              onBlur={field.onBlur}
-              error={errors.discountAmount?.message}
-            />
-          )}
-        />
 
-        <Controller
-          name="financialPeriodID"
-          control={control}
-          render={({ field }) => (
-            <NormalSelect
-              label="الفترة المالية"
-              value={field.value ?? ''}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              error={errors.financialPeriodID?.message}
-              required
-              options={[
-                { value: '', label: 'اختر' },
-                ...(financialPeriods?.map((p) => ({
-                  value: String(p.financialPeriodID),
-                  label: p.nameAr || p.financialPeriodNameAr || p.nameEn,
-                })) || []),
-              ]}
+          {invoiceType !== 'customer' && (
+            <Controller
+              name="supplierID"
+              control={control}
+              render={({ field }) => (
+                <div>
+                  <label className="mb-1 block font-medium text-gray-700 text-[15px]">
+                    المورد
+                    <span className="text-red-500 mr-1"> *</span>
+                  </label>
+                  <PartySearchSelect
+                    type="supplier"
+                    value={field.value ?? ''}
+                    selectedOption={{
+                      value: initialData.supplierID,
+                      label:
+                        initialData.supplierNameAr ||
+                        initialData.supplierName ||
+                        initialData.supplierNameEn ||
+                        '',
+                    }}
+                    onChange={(event) => {
+                      field.onChange(event.target.value);
+                      if (event.target.value) {
+                        setValue('customerID', '');
+                      }
+                    }}
+                    onBlur={field.onBlur}
+                    error={errors.supplierID?.message}
+                    placeholder="ابحث عن مورد بالاسم"
+                  />
+                </div>
+              )}
             />
           )}
-        />
 
-        <Controller
-          name="statusId"
-          control={control}
-          render={({ field }) => (
-            <NormalSelect
-              label="الحالة"
-              value={field.value ?? ''}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              error={errors.statusId?.message}
-              required
-              options={[
-                { value: '', label: 'اختر' },
-                ...statusOptions.map((status) => ({
-                  value: status.value,
-                  label: status.label,
-                })),
-              ]}
+          <Controller
+            name="taxAmount"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                type="number"
+                min="0"
+                step="any"
+                inputMode="decimal"
+                label="المبلغ الضريبي"
+                value={field.value ?? ''}
+                onChange={(event) => {
+                  const raw = event.target.value;
+                  field.onChange(
+                    raw === '' ? '' : raw.replace(/^0+(?=\d)/, '')
+                  );
+                }}
+                onFocus={(event) => event.target.select()}
+                onBlur={field.onBlur}
+                error={errors.taxAmount?.message}
+              />
+            )}
+          />
+          <Controller
+            name="discountAmount"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                type="number"
+                min="0"
+                step="any"
+                inputMode="decimal"
+                label="الخصم"
+                value={field.value ?? ''}
+                onChange={(event) => {
+                  const raw = event.target.value;
+                  field.onChange(
+                    raw === '' ? '' : raw.replace(/^0+(?=\d)/, '')
+                  );
+                }}
+                onFocus={(event) => event.target.select()}
+                onBlur={field.onBlur}
+                error={errors.discountAmount?.message}
+              />
+            )}
+          />
+
+          <Controller
+            name="financialPeriodID"
+            control={control}
+            render={({ field }) => (
+              <NormalSelect
+                label="الفترة المالية"
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                error={errors.financialPeriodID?.message}
+                required
+                options={[
+                  { value: '', label: 'اختر' },
+                  ...(financialPeriods?.map((p) => ({
+                    value: String(p.financialPeriodID),
+                    label: p.nameAr || p.financialPeriodNameAr || p.nameEn,
+                  })) || []),
+                ]}
+              />
+            )}
+          />
+
+          {isEditMode && (
+            <Controller
+              name="statusId"
+              control={control}
+              render={({ field }) => (
+                <NormalSelect
+                  label="الحالة"
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  error={errors.statusId?.message}
+                  required
+                  options={[
+                    { value: '', label: 'اختر' },
+                    ...statusOptions.map((status) => ({
+                      value: status.value,
+                      label: status.label,
+                    })),
+                  ]}
+                />
+              )}
             />
           )}
-        />
-      </div>
+        </div>
+      </section>
 
       {/* Detail rows */}
-      <InvoiceDetailsTable
-        control={control}
-        fields={fields}
-        append={append}
-        remove={remove}
-        errors={errors}
-        watchedDetails={watchedDetails}
-        productOptions={productOptions}
-      />
+      <section
+        className={
+          isEditMode ? '' : 'rounded-xl border border-gray-200 bg-white p-6'
+        }
+      >
+        <InvoiceDetailsTable
+          control={control}
+          fields={fields}
+          append={append}
+          remove={remove}
+          errors={errors}
+          watchedDetails={watchedDetails}
+          productOptions={productOptions}
+          showTaxAndDiscount={isEditMode}
+        />
+      </section>
 
       {/* Totals & submit  */}
       <InvoiceTotals
@@ -412,7 +494,7 @@ const InvoiceForm = ({
         netAmount={netAmount}
         isLoading={isLoading}
         disabled={isDueBeforeIssue}
-        showSummary={!isEditMode}
+        showSummary={false}
       />
     </form>
   );

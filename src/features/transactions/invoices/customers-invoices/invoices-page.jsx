@@ -16,6 +16,7 @@ import {
 } from '../shared/hooks/invoices.queries';
 import { useDeleteInvoice } from '../shared/hooks/invoices.mutations';
 import { buildStandardPageColumns } from '../shared/utils/invoice-columns';
+import Breadcrumb from '../../../../shared/ui/breadcrumb';
 
 const pageType = 'customer';
 const newInvoiceType = 'customer';
@@ -50,6 +51,7 @@ const CustomerInvoicesPage = () => {
 
   return (
     <div className="space-y-6 p-6">
+      <Breadcrumb items={[{ label: 'فواتير العملاء' }]} />
       <div className="flex justify-between items-center bg-white rounded-xl p-6 border border-gray-200">
         <div>
           <h1 className="text-2xl font-bold">فواتير العملاء</h1>

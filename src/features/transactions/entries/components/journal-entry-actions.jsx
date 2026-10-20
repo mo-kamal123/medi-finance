@@ -79,7 +79,7 @@ const JournalEntryActions = ({ entry }) => {
         type="button"
         onClick={handleReverseEntry}
         disabled={isPosting || isReversing || !isPosted || isReversed}
-        className="text-amber-600 transition-colors hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-40"
+        className="text-red-600 transition-colors hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-40"
         title="عكس القيد"
       >
         <RotateCcw size={18} />

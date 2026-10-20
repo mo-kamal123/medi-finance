@@ -26,6 +26,7 @@ const InvoiceDetailsTable = ({
   errors,
   watchedDetails,
   productOptions,
+  showTaxAndDiscount = true,
 }) => {
   /** Number input bound to a detail-row field via react-hook-form. */
   const renderDetailNumberInput = (name, index) => (
@@ -90,8 +91,10 @@ const InvoiceDetailsTable = ({
               <th className="p-3 text-right">الخدمة</th>
               <th className="p-3 text-right">الكمية</th>
               <th className="p-3 text-right">سعر الوحدة</th>
-              <th className="p-3 text-right">خصم %</th>
-              <th className="p-3 text-right">ضريبة %</th>
+              {showTaxAndDiscount && <th className="p-3 text-right">خصم %</th>}
+              {showTaxAndDiscount && (
+                <th className="p-3 text-right">ضريبة %</th>
+              )}
               <th className="p-3 text-right">الإجمالي</th>
               <th></th>
             </tr>
@@ -138,23 +141,27 @@ const InvoiceDetailsTable = ({
                     ) : null}
                   </td>
 
-                  <td className="min-w-30 p-2">
-                    {renderDetailNumberInput('discountPercentage', index)}
-                    {detailErrors?.discountPercentage?.message ? (
-                      <p className="mt-1 text-xs text-red-500">
-                        {detailErrors.discountPercentage.message}
-                      </p>
-                    ) : null}
-                  </td>
+                  {showTaxAndDiscount && (
+                    <td className="min-w-30 p-2">
+                      {renderDetailNumberInput('discountPercentage', index)}
+                      {detailErrors?.discountPercentage?.message ? (
+                        <p className="mt-1 text-xs text-red-500">
+                          {detailErrors.discountPercentage.message}
+                        </p>
+                      ) : null}
+                    </td>
+                  )}
 
-                  <td className="min-w-30 p-2">
-                    {renderDetailNumberInput('taxPercentage', index)}
-                    {detailErrors?.taxPercentage?.message ? (
-                      <p className="mt-1 text-xs text-red-500">
-                        {detailErrors.taxPercentage.message}
-                      </p>
-                    ) : null}
-                  </td>
+                  {showTaxAndDiscount && (
+                    <td className="min-w-30 p-2">
+                      {renderDetailNumberInput('taxPercentage', index)}
+                      {detailErrors?.taxPercentage?.message ? (
+                        <p className="mt-1 text-xs text-red-500">
+                          {detailErrors.taxPercentage.message}
+                        </p>
+                      ) : null}
+                    </td>
+                  )}
 
                   <td className="min-w-30 p-3 font-semibold text-gray-700">
                     {formatCurrency(rowTotal)}
