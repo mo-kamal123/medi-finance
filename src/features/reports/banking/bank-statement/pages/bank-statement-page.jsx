@@ -124,17 +124,19 @@ const BankStatementPage = () => {
 
   const summary = useMemo(() => {
     if (!response) return null;
-    const single = accounts.length === 1 ? accounts[0]?.summary : null;
+    const totals = response.summary ?? response;
+    const single =
+      response.summary ?? (accounts.length === 1 ? accounts[0]?.summary : null);
     return {
       openingBalance:
-        response.openingBalance ?? single?.openingBalance ?? 0,
-      totalIncoming: response.totalIncoming ?? single?.totalIncoming ?? 0,
-      totalOutgoing: response.totalOutgoing ?? single?.totalOutgoing ?? 0,
-      closingBalance: response.closingBalance ?? single?.closingBalance ?? 0,
-      bankNameAr: response.bankNameAr ?? single?.bankNameAr ?? '-',
-      accountNumber: accounts.length === 1 ? single?.accountNumber : null,
-      currencyCode: accounts.length === 1 ? single?.currencyCode : null,
-      accountCount: accounts.length,
+        totals.openingBalance ?? single?.openingBalance ?? 0,
+      totalIncoming: totals.totalIncoming ?? single?.totalIncoming ?? 0,
+      totalOutgoing: totals.totalOutgoing ?? single?.totalOutgoing ?? 0,
+      closingBalance: totals.closingBalance ?? single?.closingBalance ?? 0,
+      bankNameAr: totals.bankNameAr ?? single?.bankNameAr ?? '-',
+      accountNumber: single?.accountNumber ?? null,
+      currencyCode: single?.currencyCode ?? null,
+      accountCount: response.summary ? 1 : accounts.length,
     };
   }, [accounts, response]);
 

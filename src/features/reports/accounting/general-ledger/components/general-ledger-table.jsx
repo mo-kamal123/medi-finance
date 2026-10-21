@@ -93,7 +93,8 @@ const GeneralLedgerTable = ({ data, loading }) => {
         );
 
         const firstEntry = entries[0];
-        const balance = Number(firstEntry.runningBalance) || 0;
+        const lastEntry = entries[entries.length - 1];
+        const balance = Number(lastEntry.runningBalance) || 0;
 
         return (
           <div key={accountId} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
