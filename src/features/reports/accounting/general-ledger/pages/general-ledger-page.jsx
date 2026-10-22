@@ -23,10 +23,13 @@ const GeneralLedgerPage = () => {
     [filters]
   );
 
-  const { data, isLoading } = useGeneralLedger(queryParams);
+  const hasFilters = Object.keys(queryParams).length > 0;
+  const { data, isLoading } = useGeneralLedger(queryParams, {
+    enabled: hasFilters,
+  });
   const { handleExport, isExporting } = useGeneralLedgerExport();
 
-  const entries = data ?? [];
+  const entries = hasFilters ? (data ?? []) : [];
 
   if (isLoading && !entries.length) {
     return <PageLoader label="جاري تحميل دفتر الأستاذ العام..." />;
@@ -34,7 +37,7 @@ const GeneralLedgerPage = () => {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">دفتر الأستاذ العام</h1>
           <p className="mt-1 text-sm text-gray-600">
@@ -43,8 +46,8 @@ const GeneralLedgerPage = () => {
         </div>
         <button
           type="button"
-          onClick={() => handleExport(queryParams)}
-          disabled={isExporting}
+          onClick={() => hasFilters && handleExport(queryParams)}
+          disabled={!hasFilters || isExporting}
           className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
         >
           <Download size={16} />
@@ -55,7 +58,13 @@ const GeneralLedgerPage = () => {
       <GeneralLedgerFilter filters={filters} setFilters={setFilters} />
 
       <div className="overflow-hidden rounded-xl">
-        <GeneralLedgerTable data={entries} loading={isLoading} />
+        {hasFilters ? (
+          <GeneralLedgerTable data={entries} loading={isLoading} />
+        ) : (
+          <div className="rounded-xl border border-gray-100 bg-white p-6 text-center text-gray-500">
+            اختر فلترًا واحدًا على الأقل لعرض دفتر الأستاذ العام
+          </div>
+        )}
       </div>
     </div>
   );
