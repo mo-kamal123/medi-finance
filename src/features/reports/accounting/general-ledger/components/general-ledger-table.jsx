@@ -1,4 +1,5 @@
 import { ChevronDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Table from '../../../../../shared/ui/table';
 import { formatCurrency, formatDate } from '../../../../../shared/utils/formatters';
 import { groupByAccount } from '../utils/group-by-account';
@@ -13,22 +14,6 @@ const GeneralLedgerTable = ({ data, loading }) => {
       type: 'custom',
       render: (row) => (
         <span className="text-gray-700">{formatDate(row.entryDate)}</span>
-      ),
-    },
-    {
-      header: 'رقم القيد',
-      key: 'journalEntryNumber',
-      type: 'custom',
-      render: (row) => (
-        <span className="font-mono text-gray-600">{row.journalEntryNumber}</span>
-      ),
-    },
-    {
-      header: 'الوصف',
-      key: 'descriptionAr',
-      type: 'custom',
-      render: (row) => (
-        <span className="text-gray-800">{row.descriptionAr || row.descriptionEn || '-'}</span>
       ),
     },
     {
@@ -68,6 +53,45 @@ const GeneralLedgerTable = ({ data, loading }) => {
           </span>
         );
       },
+    },
+    {
+      header: 'الوصف',
+      key: 'descriptionAr',
+      type: 'custom',
+      render: (row) => (
+        <span className="text-gray-800">{row.descriptionAr || row.descriptionEn || '-'}</span>
+      ),
+    },
+    {
+      header: 'مركز التكلفة',
+      key: 'costCenterNameAr',
+      type: 'custom',
+      render: (row) => row.costCenterNameAr || '-',
+    },
+    {
+      header: 'العميل / المورد',
+      key: 'partyName',
+      type: 'custom',
+      render: (row) => row.customerNameAr || row.supplierNameAr || '-',
+    },
+    {
+      header: 'رقم القيد',
+      key: 'journalEntryNumber',
+      type: 'custom',
+      render: (row) =>
+        row.journalEntryID ? (
+          <Link
+            to={`/entries/${row.journalEntryID}`}
+            title="عرض تفاصيل القيد"
+            className="font-mono font-semibold text-primary hover:underline"
+          >
+            {row.journalEntryNumber || `قيد ${row.journalEntryID}`}
+          </Link>
+        ) : (
+          <span className="font-mono text-gray-600">
+            {row.journalEntryNumber || '-'}
+          </span>
+        ),
     },
   ];
 
@@ -152,23 +176,29 @@ const GeneralLedgerTable = ({ data, loading }) => {
               columns={columns}
               data={entries}
               loading={loading}
-              footer={
+              footer={(visibleColumns) => (
                 <tr className="border-t-2 border-gray-200">
-                  <td
-                    colSpan={3}
-                    className="p-3 text-left font-bold text-gray-900"
-                  >
-                    الإجمالي
-                  </td>
-                  <td className="p-3 font-bold text-emerald-700" dir="ltr">
-                    {formatCurrency(totalDebit)}
-                  </td>
-                  <td className="p-3 font-bold text-red-700" dir="ltr">
-                    {formatCurrency(totalCredit)}
-                  </td>
-                  <td className="p-3" />
+                  {visibleColumns.map((column, index) => {
+                    if (column.key === 'debitAmount' || column.key === 'creditAmount') {
+                      const isDebit = column.key === 'debitAmount';
+                      return (
+                        <td
+                          key={column.key}
+                          className={`p-3 font-bold ${isDebit ? 'text-emerald-700' : 'text-red-700'}`}
+                          dir="ltr"
+                        >
+                          {formatCurrency(isDebit ? totalDebit : totalCredit)}
+                        </td>
+                      );
+                    }
+                    return (
+                      <td key={column.key} className="p-3 text-left font-bold text-gray-900">
+                        {index === 0 ? 'الإجمالي' : null}
+                      </td>
+                    );
+                  })}
                 </tr>
-              }
+              )}
             />
           </div>
         );
