@@ -7,9 +7,11 @@ export const getBalanceSheet = async (params = {}) => {
   };
 
   if (!requestParams.asOfDate) delete requestParams.asOfDate;
+  if (!requestParams.accountLevel) delete requestParams.accountLevel;
   if (!requestParams.financialPeriodId) delete requestParams.financialPeriodId;
   if (!requestParams.costCenterId) delete requestParams.costCenterId;
-  if (!requestParams.filterByCostCenter) delete requestParams.filterByCostCenter;
+  if (!requestParams.filterByCostCenter)
+    delete requestParams.filterByCostCenter;
 
   const { data } = await axiosInstance.get('/reports/balance-sheet', {
     params: requestParams,
@@ -25,14 +27,19 @@ export const getBalanceSheetExportExcel = async (params = {}) => {
   };
 
   if (!requestParams.asOfDate) delete requestParams.asOfDate;
+  if (!requestParams.accountLevel) delete requestParams.accountLevel;
   if (!requestParams.financialPeriodId) delete requestParams.financialPeriodId;
   if (!requestParams.costCenterId) delete requestParams.costCenterId;
-  if (!requestParams.filterByCostCenter) delete requestParams.filterByCostCenter;
+  if (!requestParams.filterByCostCenter)
+    delete requestParams.filterByCostCenter;
 
-  const { data } = await axiosInstance.get('/reports/balance-sheet/export-excel', {
-    params: requestParams,
-    responseType: 'blob',
-  });
+  const { data } = await axiosInstance.get(
+    '/reports/balance-sheet/export-excel',
+    {
+      params: requestParams,
+      responseType: 'blob',
+    }
+  );
 
   return data;
 };

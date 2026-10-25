@@ -5,25 +5,49 @@ import { X } from 'lucide-react';
 import FormInput from '../../../../shared/ui/input';
 import Toggle from '../../../../shared/ui/toggle';
 import { useCurrencies } from '../../../transactions/commercial-papers/hooks/commercial-papers.queries';
-import { useCreateBankAccount, useUpdateBankAccount } from '../hooks/banks.mutations';
-import { bankAccountSchema } from '../validation/bank-account.validation';
+import {
+  useCreateBankAccount,
+  useUpdateBankAccount,
+} from '../hooks/banks.mutations';
+import {
+  bankAccountSchema,
+  createBankAccountSchema,
+} from '../validation/bank-account.validation';
+import AccountSearchSelect from '../../../transactions/entries/components/account-search-select';
 
 const getInitialValues = (account = {}, isEditMode) => ({
   accountNumber: account.accountNumber ?? '',
   branch: account.branch ?? '',
   iban: account.iban ?? '',
-  ...(isEditMode ? {
-    accountNameAr: account.accountNameAr ?? '',
-    accountNameEn: account.accountNameEn ?? '',
-  } : {}),
+  ...(isEditMode
+    ? {
+        accountNameAr: account.accountNameAr ?? '',
+        accountNameEn: account.accountNameEn ?? '',
+      }
+    : {}),
   currencyID: account.currencyID ? String(account.currencyID) : '',
-  ...(isEditMode ? {} : { openingBalance: account.openingBalance ?? '' }),
+  ...(isEditMode
+    ? {}
+    : {
+        openingBalance: account.openingBalance ?? '',
+        accountType: String(account.accountType ?? 1),
+        counterpartAccountID: account.counterpartAccountID
+          ? String(account.counterpartAccountID)
+          : '',
+      }),
   minBalance: account.minBalance ?? '',
   isActive: account.isActive ?? true,
   isDefault: account.isDefault ?? false,
 });
 
-const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSaved }) => {
+const BankAccountModal = ({
+  account,
+  bankId,
+  isOpen,
+  isEditMode,
+  onClose,
+  onSaved,
+}) => {
   const { data: currencies = [] } = useCurrencies();
   const createMutation = useCreateBankAccount(bankId);
   const updateMutation = useUpdateBankAccount(bankId);
@@ -44,7 +68,9 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
   } = useForm({
     defaultValues: formDefaults,
     values: formDefaults,
-    resolver: zodResolver(bankAccountSchema),
+    resolver: zodResolver(
+      isEditMode ? bankAccountSchema : createBankAccountSchema
+    ),
     mode: 'onTouched',
     reValidateMode: 'onChange',
   });
@@ -93,21 +119,28 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
       branch: data.branch || '',
       iban: data.iban || '',
       bankID: Number(bankId),
-      ...(isEditMode ? {
-        accountNameAr: data.accountNameAr || '',
-        accountNameEn: data.accountNameEn || '',
-        accountID: account?.accountID ?? 0,
-      } : {
-        openingBalance: Number(data.openingBalance) || 0,
-      }),
+      ...(isEditMode
+        ? {
+            accountNameAr: data.accountNameAr || '',
+            accountNameEn: data.accountNameEn || '',
+            accountID: account?.accountID ?? 0,
+            minBalance: Number(data.minBalance) || 0,
+          }
+        : {
+            openingBalance: Number(data.openingBalance) || 0,
+            accountType: Number(data.accountType),
+            counterpartAccountID: Number(data.counterpartAccountID),
+          }),
       currencyID: Number(data.currencyID),
-      minBalance: Number(data.minBalance) || 0,
       isActive: Boolean(data.isActive),
       isDefault: Boolean(data.isActive) && Boolean(data.isDefault),
     };
 
     if (isEditMode) {
-      updateMutation.mutate({ id: account.bankAccountID, ...payload }, { onSuccess: onSaved });
+      updateMutation.mutate(
+        { id: account.bankAccountID, ...payload },
+        { onSuccess: onSaved }
+      );
     } else {
       createMutation.mutate(payload, { onSuccess: onSaved });
     }
@@ -216,24 +249,48 @@ const BankAccountModal = ({ account, bankId, isOpen, isEditMode, onClose, onSave
             )}
 
             {!isEditMode && (
+              <>
+                <Controller
+                  name="counterpartAccountID"
+                  control={control}
+                  render={({ field }) => (
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        الحساب المقابل *
+                      </label>
+                      <AccountSearchSelect
+                        value={field.value}
+                        onChange={(event) => {
+                          field.onChange(event.target.value);
+                          trigger('counterpartAccountID');
+                        }}
+                        onBlur={field.onBlur}
+                        error={errors.counterpartAccountID?.message}
+                      />
+                    </div>
+                  )}
+                />
+                <FormInput
+                  type="number"
+                  min="0"
+                  label="الرصيد الافتتاحي"
+                  placeholder="مثال: 1000"
+                  {...registerBlur('openingBalance')}
+                  error={errors.openingBalance?.message}
+                />
+              </>
+            )}
+
+            {isEditMode && (
               <FormInput
                 type="number"
                 min="0"
-                label="الرصيد الافتتاحي"
-                placeholder="مثال: 1000"
-                {...registerBlur('openingBalance')}
-                error={errors.openingBalance?.message}
+                label="الحد الأدنى للرصيد"
+                placeholder="مثال: 500"
+                {...registerBlur('minBalance')}
+                error={errors.minBalance?.message}
               />
             )}
-
-            <FormInput
-              type="number"
-              min="0"
-              label="الحد الأدنى للرصيد"
-              placeholder="مثال: 500"
-              {...registerBlur('minBalance')}
-              error={errors.minBalance?.message}
-            />
           </div>
 
           <div className="flex flex-wrap gap-6">

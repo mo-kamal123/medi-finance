@@ -61,7 +61,7 @@ const GeneralLedgerTable = ({ data, loading }) => {
           <span
             dir="ltr"
             className={`font-bold ${
-              balance >= 0 ? 'text-blue-700' : 'text-red-700'
+              balance >= 0 ? 'text-main' : 'text-red-700'
             }`}
           >
             {formatCurrency(balance)}
@@ -83,7 +83,10 @@ const GeneralLedgerTable = ({ data, loading }) => {
       header: 'مركز التكلفة',
       key: 'costCenterNameAr',
       type: 'custom',
-      render: (row) => row.costCenterNameAr || '-',
+      render: (row) =>
+        [row.costCenterCode, row.costCenterNameAr]
+          .filter(Boolean)
+          .join(' - ') || '-',
     },
     {
       header: 'العميل / المورد',
@@ -91,6 +94,9 @@ const GeneralLedgerTable = ({ data, loading }) => {
       type: 'custom',
       render: (row) => row.customerNameAr || row.supplierNameAr || '-',
     },
+    { header: 'رقم المرجع', key: 'referenceNumber' },
+    { header: 'الفترة المالية', key: 'financialPeriodNameAr' },
+    { header: 'نوع المصدر', key: 'sourceType' },
     {
       header: 'رقم القيد',
       key: 'journalEntryNumber',
@@ -114,7 +120,7 @@ const GeneralLedgerTable = ({ data, loading }) => {
 
   if (!data || data.length === 0) {
     return (
-      <div className="overflow-hidden rounded-xl border border-gray-100 bg-white ">
+      <div className="overflow-hidden rounded-xl border border-gray-100 bg-white [&_td]:whitespace-nowrap [&_td]:px-5 [&_td]:py-4 [&_th]:whitespace-nowrap [&_th]:px-5 [&_th]:py-4">
         <Table columns={columns} data={[]} loading={loading} />
       </div>
     );
@@ -148,7 +154,7 @@ const GeneralLedgerTable = ({ data, loading }) => {
             key={accountId}
             className="overflow-hidden rounded-2xl border border-primary/20 border-t-3 border-t-primary/90 bg-white "
           >
-            <div className="flex flex-col gap-4 bg-linear-to-l from-primary/10 to-primary/5 p-4 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-4 bg-primary/5 p-4 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
               <h2 className="min-w-0 flex-1">
                 <button
                   type="button"
@@ -213,7 +219,7 @@ const GeneralLedgerTable = ({ data, loading }) => {
                   <p
                     dir="ltr"
                     className={`mt-1 text-sm font-bold ${
-                      balance >= 0 ? 'text-blue-700' : 'text-red-700'
+                      balance >= 0 ? 'text-main' : 'text-red-700'
                     }`}
                   >
                     {formatCurrency(balance)}
@@ -225,7 +231,7 @@ const GeneralLedgerTable = ({ data, loading }) => {
             <div
               id={accountDetailsId}
               hidden={!isExpanded}
-              className="border-t border-primary/15 p-3 sm:p-5"
+              className="border-t border-primary/15 p-3 sm:p-5 [&_td]:whitespace-nowrap [&_td]:px-5 [&_td]:py-4 [&_th]:whitespace-nowrap [&_th]:px-5 [&_th]:py-4"
             >
               <Table
                 columns={columns}
