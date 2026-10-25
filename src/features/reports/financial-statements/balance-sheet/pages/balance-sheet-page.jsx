@@ -1,4 +1,6 @@
-import { Fragment, useState } from 'react';
+import StatementAccountsTable from '../../components/statement-accounts-table';
+import Breadcrumb from '../../../../../shared/ui/breadcrumb';
+import { useState } from 'react';
 import {
   Download,
   Scale,
@@ -56,30 +58,6 @@ const primaryTotals = [
     dot: 'bg-violet-500',
   },
 ];
-const sectionTones = {
-  assets: {
-    border: 'border-t-teal-400',
-    surface: 'from-teal-50 to-emerald-50/40 hover:from-teal-100/70',
-    icon: 'border-teal-200 text-teal-700',
-  },
-  liabilities: {
-    border: 'border-t-amber-400',
-    surface: 'from-amber-50 to-orange-50/40 hover:from-amber-100/70',
-    icon: 'border-amber-200 text-amber-700',
-  },
-  equity: {
-    border: 'border-t-violet-400',
-    surface: 'from-violet-50 to-indigo-50/40 hover:from-violet-100/70',
-    icon: 'border-violet-200 text-violet-700',
-  },
-};
-const accountTypes = {
-  Asset: 'أصول',
-  Liability: 'خصوم',
-  Equity: 'حقوق الملكية',
-  Revenue: 'إيرادات',
-  Expense: 'مصروفات',
-};
 const amount = (value) => (value == null ? '-' : formatCurrency(value));
 const Amount = ({ value, large = false }) => (
   <span
@@ -95,14 +73,11 @@ const Amount = ({ value, large = false }) => (
 );
 
 const BalanceSheetSection = ({ section }) => {
-  const sectionName = (section.sectionName || '').toLowerCase();
-  const type = section.subSections?.[0]?.accounts?.[0]?.accountType;
-  const tone =
-    sectionName.includes('liabil') || type === 'Liability'
-      ? sectionTones.liabilities
-      : sectionName.includes('equity') || type === 'Equity'
-        ? sectionTones.equity
-        : sectionTones.assets;
+  const tone = {
+    border: 'border-t-primary',
+    surface: 'from-primary/10 to-primary/5 hover:from-primary/15',
+    icon: 'border-primary/20 text-primary',
+  };
   const subSections = section.subSections ?? [];
   const count = subSections.reduce(
     (sum, sub) => sum + (sub.accounts?.length ?? 0),
@@ -112,7 +87,7 @@ const BalanceSheetSection = ({ section }) => {
     <details
       open
       className={
-        'group overflow-hidden rounded-2xl border border-t-4 border-gray-200 bg-white ' +
+        'group overflow-hidden rounded-2xl border border-t-4 border-primary/20 bg-white ' +
         tone.border
       }
     >
@@ -145,121 +120,40 @@ const BalanceSheetSection = ({ section }) => {
         </span>
         <Amount value={section.total} />
       </summary>
-      <div className="overflow-x-auto border-t border-gray-100">
-        <table className="w-full text-start text-sm">
-          <thead className="border-b border-gray-200 bg-gray-50 text-xs text-gray-500">
-            <tr>
-              {[
-                'كود الحساب',
-                'اسم الحساب',
-                'نوع الحساب',
-                'الحساب الرئيسي',
-                'الرصيد',
-              ].map((label) => (
-                <th
-                  key={label}
-                  scope="col"
-                  className="whitespace-nowrap px-5 py-3 text-start font-medium"
-                >
-                  {label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {!subSections.length && (
-              <tr>
-                <td colSpan={5} className="px-5 py-8 text-center text-gray-500">
-                  لا توجد حسابات
-                </td>
-              </tr>
-            )}
-            {subSections.map((sub, subIndex) => (
-              <Fragment key={subIndex}>
-                <tr className="border-y border-gray-100 bg-gray-50/80">
-                  <th
-                    scope="rowgroup"
-                    colSpan={4}
-                    className="px-5 py-3 text-start font-semibold text-gray-700"
-                  >
+      <div className="space-y-5 border-t border-primary/10 p-3 sm:p-5">
+        {subSections.length ? (
+          subSections.map((sub, index) => (
+            <div key={sub.subSectionName || index} className="space-y-3">
+              {(subSections.length > 1 ||
+                (sub.subSectionNameAr || sub.subSectionName)?.trim() !==
+                  (section.sectionNameAr || section.sectionName)?.trim()) && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-primary/5 px-4 py-3">
+                  <h3 className="text-sm font-semibold text-gray-700">
                     {sub.subSectionNameAr || sub.subSectionName}
-                  </th>
-                  <td className="whitespace-nowrap px-5 py-3">
-                    <Amount value={sub.total} />
-                  </td>
-                </tr>
-                {(sub.accounts ?? []).map((account, index) => (
-                  <tr
-                    key={account.accountID ?? index}
-                    className="border-b border-gray-100 transition-colors hover:bg-primary/5"
-                  >
-                    <td className="whitespace-nowrap px-5 py-4">
-                      <span
-                        dir="ltr"
-                        className="inline-block font-mono font-medium text-gray-700"
-                      >
-                        {account.accountCode || '-'}
-                      </span>
-                      <span className="mt-1 block text-xs text-gray-400">
-                        المعرف: {account.accountID ?? '-'}
-                      </span>
-                    </td>
-                    <td className="min-w-56 px-5 py-4">
-                      <span className="block font-medium text-gray-900">
-                        {account.accountNameAr || account.accountNameEn || '-'}
-                      </span>
-                      {account.accountNameEn && (
-                        <span
-                          dir="ltr"
-                          className="mt-1 block text-start text-xs text-gray-500"
-                        >
-                          {account.accountNameEn}
-                        </span>
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap px-5 py-4">
-                      <span className="rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-600">
-                        {accountTypes[account.accountType] ||
-                          account.accountType ||
-                          '-'}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 font-mono text-gray-500">
-                      {account.parentAccountID ?? '-'}
-                    </td>
-                    <td className="whitespace-nowrap px-5 py-4">
-                      <Amount value={account.balance} />
-                    </td>
-                  </tr>
-                ))}
-                {!sub.accounts?.length && (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="px-5 py-6 text-center text-gray-400"
-                    >
-                      لا توجد حسابات
-                    </td>
-                  </tr>
-                )}
-              </Fragment>
-            ))}
-          </tbody>
-          <tfoot className="border-t-2 border-primary/15 bg-primary/5">
-            <tr>
-              <th
-                scope="row"
-                colSpan={4}
-                className="px-5 py-4 text-start font-bold text-gray-800"
-              >
-                إجمالي {section.sectionNameAr || section.sectionName}
-              </th>
-              <td className="whitespace-nowrap px-5 py-4">
-                <Amount value={section.total} />
-              </td>
-            </tr>
-          </tfoot>
-        </table>
+                  </h3>
+                  <Amount value={sub.total} />
+                </div>
+              )}
+              <StatementAccountsTable
+                accounts={sub.accounts ?? []}
+                total={sub.total}
+                totalLabel={
+                  'إجمالي ' + (sub.subSectionNameAr || sub.subSectionName)
+                }
+                showMetadata
+              />
+            </div>
+          ))
+        ) : (
+          <StatementAccountsTable
+            accounts={[]}
+            total={section.total}
+            totalLabel={
+              'إجمالي ' + (section.sectionNameAr || section.sectionName)
+            }
+            showMetadata
+          />
+        )}
       </div>
     </details>
   );
@@ -277,6 +171,13 @@ const BalanceSheetPage = () => {
   const sections = report?.sections ?? [];
   return (
     <div className="space-y-6 p-4 sm:p-6">
+      <Breadcrumb
+        items={[
+          { label: 'التقارير' },
+          { label: 'القوائم المالية' },
+          { label: 'الميزانية العمومية' },
+        ]}
+      />
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
         <div className="flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
           <div className="flex items-center gap-3">

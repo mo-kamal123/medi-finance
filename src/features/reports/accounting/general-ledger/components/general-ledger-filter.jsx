@@ -2,18 +2,12 @@ import { useMemo } from 'react';
 import FilterBar from '../../../../../shared/ui/filter-bar';
 import DateInput from '../../../../../shared/ui/date-input';
 import SearchableSelect from '../../../../../shared/ui/searchable-select';
+import PartySearchSelect from '../../../../../shared/ui/party-search-select';
 import AccountSearchSelect from '../../../../transactions/entries/components/account-search-select';
 import useCostTree from '../../../../accounting/tree/cost-tree/hooks/use-cost-tree';
-import {
-  useFinancialPeriods,
-  useSuppliers,
-  useCustomers,
-} from '../../../../transactions/invoices/shared/hooks/invoices.queries';
+import { useFinancialPeriods } from '../../../../transactions/invoices/shared/hooks/invoices.queries';
 import { useCurrencies } from '../../../../transactions/commercial-papers/hooks/commercial-papers.queries';
-import {
-  buildCostCenterOptions,
-  buildPartyOptions,
-} from '../../../../transactions/entries/utils/journal-entry.utils';
+import { buildCostCenterOptions } from '../../../../transactions/entries/utils/journal-entry.utils';
 import {
   countActiveGeneralLedgerFilters,
   DEFAULT_GENERAL_LEDGER_FILTERS,
@@ -36,8 +30,6 @@ const GeneralLedgerFilter = ({ filters, setFilters, hiddenFields = {} }) => {
 
   const { data: financialPeriods = [] } = useFinancialPeriods();
   const { data: costTree = [] } = useCostTree();
-  const { data: customers = [] } = useCustomers();
-  const { data: suppliers = [] } = useSuppliers();
   const { data: currencies = [] } = useCurrencies();
 
   const periodOptions = useMemo(
@@ -52,26 +44,6 @@ const GeneralLedgerFilter = ({ filters, setFilters, hiddenFields = {} }) => {
   const costCenterOptions = useMemo(
     () => buildCostCenterOptions(costTree),
     [costTree]
-  );
-
-  const customerOptions = useMemo(
-    () =>
-      buildPartyOptions(customers, {
-        idKey: 'customerID',
-        nameArKey: 'customerNameAr',
-        nameEnKey: 'customerNameEn',
-      }),
-    [customers]
-  );
-
-  const supplierOptions = useMemo(
-    () =>
-      buildPartyOptions(suppliers, {
-        idKey: 'supplierID',
-        nameArKey: 'supplierNameAr',
-        nameEnKey: 'supplierNameEn',
-      }),
-    [suppliers]
   );
 
   const currencyOptions = useMemo(
@@ -158,24 +130,30 @@ const GeneralLedgerFilter = ({ filters, setFilters, hiddenFields = {} }) => {
       />
     ),
     visibleFields.customerId && (
-      <SearchableSelect
-        key="customerId"
-        label="العميل"
-        value={filters.customerId || ''}
-        onChange={(event) => handleChange('customerId', event.target.value)}
-        placeholder="كل العملاء"
-        options={customerOptions}
-      />
+      <div key="customerId">
+        <label className="mb-1 block text-sm font-medium text-gray-700">
+          العميل
+        </label>
+        <PartySearchSelect
+          type="customer"
+          value={filters.customerId || ''}
+          onChange={(event) => handleChange('customerId', event.target.value)}
+          placeholder="ابحث باسم العميل"
+        />
+      </div>
     ),
     visibleFields.supplierId && (
-      <SearchableSelect
-        key="supplierId"
-        label="المورد"
-        value={filters.supplierId || ''}
-        onChange={(event) => handleChange('supplierId', event.target.value)}
-        placeholder="كل الموردين"
-        options={supplierOptions}
-      />
+      <div key="supplierId">
+        <label className="mb-1 block text-sm font-medium text-gray-700">
+          المورد
+        </label>
+        <PartySearchSelect
+          type="supplier"
+          value={filters.supplierId || ''}
+          onChange={(event) => handleChange('supplierId', event.target.value)}
+          placeholder="ابحث باسم المورد"
+        />
+      </div>
     ),
     visibleFields.currencyId && (
       <SearchableSelect

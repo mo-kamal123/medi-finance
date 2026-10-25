@@ -246,7 +246,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
   );
 
   const isTabMode = !!activeTab;
-  const invoiceSelector = (
+  const invoiceSelector = (mode === 'create' || invoicePayments.length > 0) ? (
     <ChequeInvoiceSelector
       key={`${chequeType}-${partyID || ''}`}
       chequeType={chequeType}
@@ -256,7 +256,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
       errors={errors.invoicePayments}
       disabled={mode !== 'create'}
     />
-  );
+  ) : null;
 
   const renderInfoTab = () => {
     const isReceipt = chequeType === '0';

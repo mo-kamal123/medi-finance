@@ -4,7 +4,13 @@ import { createPortal } from 'react-dom';
 const MENU_WIDTH = 200;
 const OFFSET = 8;
 
-const Dropdown = ({ isOpen, onClose, children, anchorRef }) => {
+const Dropdown = ({
+  isOpen,
+  onClose,
+  children,
+  anchorRef,
+  width = MENU_WIDTH,
+}) => {
   const ref = useRef(null);
   const [style, setStyle] = useState({
     position: 'fixed',
@@ -17,6 +23,7 @@ const Dropdown = ({ isOpen, onClose, children, anchorRef }) => {
 
     const updatePosition = () => {
       const rect = anchorRef.current.getBoundingClientRect();
+      const menuWidth = Math.min(width, window.innerWidth - 16);
       const height = ref.current?.offsetHeight || 176;
       const belowSpace = window.innerHeight - rect.bottom;
       const openUp = belowSpace < height + OFFSET;
@@ -24,13 +31,19 @@ const Dropdown = ({ isOpen, onClose, children, anchorRef }) => {
         ? Math.max(8, rect.top - height - OFFSET)
         : rect.bottom + OFFSET;
 
-      let left = rect.right - MENU_WIDTH;
+      let left = rect.right - menuWidth;
       if (left < 8) left = Math.max(8, rect.left);
-      if (left + MENU_WIDTH > window.innerWidth - 8) {
-        left = Math.max(8, window.innerWidth - MENU_WIDTH - 8);
+      if (left + menuWidth > window.innerWidth - 8) {
+        left = Math.max(8, window.innerWidth - menuWidth - 8);
       }
 
-      setStyle({ position: 'fixed', top, left, width: MENU_WIDTH, zIndex: 9999 });
+      setStyle({
+        position: 'fixed',
+        top,
+        left,
+        width: menuWidth,
+        zIndex: 9999,
+      });
     };
 
     updatePosition();
@@ -41,7 +54,7 @@ const Dropdown = ({ isOpen, onClose, children, anchorRef }) => {
       window.removeEventListener('scroll', updatePosition, true);
       window.removeEventListener('resize', updatePosition);
     };
-  }, [isOpen, anchorRef]);
+  }, [isOpen, anchorRef, width]);
 
   useLayoutEffect(() => {
     if (!isOpen) return;
@@ -75,7 +88,7 @@ const Dropdown = ({ isOpen, onClose, children, anchorRef }) => {
     >
       {children}
     </div>,
-    document.body,
+    document.body
   );
 };
 

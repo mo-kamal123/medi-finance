@@ -1,3 +1,4 @@
+import Breadcrumb from '../../../../../shared/ui/breadcrumb';
 import { useMemo, useState } from 'react';
 import {
   Download,
@@ -77,6 +78,7 @@ const PartyAccountStatement = ({
 
   return (
     <div className="space-y-6 p-6">
+      <Breadcrumb items={[{ label: 'التقارير' }, { label: 'تقارير محاسبية' }, { label: 'كشف حساب ' + partyLabel }]} />
       <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">

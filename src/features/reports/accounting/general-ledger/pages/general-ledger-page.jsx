@@ -1,3 +1,4 @@
+import Breadcrumb from '../../../../../shared/ui/breadcrumb';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Download } from 'lucide-react';
@@ -37,6 +38,7 @@ const GeneralLedgerPage = () => {
 
   return (
     <div className="space-y-6 p-6">
+      <Breadcrumb items={[{ label: 'التقارير' }, { label: 'تقارير محاسبية' }, { label: 'دفتر الأستاذ العام' }]} />
       <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">دفتر الأستاذ العام</h1>

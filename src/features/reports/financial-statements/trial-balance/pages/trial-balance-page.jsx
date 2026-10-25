@@ -1,3 +1,4 @@
+import Breadcrumb from '../../../../../shared/ui/breadcrumb';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ChevronLeft,
@@ -157,7 +158,7 @@ const TrialBalancePage = () => {
   );
 
   const handleExpandAll = () => {
-    setExpandedNodes((prev) => {
+    setExpandedNodes(() => {
       const allTrue = {};
       const expandRecursive = (nodes) => {
         nodes.forEach((n) => {
@@ -178,6 +179,7 @@ const TrialBalancePage = () => {
 
   return (
     <div className="space-y-6 p-6">
+      <Breadcrumb items={[{ label: 'التقارير' }, { label: 'القوائم المالية' }, { label: "ميزان المراجعة" }]} />
       {/* Header */}
       <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-3">

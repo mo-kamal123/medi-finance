@@ -30,7 +30,7 @@ const STATUS_PALETTE = [
   'bg-indigo-100 text-indigo-700',
   'bg-orange-100 text-orange-700',
   'bg-cyan-100 text-cyan-700',
-  'bg-lime-100 text-lime-700',
+  'bg-blue-100 text-blue-700',
   'bg-fuchsia-100 text-fuchsia-700',
   'bg-blue-100 text-blue-700',
 ];
