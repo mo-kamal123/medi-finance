@@ -15,6 +15,7 @@ const Table = ({
   onRowClick,
   emptyMessage = 'لا توجد بيانات',
   extraRenderArg,
+  showColumnPicker = true,
 }) => {
   const [showColPicker, setShowColPicker] = useState(false);
   const pickerBtnRef = useRef(null);
@@ -46,7 +47,7 @@ const Table = ({
 
   const visibleSelectableCount = nonActionColumns.filter((_, index) => !hiddenCols.has(index)).length;
   const visibleColumns = columns.filter(
-    (_, i) => !hiddenCols.has(i) || (hasActions && i === columns.length - 1)
+    (_, i) => !showColumnPicker || !hiddenCols.has(i) || (hasActions && i === columns.length - 1)
   );
   const colSpan = visibleColumns.length + (hasActions ? 1 : 0);
 
@@ -100,7 +101,7 @@ const Table = ({
 
   return (
     <div className="relative space-y-2 ">
-      <div className="flex justify-end">
+      {showColumnPicker && <div className="flex justify-end">
         <button
           ref={pickerBtnRef}
           type="button"
@@ -111,9 +112,9 @@ const Table = ({
           <Columns3 size={16} />
           <span>الأعمدة</span>
         </button>
-      </div>
+      </div>}
 
-      {showColPicker && dropdownStyle
+      {showColumnPicker && showColPicker && dropdownStyle
         ? createPortal(
             <>
               <div

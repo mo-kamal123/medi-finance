@@ -1,5 +1,8 @@
 import { z } from 'zod';
-import { normalizeIban, isValidEgyptianIban } from '../../../../shared/lib/iban';
+import {
+  normalizeIban,
+  isValidEgyptianIban,
+} from '../../../../shared/lib/iban.js';
 
 const optionalIban = z.union([
   z.literal(''),
@@ -34,9 +37,20 @@ export const bankAccountSchema = z.object({
   iban: optionalIban,
   accountNameAr: z.string().optional(),
   accountNameEn: z.string().optional(),
-  currencyID: z.string().or(z.number()).refine((val) => Number(val) > 0, 'العملة مطلوبة'),
+  currencyID: z
+    .string()
+    .or(z.number())
+    .refine((val) => Number(val) > 0, 'العملة مطلوبة'),
   openingBalance: nonNegativeAmount,
   minBalance: nonNegativeAmount,
   isActive: z.boolean().default(true),
   isDefault: z.boolean().default(false),
+});
+
+export const createBankAccountSchema = bankAccountSchema.extend({
+  accountType: z.coerce.number().int().positive('نوع الحساب مطلوب'),
+  counterpartAccountID: z.coerce
+    .number()
+    .int()
+    .positive('الحساب المقابل مطلوب'),
 });

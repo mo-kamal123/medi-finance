@@ -114,9 +114,7 @@ export const links = [
           name: 'تقارير محاسبية',
           icon: BookOpen,
           sub: [
-            { name: 'حساب الأستاذ', link: '/general-ledger', icon: BookOpen },
-            { name: 'كشف حساب عميل', link: '/general-ledger/customer', icon: Users },
-            { name: 'كشف حساب مورد', link: '/general-ledger/supplier', icon: Users },
+            { name: 'دفتر الأستاذ', link: '/general-ledger', icon: BookOpen },
             { name: 'أعمار الذمم', link: '/aging-report', icon: BookOpen },
           ],
         },
