@@ -58,7 +58,7 @@ export const getInvoiceStatusName = (statusId, statuses = []) => {
   return fromFallback?.label || 'مسودة';
 };
 
-const getTodayDateInputValue = () => {
+export const getTodayDateInputValue = () => {
   const today = new Date();
 
   return [

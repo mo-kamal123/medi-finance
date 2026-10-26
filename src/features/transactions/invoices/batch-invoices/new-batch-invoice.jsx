@@ -23,7 +23,7 @@ import {
 import { useCreateBatchInvoice } from '../shared/hooks/invoices.mutations';
 import { invoicesKeys } from '../shared/hooks/invoices.keys';
 import { getBatchByNumber } from '../shared/api/invoices-api';
-import { toDateInputValue } from '../shared/utils/mapInvoiceToFormValues';
+import { getTodayDateInputValue, toDateInputValue } from '../shared/utils/mapInvoiceToFormValues';
 import { formatCurrency, formatNumber } from '../shared/utils/format-currency';
 import BatchAttachmentsTab from './batch-attachments-tab';
 import ReturnBatchButton from '../../../master-data/batches/components/return-batch-button';
@@ -276,8 +276,8 @@ const mapBatchToFormData = (batch) => {
     financialPeriodID: batch.financialPeriodID
       ? String(batch.financialPeriodID)
       : '',
-    invoiceDate: toDateInputValue(batch.batchDate ?? batch.date),
-    dueDate: toDateInputValue(batch.batchDate ?? batch.date),
+    invoiceDate: getTodayDateInputValue(),
+    dueDate: toDateInputValue(batch.dueDate),
     discounts,
     details,
     summary,

@@ -7,6 +7,7 @@ import FormInput from '../../../../../shared/ui/input';
 import DateInput from '../../../../../shared/ui/date-input';
 import NormalSelect from '../../../../../shared/ui/NormalSelect';
 import PartySearchSelect from '../../../../../shared/ui/party-search-select';
+import { toast } from '../../../../../shared/lib/toast';
 
 // -- Domain logic
 import { invoiceSchema } from '../validation/invoice.validation';
@@ -24,6 +25,7 @@ import {
 import {
   calculateTotals,
   buildStatusOptions,
+  getDefaultInvoiceTypeId,
 } from '../utils/invoice-form-utils';
 
 // -- Composed sub-components
@@ -127,13 +129,13 @@ const InvoiceForm = ({
 
   // Side-effects
   const hasSetInvoiceNumber = useRef(false);
+  const nextInvoiceNumber =
+    nextInvoiceNumberData?.data?.nextInvoiceNumber ??
+    nextInvoiceNumberData?.nextInvoiceNumber;
 
   useEffect(() => {
     if (isEditMode) return;
-    const salesType = invoiceTypes?.find(
-      (type) =>
-        String(type.nameAr || type.invoiceTypeNameAr || '').trim() === 'مبيعات'
-    );
+    const defaultTypeId = getDefaultInvoiceTypeId(invoiceTypes, invoiceType);
     const period2026 = financialPeriods?.find((period) =>
       ['الفترة المالية 2026', '2026'].includes(
         String(
@@ -141,9 +143,7 @@ const InvoiceForm = ({
         ).trim()
       )
     );
-    if (salesType && !getValues('invoiceTypeID')) {
-      setValue('invoiceTypeID', String(salesType.invoiceTypeID));
-    }
+    setValue('invoiceTypeID', defaultTypeId);
     if (period2026 && !getValues('financialPeriodID')) {
       setValue('financialPeriodID', String(period2026.financialPeriodID));
     }
@@ -155,6 +155,7 @@ const InvoiceForm = ({
   }, [
     isEditMode,
     invoiceTypes,
+    invoiceType,
     financialPeriods,
     invoiceStatuses,
     getValues,
@@ -165,13 +166,16 @@ const InvoiceForm = ({
   useEffect(() => {
     if (
       !isEditMode &&
-      nextInvoiceNumberData?.nextInvoiceNumber &&
+      nextInvoiceNumber != null &&
+      nextInvoiceNumber !== '' &&
       !hasSetInvoiceNumber.current
     ) {
-      setValue('invoiceNumber', nextInvoiceNumberData.nextInvoiceNumber);
+      if (!getValues('invoiceNumber')) {
+        setValue('invoiceNumber', String(nextInvoiceNumber));
+      }
       hasSetInvoiceNumber.current = true;
     }
-  }, [isEditMode, nextInvoiceNumberData?.nextInvoiceNumber, setValue]);
+  }, [isEditMode, nextInvoiceNumber, getValues, setValue]);
 
   /** Populate form with server data when editing. */
   useEffect(() => {
@@ -199,9 +203,18 @@ const InvoiceForm = ({
     })) || [];
 
   // Submit handler
-  const handleFormSubmit = handleSubmit((data) => {
-    onSubmit(buildInvoicePayload(data, { isEditMode }));
-  });
+  const handleFormSubmit = handleSubmit(
+    (data) => onSubmit(buildInvoicePayload(data, { isEditMode })),
+    (validationErrors) => {
+      if (!isEditMode && validationErrors.invoiceNumber) {
+        toast.error('تعذر تحميل رقم الفاتورة التلقائي. أعد تحميل الصفحة وحاول مرة أخرى.');
+      } else if (!isEditMode && validationErrors.invoiceTypeID) {
+        toast.error('تعذر تحديد نوع الفاتورة تلقائياً. تحقق من إعدادات أنواع الفواتير.');
+      } else {
+        toast.error('تعذر حفظ الفاتورة. راجع الحقول المطلوبة والأخطاء الموضحة في النموذج.');
+      }
+    }
+  );
 
   // JSX
   return (
@@ -229,8 +242,7 @@ const InvoiceForm = ({
           </h2>
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {isEditMode && (
-            <Controller
+          {isEditMode && <Controller
               name="invoiceNumber"
               control={control}
               render={({ field }) => (
@@ -240,20 +252,12 @@ const InvoiceForm = ({
                   onChange={field.onChange}
                   onBlur={field.onBlur}
                   error={errors.invoiceNumber?.message}
-                  readOnly={!isEditMode}
                   required
-                  className={
-                    !isEditMode
-                      ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
-                      : ''
-                  }
                 />
               )}
-            />
-          )}
+          />}
 
-          {isEditMode && (
-            <Controller
+          {isEditMode && <Controller
               name="invoiceTypeID"
               control={control}
               render={({ field }) => (
@@ -273,8 +277,7 @@ const InvoiceForm = ({
                   ]}
                 />
               )}
-            />
-          )}
+          />}
 
           <Controller
             name="invoiceDate"

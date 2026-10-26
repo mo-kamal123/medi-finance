@@ -1,5 +1,22 @@
 // Invoice form pure utilities (calculations, status options).
 
+export const getDefaultInvoiceTypeId = (invoiceTypes, invoiceType) => {
+  const labels = invoiceType === 'customer'
+    ? ['فاتورة مبيعات', 'مبيعات']
+    : invoiceType === 'supplier'
+      ? ['فاتورة مشتريات', 'مشتريات']
+      : [];
+  for (const label of labels) {
+    const match = invoiceTypes?.find((type) =>
+      [type.nameAr, type.invoiceTypeNameAr].some(
+        (name) => String(name ?? '').trim() === label
+      )
+    );
+    if (match?.invoiceTypeID != null) return String(match.invoiceTypeID);
+  }
+  return '';
+};
+
 /**
  * Calculate the gross total for a single detail row (quantity × unitPrice).
  */
