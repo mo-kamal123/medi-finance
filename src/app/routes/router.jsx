@@ -6,6 +6,7 @@ import { bankingRoutes } from '../../features/banking/routes';
 import { masterDataRoutes } from '../../features/master-data/routes';
 import { transactionsRoutes } from '../../features/transactions/routes';
 import { reportsRoutes } from '../../features/reports/routes';
+import { userManagementRoutes } from '../../features/user-management/routes';
 import RouteErrorPage from '../../shared/ui/route-error-page';
 
 export const router = createBrowserRouter([
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
 
           // reports routes
           ...reportsRoutes,
+          ...userManagementRoutes,
         ],
       },
     ],

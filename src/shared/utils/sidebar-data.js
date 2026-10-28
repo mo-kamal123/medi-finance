@@ -14,6 +14,7 @@ import {
     Wallet,
     Banknote,
     Link2,
+    ShieldCheck,
   } from 'lucide-react';
 
 export const links = [
@@ -77,6 +78,14 @@ export const links = [
         { name: 'العملاء', link: '/customers', icon: Users },
         { name: 'المورديين', link: '/suppliers', icon: Users },
         { name: 'الدفعات', link: '/batches', icon: FileText },
+      ],
+    },
+    {
+      name: 'إدارة المستخدمين',
+      icon: ShieldCheck,
+      sub: [
+        { name: 'المستخدمون', link: '/users', icon: Users },
+        { name: 'الأدوار', link: '/roles', icon: ShieldCheck },
       ],
     },
     {
