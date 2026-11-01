@@ -22,7 +22,7 @@ const UserPageHeader = ({ user }) => {
             </h1>
             <p className="mt-0.5 text-white/70">
               {user ? (
-                <span dir="ltr">{user.username}</span>
+                <span dir="ltr">{user.mobileNumber ?? user.username}</span>
               ) : (
                 'إنشاء بيانات المستخدم وتحديد الدور وحالة الحساب'
               )}

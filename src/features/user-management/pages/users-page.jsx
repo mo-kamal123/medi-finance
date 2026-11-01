@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import ManagementTablePage from '../components/management-table-page';
@@ -20,14 +21,26 @@ const columns = [
       </Link>
     ),
   },
-  { header: 'اسم المستخدم', key: 'username' },
   {
-    header: 'البريد الإلكتروني',
-    key: 'email',
+    header: 'رقم الهاتف',
+    key: 'mobileNumber',
     type: 'custom',
-    render: (row) => <span dir="ltr">{row.email}</span>,
+    render: (row) => <span dir="ltr">{row.mobileNumber}</span>,
   },
-  { header: 'كود الموظف', key: 'employeeCode' },
+  {
+    header: 'الأدوار',
+    key: 'roles',
+    type: 'custom',
+    render: (row) => (
+      <div className="flex flex-wrap gap-1.5">
+        {(row.roles ?? []).map((role) => (
+          <span key={role} dir="auto" className="rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+            {role}
+          </span>
+        ))}
+      </div>
+    ),
+  },
   {
     header: 'الحالة',
     key: 'status',
@@ -101,12 +114,11 @@ const UsersPage = () => {
           </Link>
         }
         columns={columns}
-        searchKeys={['id', 'name', 'username', 'email', 'employeeCode']}
-        searchPlaceholder="ابحث بالاسم أو البريد أو اسم المستخدم"
+        searchKeys={['id', 'name', 'mobileNumber', 'roles']}
+        searchPlaceholder="ابحث بالاسم أو رقم الهاتف أو الدور"
       />
     </>
   );
 };
 
 export default UsersPage;
-import { useState } from 'react';

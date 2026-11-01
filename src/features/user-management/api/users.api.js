@@ -3,7 +3,7 @@ import { axiosInstance } from '../../../app/api/axiosInstance';
 export const mapUser = (user) => ({
   ...user,
   id: String(user.userID),
-  name: user.fullName ?? '',
+  name: [user.firstName, user.lastName].filter(Boolean).join(' ') || user.fullName || '',
   status: user.isActive ? 'active' : 'inactive',
 });
 
@@ -24,16 +24,10 @@ export const getUsers = async (
   };
 };
 
-// Only the paginated list endpoint is documented. Resolve direct user links
-// through that endpoint rather than assuming a user-detail API exists.
-export const findUser = async (id, signal) => {
-  let pageNumber = 1;
-  let response;
-  do {
-    response = await getUsers({ pageNumber, pageSize: 50 }, signal);
-    const user = response.items.find((item) => item.id === String(id));
-    if (user) return user;
-    pageNumber += 1;
-  } while (pageNumber <= response.totalPages);
-  return null;
+export const getUser = async (id, signal) => {
+  const { data } = await axiosInstance.get(`/users/${encodeURIComponent(id)}`, {
+    signal,
+  });
+  const user = data.data ?? data;
+  return user ? mapUser(user) : null;
 };

@@ -6,6 +6,7 @@ import { getDemoUsers, updateDemoUser } from '../data/demo-users';
 import { mockRoles } from '../data/mock-data';
 import { useUser } from '../hooks/users.queries';
 import PageLoader from '../../../shared/ui/page-loader';
+import UserDetails from '../components/user-details';
 
 const EditUserPage = () => {
   const { id } = useParams();
@@ -65,7 +66,7 @@ const EditUserPage = () => {
         ]}
       />
       <UserPageHeader user={user} roles={mockRoles} />
-      <UserForm
+      {isDemo ? <UserForm
         key={user.id}
         users={users}
         roles={mockRoles}
@@ -73,7 +74,7 @@ const EditUserPage = () => {
         readOnly={!isDemo}
         onCancel={() => navigate('/users')}
         onSave={saveUser}
-      />
+      /> : <UserDetails user={user} />}
     </div>
   );
 };
