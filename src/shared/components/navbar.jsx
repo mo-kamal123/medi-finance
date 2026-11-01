@@ -1,4 +1,4 @@
-import { CircleChevronRight, Power, Settings } from 'lucide-react';
+import { ChevronRight, CircleChevronRight, Power, Settings } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearCredentials } from '../../features/auth/store/auth-slice';
 import { toggleSidebar } from '../store/main-slice';
@@ -17,13 +17,21 @@ const Navbar = () => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 shadow-2xl px-4 sm:px-6 h-16 flex items-center justify-between">
+    <header className="bg-white border-b border-gray-200 shadow-2xl ps-0 pe-4 sm:pe-6 h-16 flex items-center justify-between">
       {/* welcome section */}
       <div className="flex items-center gap-3">
-        <CircleChevronRight
+        <button
+          type="button"
           onClick={() => dispatch(toggleSidebar())}
-          className={`w-6 h-6 text-primary transition-all duration-300 ${isOpen ? 'rotate-180' : 'rotate-0'}`}
-        />
+          aria-label={isOpen ? 'إغلاق القائمة الجانبية' : 'فتح القائمة الجانبية'}
+          aria-expanded={isOpen}
+          className="flex h-8 w-6 shrink-0 items-center justify-center rounded-e-full bg-primary text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        >
+          <ChevronRight
+            aria-hidden="true"
+            className={`h-6 w-6 pr-1 transition-transform duration-300 ${isOpen ? 'rotate-180' : 'rotate-0 pl-1'}`}
+          />
+        </button>
         <h1 className="text-lg sm:text-xl font-semibold text-gray-800">
           مرحباً بك{' '}
           <span className="sub-font font-bold inline text-primary">
