@@ -1,4 +1,5 @@
 import {
+    House,
     Calculator,
     FolderTree,
     FileText,
@@ -18,6 +19,7 @@ import {
   } from 'lucide-react';
 
 export const links = [
+    { name: 'الرئيسية', link: '/', icon: House },
     {
       // accounting
       name: 'المحاسبة',

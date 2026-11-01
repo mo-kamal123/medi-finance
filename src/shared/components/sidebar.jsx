@@ -1,13 +1,35 @@
 import SidebarItem from '../ui/sidebar-item';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { LogOut, ShieldCheck, UserRound } from 'lucide-react';
+import { clearCredentials } from '../../features/auth/store/auth-slice';
+import { removeFromLocalStorage } from '../utils/local-storage-actions';
 import logo from '../../app/assets/logo.png';
-import khusum from '../../app/assets/Khusm Logo (1).png';
 import { links } from '../utils/sidebar-data';
 import { useState } from 'react';
 
 const Sidebar = () => {
+  const dispatch = useDispatch();
   const openSidebar = useSelector((state) => state.main.sidebar);
+  const user = useSelector((state) => state.auth.user);
   const [openGroup, setOpenGroup] = useState(null);
+  const displayName =
+    [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
+    user?.fullName ||
+    user?.mobileNumber ||
+    user?.username ||
+    'المستخدم';
+  const initials = displayName
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((name) => Array.from(name)[0])
+    .join('');
+  const roles = user?.roles || [];
+
+  const handleLogout = () => {
+    removeFromLocalStorage('token');
+    removeFromLocalStorage('user');
+    dispatch(clearCredentials());
+  };
 
   return (
     <aside
@@ -50,9 +72,48 @@ const Sidebar = () => {
           </ul>
         </nav>
 
-        <div className="pt-3 flex shrink-0 flex-col items-end justify-center gap-2 px-2">
-          <p className="text-2xl text-white font-bold">powered by</p>
-          <img src={khusum} alt="logo" className="w-100" />
+        <div className="mt-3 shrink-0 border-t border-white/15 pt-4">
+          <section
+            dir="ltr"
+            aria-label="الملف الشخصي"
+            className="rounded-2xl border border-white/15 bg-gradient-to-br from-white/15 to-white/5 p-4 shadow-lg shadow-black/10"
+          >
+            <div className="flex items-center gap-3">
+              <div
+                aria-hidden="true"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-base font-bold text-primary shadow-sm"
+              >
+                {user ? initials : <UserRound size={22} />}
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p dir="auto" className="break-words text-sm font-semibold leading-6 text-white">
+                  {displayName}
+                </p>
+                {roles.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {roles.map((role) => (
+                      <span
+                        key={role}
+                        className="inline-flex max-w-full items-center gap-1 text-xs font-medium text-teal-100"
+                      >
+                        <ShieldCheck size={13} className="shrink-0" aria-hidden="true" />
+                        <span dir="auto" className="break-words">{role}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                aria-label="تسجيل الخروج"
+                title="تسجيل الخروج"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-white/80 transition-colors hover:border-red-200/30 hover:bg-red-500/20 hover:text-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+              >
+                <LogOut size={18} aria-hidden="true" />
+              </button>
+            </div>
+          </section>
         </div>
       </div>
     </aside>

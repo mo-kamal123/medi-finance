@@ -1,11 +1,18 @@
 import { useState } from 'react';
 import AuthForm from '../components/auth-form';
 import { useLogin } from '../hooks/useLogin';
+import { useSearchParams } from 'react-router-dom';
+import { getErrorMessage } from '../../../shared/lib/toast';
 
 const Login = () => {
-  const [loginData, setLoginData] = useState({ username: '', password: '' });
-  const { mutate: login } = useLogin();
+  const [loginData, setLoginData] = useState({
+    mobileNumber: '201000000099',
+    password: 'Fin!N5CTvbES6rwhhHyqs-xZ9a',
+  });
+  const [searchParams] = useSearchParams();
+  const { mutate: login, isPending, isError, error, reset } = useLogin();
   const handleChange = (inputKey, value) => {
+    reset();
     setLoginData((prev) => ({
       ...prev,
       [inputKey]: value, // dynamic key
@@ -14,6 +21,7 @@ const Login = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isPending) return;
     login(loginData);
   };
   return (
@@ -25,10 +33,22 @@ const Login = () => {
       </div>
 
       {/* Form */}
+      {isError ? (
+        <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {typeof error?.response?.data === 'string' && error.response.data.trim()
+            ? error.response.data
+            : getErrorMessage(error, 'تعذر تسجيل الدخول، يرجى المحاولة مرة أخرى')}
+        </div>
+      ) : searchParams.get('sessionExpired') === '1' ? (
+        <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى
+        </div>
+      ) : null}
       <AuthForm
         onChange={handleChange}
         loginData={loginData}
         onSubmit={handleSubmit}
+        isPending={isPending}
       />
 
       {/* Footer */}

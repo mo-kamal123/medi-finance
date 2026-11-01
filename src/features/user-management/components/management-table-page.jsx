@@ -14,6 +14,13 @@ const ManagementTablePage = ({
   searchKeys,
   searchPlaceholder,
   roleOptions,
+  headerAction,
+  onRowClick,
+  serverPagination,
+  loading = false,
+  error,
+  onRetry,
+  isDemo = true,
 }) => {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
@@ -32,8 +39,11 @@ const ManagementTablePage = ({
           .includes(query)
       )
   );
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const currentPage = Math.min(page, totalPages);
+  const totalPages = serverPagination
+    ? Math.max(1, serverPagination.totalPages)
+    : Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage =
+    serverPagination?.pageNumber ?? Math.min(page, totalPages);
 
   const updateFilter = (setter, value) => {
     setter(value);
@@ -44,17 +54,24 @@ const ManagementTablePage = ({
     <div className="space-y-6">
       <Breadcrumb items={[{ label: 'إدارة المستخدمين' }, { label: title }]} />
       <div className="rounded-xl border border-gray-200 bg-white p-6">
-        <h1 className="text-2xl font-bold">{title}</h1>
-        <p className="mt-1 text-sm text-gray-600">{description}</p>
-        <p className="mt-3 inline-block rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          بيانات تجريبية للعرض فقط
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">{title}</h1>
+            <p className="mt-1 text-sm text-gray-600">{description}</p>
+          </div>
+          {headerAction}
+        </div>
+        {isDemo && (
+          <p className="mt-3 inline-block rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            بيانات تجريبية للعرض فقط
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 items-end gap-4 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-2 xl:grid-cols-4">
         <FormInput
-          label="بحث"
-          aria-label="بحث"
+          label={serverPagination ? 'بحث في الصفحة الحالية' : 'بحث'}
+          aria-label={serverPagination ? 'بحث في الصفحة الحالية' : 'بحث'}
           value={search}
           icon={Search}
           onChange={(event) => updateFilter(setSearch, event.target.value)}
@@ -96,23 +113,48 @@ const ManagementTablePage = ({
       </div>
 
       <p role="status" className="text-sm text-gray-600">
-        عدد النتائج: {filtered.length} من {data.length}
+        {serverPagination
+          ? `نتائج الصفحة الحالية: ${filtered.length} — إجمالي المستخدمين: ${serverPagination.totalCount}. البحث وفلاتر الحالة تطبق على الصفحة الحالية.`
+          : `عدد النتائج: ${filtered.length} من ${data.length}`}
       </p>
-      <Table
-        columns={columns}
-        data={filtered.slice(
-          (currentPage - 1) * pageSize,
-          currentPage * pageSize
-        )}
-        emptyMessage="لا توجد نتائج مطابقة للبحث"
-      />
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        pageSize={pageSize}
-        onPageChange={setPage}
-        onPageSizeChange={(value) => updateFilter(setPageSize, value)}
-      />
+      {error ? (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700"
+        >
+          تعذر تحميل المستخدمين.
+          <button type="button" onClick={onRetry} className="mx-3 underline">
+            إعادة المحاولة
+          </button>
+        </div>
+      ) : (
+        <>
+          <Table
+            loading={loading}
+            onRowClick={onRowClick}
+            columns={columns}
+            data={
+              serverPagination
+                ? filtered
+                : filtered.slice(
+                    (currentPage - 1) * pageSize,
+                    currentPage * pageSize
+                  )
+            }
+            emptyMessage="لا توجد نتائج مطابقة للبحث"
+          />
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={serverPagination?.pageSize ?? pageSize}
+            onPageChange={serverPagination?.onPageChange ?? setPage}
+            onPageSizeChange={
+              serverPagination?.onPageSizeChange ??
+              ((value) => updateFilter(setPageSize, value))
+            }
+          />
+        </>
+      )}
     </div>
   );
 };
