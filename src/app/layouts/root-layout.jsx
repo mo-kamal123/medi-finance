@@ -32,7 +32,9 @@ const AuthenticatedLayout = () => {
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
           <div className="flex min-h-full flex-col">
             <div className="flex-1 p-4 sm:p-6">
-              {profile.isPending ? (
+              {pathname === '/' ? (
+                <Outlet context={user?.permissions} />
+              ) : profile.isPending ? (
                 <PageLoader label="جاري تحميل صلاحيات المستخدم..." />
               ) : profile.isError ? (
                 <div role="alert" className="rounded-xl bg-red-50 p-6 text-red-700">

@@ -1,6 +1,6 @@
 import { BarChart3 } from 'lucide-react';
 
-const WelcomeSection = () => {
+const WelcomeSection = ({ isDashboard = true }) => {
   return (
     <div className="bg-gradient-to-r from-primary to-primary/80 rounded-2xl p-6 sm:p-8 text-white shadow-lg">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -9,13 +9,17 @@ const WelcomeSection = () => {
             مرحباً بك في Medi Finance
           </h1>
           <p className="text-white/90 text-sm sm:text-base">
-            نظام محاسبي متكامل لإدارة شؤونك المالية بكفاءة
+            {isDashboard
+              ? 'نظام محاسبي متكامل لإدارة شؤونك المالية بكفاءة'
+              : 'اختر القسم الذي تريد فتحه من الأقسام المتاحة لحسابك.'}
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">
-          <BarChart3 size={24} />
-          <span className="font-semibold">لوحة التحكم</span>
-        </div>
+        {isDashboard && (
+          <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">
+            <BarChart3 size={24} />
+            <span className="font-semibold">لوحة التحكم</span>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,18 +1,16 @@
 import { NavLink } from 'react-router-dom';
 
-const QuickActionsSection = ({ quickActions }) => {
+const QuickActionsSection = ({ quickActions, title = 'الإجراءات السريعة' }) => {
   return (
     <div className="lg:col-span-2">
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          الإجراءات السريعة
-        </h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">{title}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {quickActions.map((action, index) => {
+          {quickActions.map((action) => {
             const Icon = action.icon;
             return (
               <NavLink
-                key={index}
+                key={action.link}
                 to={action.link}
                 className="group p-4 rounded-xl border border-gray-200 hover:border-primary/30 hover:shadow-md transition-all"
               >
@@ -26,9 +24,11 @@ const QuickActionsSection = ({ quickActions }) => {
                     <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-primary transition-colors">
                       {action.title}
                     </h3>
-                    <p className="text-sm text-gray-600">
-                      {action.description}
-                    </p>
+                    {action.description && (
+                      <p className="text-sm text-gray-600">
+                        {action.description}
+                      </p>
+                    )}
                   </div>
                 </div>
               </NavLink>

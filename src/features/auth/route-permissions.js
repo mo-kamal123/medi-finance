@@ -1,5 +1,4 @@
 const routeResources = new Map([
-  ['', 'Dashboard'],
   ['accounts-tree', 'ChartOfAccounts'],
   ['cost-tree', 'CostCenters'],
   ['link', 'AccountCostCenterLink'],
@@ -35,6 +34,7 @@ const routeResources = new Map([
 ]);
 
 export const canViewRoute = (permissions, pathname) => {
+  if (pathname === '/') return true;
   const section = pathname.replace(/^\/+/, '').split('/')[0].toLowerCase();
   const resource = routeResources.get(section);
   return Boolean(resource && permissions?.[resource]?.View === true);

@@ -13,10 +13,41 @@ import QuickActionsSection from '../components/quick-actions-section';
 import RecentActivitySection from '../components/recent-activity-section';
 import SystemOverviewSection from '../components/system-overview-section';
 import { useOutletContext } from 'react-router-dom';
-import { canViewRoute } from '../../auth/route-permissions';
+import { canViewRoute, filterNavigation } from '../../auth/route-permissions';
+import { links } from '../../../shared/utils/sidebar-data';
+
+const getModuleShortcuts = (items) =>
+  items.flatMap(({ name, link, icon, sub }) =>
+    sub
+      ? getModuleShortcuts(sub)
+      : link === '/'
+        ? []
+        : [{ title: name, link, icon, color: 'bg-primary' }]
+  );
 
 const Home = () => {
   const permissions = useOutletContext();
+  if (permissions?.Dashboard?.View !== true) {
+    const modules = getModuleShortcuts(filterNavigation(links, permissions));
+
+    return (
+      <div className="space-y-6">
+        <WelcomeSection isDashboard={false} />
+        {modules.length > 0 ? (
+          <QuickActionsSection
+            title="الأقسام المتاحة لك"
+            quickActions={modules}
+          />
+        ) : (
+          permissions && (
+            <p className="rounded-xl border border-gray-200 bg-white p-6 text-gray-600">
+              لا توجد أقسام متاحة لحسابك حالياً.
+            </p>
+          )
+        )}
+      </div>
+    );
+  }
   // Sample data - replace with real data from your API
   const stats = [
     {
@@ -70,21 +101,21 @@ const Home = () => {
     },
     {
       title: 'القيود اليومية',
-      description: 'تسجيل القيود المحاسبية',
+      description: 'عرض القيود المحاسبية',
       icon: FileText,
       link: '/entries',
       color: 'bg-blue-500',
     },
     {
-      title: 'التقارير المالية',
-      description: 'عرض التقارير والتحليلات',
+      title: 'ميزان المراجعة',
+      description: 'عرض تقرير ميزان المراجعة',
       icon: BarChart3,
-      link: '/',
+      link: '/trial-balance',
       color: 'bg-emerald-500',
     },
     {
-      title: 'الفواتير',
-      description: 'اداره الفواتير للعملاء والمورديين',
+      title: 'فواتير العملاء',
+      description: 'عرض فواتير العملاء',
       icon: Calculator,
       link: '/customers-invoices',
       color: 'bg-purple-500',
@@ -117,24 +148,23 @@ const Home = () => {
       {/* Welcome Section */}
       <WelcomeSection />
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return <StatisticsCard stat={stat} Icon={Icon} key={index} />;
-        })}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat) => (
+          <StatisticsCard key={stat.title} stat={stat} Icon={stat.icon} />
+        ))}
       </div>
 
-      {/* Quick Actions & Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Quick Actions */}
-        <QuickActionsSection quickActions={quickActions} />
-
-        {/* Recent Activity */}
+      <div
+        className={
+          quickActions.length ? 'grid gap-6 lg:grid-cols-3' : undefined
+        }
+      >
+        {quickActions.length > 0 && (
+          <QuickActionsSection quickActions={quickActions} />
+        )}
         <RecentActivitySection recentActivity={recentActivity} />
       </div>
 
-      {/* System Overview */}
       <SystemOverviewSection />
     </div>
   );

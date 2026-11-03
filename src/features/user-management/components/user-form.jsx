@@ -1,8 +1,10 @@
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { ArrowLeft, Save } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import FormInput from '../../../shared/ui/input';
 import SearchableSelect from '../../../shared/ui/searchable-select';
+import Toggle from '../../../shared/ui/toggle';
 import { createUserSchema } from '../validation/create-user.validation';
 
 const UserForm = ({ roles, user, onSave }) => {
@@ -14,7 +16,8 @@ const UserForm = ({ roles, user, onSave }) => {
     setError,
     formState: { errors, isSubmitting },
   } = useForm({
-    resolver: zodResolver(createUserSchema(roles, editing)),
+    resolver: zodResolver(createUserSchema(roles, user)),
+    mode: 'onTouched',
     defaultValues: {
       firstName: user?.firstName ?? '',
       lastName: user?.lastName ?? '',
@@ -47,9 +50,15 @@ const UserForm = ({ roles, user, onSave }) => {
   const input = (name, label, props) => (
     <FormInput
       {...register(name)}
+      id={`user-${name}`}
       label={label}
       aria-invalid={Boolean(errors[name])}
-      error={errors[name]?.message}
+      aria-describedby={errors[name] ? `user-${name}-error` : undefined}
+      error={
+        errors[name] && (
+          <span id={`user-${name}-error`}>{errors[name].message}</span>
+        )
+      }
       {...props}
     />
   );
@@ -61,19 +70,33 @@ const UserForm = ({ roles, user, onSave }) => {
       onSubmit={handleSubmit(submit)}
       className="rounded-xl border border-gray-200 bg-white p-6"
     >
-      <h2 className="mb-5 text-lg font-semibold">المعلومات الأساسية</h2>
-      <fieldset disabled={isSubmitting} className="min-w-0 space-y-5">
-        <div className="grid gap-4 md:grid-cols-2">
+      <fieldset disabled={isSubmitting} className="min-w-0 space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">
+            المعلومات الأساسية
+          </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            {editing
+              ? 'تعديل بيانات المستخدم والدور المخصص له'
+              : 'إدخال بيانات المستخدم الجديد واختيار دوره'}
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {input('firstName', 'الاسم الأول', {
             required: true,
             autoComplete: 'given-name',
+            placeholder: 'أدخل الاسم الأول',
           })}
-          {input('lastName', 'اسم العائلة', { autoComplete: 'family-name' })}
+          {input('lastName', 'اسم العائلة', {
+            autoComplete: 'family-name',
+            placeholder: 'أدخل اسم العائلة',
+          })}
           {input('mobileNumber', 'رقم الهاتف', {
             required: true,
             type: 'tel',
             autoComplete: 'tel',
             dir: 'ltr',
+            placeholder: '01000xxxxx',
           })}
           <Controller
             name="roleId"
@@ -93,32 +116,35 @@ const UserForm = ({ roles, user, onSave }) => {
               />
             )}
           />
-          {editing ? (
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                {...register('isActive')}
-                className="size-4 accent-primary"
-              />
-              الحساب نشط
-            </label>
-          ) : (
+          {!editing && (
             <>
               {input('password', 'كلمة المرور', {
                 required: true,
                 type: 'password',
                 autoComplete: 'new-password',
                 dir: 'ltr',
+                placeholder: '8 أحرف على الأقل',
+                passwordToggle: true,
               })}
               {input('confirmPassword', 'تأكيد كلمة المرور', {
                 required: true,
                 type: 'password',
                 autoComplete: 'new-password',
                 dir: 'ltr',
+                placeholder: 'أعد إدخال كلمة المرور',
+                passwordToggle: true,
               })}
             </>
           )}
         </div>
+        {editing && (
+          <Toggle
+            {...register('isActive')}
+            label="الحساب نشط"
+            role="switch"
+            disabled={isSubmitting}
+          />
+        )}
         {!roles.length && (
           <p role="status" className="text-gray-600">
             لا توجد أدوار متاحة.
@@ -133,8 +159,9 @@ const UserForm = ({ roles, user, onSave }) => {
           <button
             type="submit"
             disabled={isSubmitting || !roles.length}
-            className="rounded-lg bg-primary px-6 py-2 text-white disabled:opacity-60"
+            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-60"
           >
+            <Save size={16} aria-hidden="true" />
             {isSubmitting
               ? 'جاري الحفظ...'
               : editing
@@ -143,9 +170,10 @@ const UserForm = ({ roles, user, onSave }) => {
           </button>
           <Link
             to="/users"
-            className="rounded-lg border border-gray-300 px-6 py-2 hover:bg-gray-50"
+            className="flex items-center gap-2 rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
           >
             إلغاء
+            <ArrowLeft size={16} aria-hidden="true" />
           </Link>
         </div>
       </fieldset>

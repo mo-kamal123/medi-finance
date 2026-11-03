@@ -1,14 +1,32 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ChevronDown, Layers, ShieldCheck } from 'lucide-react';
+import {
+  ArrowLeft,
+  ChevronDown,
+  FileText,
+  ListChecks,
+  ShieldCheck,
+} from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Breadcrumb from '../../../shared/ui/breadcrumb';
+import FormInput from '../../../shared/ui/input';
 import PageLoader from '../../../shared/ui/page-loader';
+import Toggle from '../../../shared/ui/toggle';
 import { getPermissionModules, getRole, saveRole } from '../api/roles.api';
 import StatusBadge from '../components/status-badge';
 
-const inputClass =
-  'w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20';
+const tabs = [
+  {
+    id: 'info',
+    label: 'بيانات الدور',
+    icon: <FileText size={16} aria-hidden="true" />,
+  },
+  {
+    id: 'permissions',
+    label: 'الصلاحيات',
+    icon: <ListChecks size={16} aria-hidden="true" />,
+  },
+];
 
 const PermissionCheckbox = ({ code, label, selected, onToggle }) => (
   <label className="flex cursor-pointer items-center gap-3 px-4 py-3 text-sm hover:bg-primary/5 has-checked:bg-primary/5">
@@ -22,6 +40,44 @@ const PermissionCheckbox = ({ code, label, selected, onToggle }) => (
   </label>
 );
 
+const getPermissionCodes = ({ resources }) =>
+  resources.flatMap(({ permissions }) => permissions.map(({ code }) => code));
+
+const SelectAllPermissions = ({
+  codes,
+  label,
+  selected,
+  onChange,
+  compact = false,
+}) => {
+  const allSelected =
+    codes.length > 0 && codes.every((code) => selected.has(code));
+  const partiallySelected =
+    !allSelected && codes.some((code) => selected.has(code));
+
+  return (
+    <label
+      className={
+        compact
+          ? 'grid size-10 cursor-pointer place-items-center'
+          : 'flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700'
+      }
+    >
+      <input
+        type="checkbox"
+        className="size-4 shrink-0 accent-primary"
+        ref={(input) => {
+          if (input) input.indeterminate = partiallySelected;
+        }}
+        checked={allSelected}
+        disabled={!codes.length}
+        onChange={(event) => onChange(codes, event.target.checked)}
+      />
+      <span className={compact ? 'sr-only' : undefined}>{label}</span>
+    </label>
+  );
+};
+
 const RoleForm = ({ id, role, modules }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -32,6 +88,7 @@ const RoleForm = ({ id, role, modules }) => {
     () => new Set(role?.permissionCodes)
   );
   const [nameError, setNameError] = useState(false);
+  const [activeTab, setActiveTab] = useState('info');
   const { mutate, isPending, isError } = useMutation({
     mutationFn: (values) => saveRole(id, values),
     onSuccess: () => {
@@ -49,20 +106,29 @@ const RoleForm = ({ id, role, modules }) => {
     });
   };
 
-  const knownCodes = new Set(
-    modules.flatMap(({ resources }) =>
-      resources.flatMap(({ permissions }) =>
-        permissions.map(({ code }) => code)
-      )
-    )
-  );
+  const selectPermissions = (codes, checked) => {
+    setSelected((previous) => {
+      const next = new Set(previous);
+      for (const code of codes) {
+        if (checked) next.add(code);
+        else next.delete(code);
+      }
+      return next;
+    });
+  };
+
+  const knownCodes = new Set(modules.flatMap(getPermissionCodes));
   const otherCodes = [...selected].filter((code) => !knownCodes.has(code));
 
   const submit = (event) => {
     event.preventDefault();
     const trimmedName = name.trim();
     setNameError(!trimmedName);
-    if (!trimmedName || isPending) return;
+    if (!trimmedName) {
+      setActiveTab('info');
+      return;
+    }
+    if (isPending) return;
 
     mutate({
       name: trimmedName,
@@ -73,7 +139,7 @@ const RoleForm = ({ id, role, modules }) => {
   };
 
   return (
-    <form onSubmit={submit} className="space-y-6">
+    <form noValidate onSubmit={submit} className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-linear-to-r from-primary to-primary/80 p-6 text-white sm:px-8">
         <div className="flex min-w-0 items-center gap-4">
           <span className="grid size-14 shrink-0 place-items-center rounded-xl bg-white/20">
@@ -104,113 +170,204 @@ const RoleForm = ({ id, role, modules }) => {
           <ArrowLeft size={16} aria-hidden="true" />
         </Link>
       </header>
-      <fieldset disabled={isPending} className="min-w-0 space-y-6">
+      <fieldset
+        disabled={isPending}
+        className="min-w-0 rounded-xl border border-gray-200 bg-white"
+      >
+        <div
+          role="tablist"
+          aria-label="تفاصيل الدور"
+          className="flex gap-1 overflow-x-auto border-b border-gray-200 px-4 pt-3"
+        >
+          {tabs.map(({ id: tab, label, icon }) => (
+            <button
+              key={tab}
+              type="button"
+              role="tab"
+              id={`role-tab-${tab}`}
+              aria-selected={activeTab === tab}
+              aria-controls={`role-panel-${tab}`}
+              tabIndex={activeTab === tab ? 0 : -1}
+              onClick={() => setActiveTab(tab)}
+              onKeyDown={(event) => {
+                if (
+                  !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(
+                    event.key
+                  )
+                )
+                  return;
+                event.preventDefault();
+                const nextTab =
+                  event.key === 'Home'
+                    ? 'info'
+                    : event.key === 'End'
+                      ? 'permissions'
+                      : tab === 'info'
+                        ? 'permissions'
+                        : 'info';
+                setActiveTab(nextTab);
+                event.currentTarget.ownerDocument
+                  .getElementById(`role-tab-${nextTab}`)
+                  ?.focus();
+              }}
+              className={`flex items-center gap-2 whitespace-nowrap rounded-t-lg px-4 py-2.5 text-base font-medium transition-colors ${
+                activeTab === tab
+                  ? 'border-b-2 border-primary bg-primary/5 text-primary'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {icon}
+              {label}
+            </button>
+          ))}
+        </div>
         <section
-          aria-labelledby="role-details"
-          className="space-y-4 rounded-xl border border-gray-200 bg-white p-5"
+          role="tabpanel"
+          id="role-panel-info"
+          aria-labelledby="role-tab-info"
+          hidden={activeTab !== 'info'}
+          className="space-y-4 p-6"
         >
           <h2 id="role-details" className="text-lg font-semibold">
             بيانات الدور
           </h2>
-          <label className="block space-y-1">
-            <span>اسم الدور</span>
-            <input
-              className={inputClass}
-              required
-              maxLength={150}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-          </label>
-          {nameError && (
-            <p role="alert" className="text-red-700">
-              أدخل اسم الدور.
-            </p>
-          )}
-          <label className="block space-y-1">
-            <span>الوصف</span>
-            <textarea
-              className={inputClass}
-              rows={3}
-              maxLength={1000}
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-            />
-          </label>
-          <label className="flex items-center gap-3 rounded-lg bg-gray-50 p-3">
-            <input
-              type="checkbox"
-              className="size-4 accent-primary"
-              checked={isActive}
-              onChange={(event) => setIsActive(event.target.checked)}
-            />
-            <span>نشط</span>
-          </label>
+          <FormInput
+            label="اسم الدور"
+            aria-label="اسم الدور"
+            aria-invalid={nameError}
+            error={
+              nameError ? <span role="alert">أدخل اسم الدور.</span> : undefined
+            }
+            required
+            maxLength={150}
+            value={name}
+            onChange={(event) => {
+              setName(event.target.value);
+              if (event.target.value.trim()) setNameError(false);
+            }}
+          />
+          <FormInput
+            as="textarea"
+            label="الوصف"
+            aria-label="الوصف"
+            rows={3}
+            maxLength={1000}
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+          />
+          <Toggle
+            label="نشط"
+            role="switch"
+            checked={isActive}
+            onChange={(event) => setIsActive(event.target.checked)}
+            disabled={isPending}
+          />
         </section>
         <section
-          aria-labelledby="role-permissions"
-          className="min-w-0 space-y-3 rounded-xl border border-gray-200 bg-white p-5"
+          role="tabpanel"
+          id="role-panel-permissions"
+          aria-labelledby="role-tab-permissions"
+          hidden={activeTab !== 'permissions'}
+          className="h-[clamp(12rem,50dvh,32rem)] min-w-0 space-y-3 overflow-y-auto overscroll-contain p-6"
         >
-          <h2 id="role-permissions" className="text-lg font-semibold">
-            صلاحيات الدور
-          </h2>
-          <p className="text-sm text-gray-600">
-            افتح الوحدة واختر الصلاحيات التي تريد إسنادها للدور.
-          </p>
+          <div
+            dir="rtl"
+            className="flex flex-wrap items-center justify-between gap-3"
+          >
+            <h2 id="role-permissions" className="text-lg font-semibold">
+              صلاحيات الدور
+            </h2>
+            <div className="ms-auto rounded-lg border border-gray-200 bg-primary/5">
+              <SelectAllPermissions
+                codes={[...knownCodes]}
+                label="تحديد جميع الصلاحيات المتاحة"
+                selected={selected}
+                onChange={selectPermissions}
+              />
+            </div>
+          </div>
           {!modules.length && (
             <p className="text-gray-600">لا توجد صلاحيات متاحة.</p>
           )}
-          {modules.map(({ module, resources }) => (
-            <details
-              key={module}
-              className="group rounded-xl border border-gray-200 bg-white"
-            >
-              <summary
-                className="flex cursor-pointer list-none items-center gap-3 rounded-xl bg-gray-50 px-4 py-3 text-right font-medium hover:bg-gray-100 [&::-webkit-details-marker]:hidden"
-                dir="rtl"
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {[0, 1].map((column) => (
+              <div
+                key={column}
+                className="contents md:flex md:min-w-0 md:flex-col md:gap-3"
               >
-                <Layers
-                  size={18}
-                  className="shrink-0 text-primary"
-                  aria-hidden="true"
-                />
-                <bdi className="min-w-0 flex-1 break-words">{module}</bdi>
-                <ChevronDown
-                  size={18}
-                  className="shrink-0 text-gray-600 transition-transform group-open:rotate-180"
-                  aria-hidden="true"
-                />
-              </summary>
-              {resources.map(
-                ({ resource, displayNameAr, displayName, permissions }) => (
-                  <fieldset
-                    key={resource}
-                    dir="rtl"
-                    className="m-4 min-w-0 rounded-lg border border-gray-200"
-                  >
-                    <legend className="mx-3 px-2 text-sm font-semibold text-gray-700">
-                      <bdi>{displayNameAr || displayName || resource}</bdi>
-                    </legend>
-                    <div className="divide-y divide-gray-100">
-                      {permissions.map((permission) => (
-                        <PermissionCheckbox
-                          key={permission.code}
-                          code={permission.code}
-                          label={
-                            permission.displayNameAr ||
-                            permission.displayName ||
-                            permission.code
-                          }
-                          selected={selected}
-                          onToggle={toggle}
-                        />
-                      ))}
-                    </div>
-                  </fieldset>
-                )
-              )}
-            </details>
-          ))}
+                {modules.map(
+                  ({ module, resources }, index) =>
+                    index % 2 === column && (
+                      <div
+                        key={module}
+                        style={{ order: index }}
+                        className="relative min-w-0"
+                      >
+                        <div className="absolute top-1 right-1 z-10">
+                          <SelectAllPermissions
+                            codes={getPermissionCodes({ resources })}
+                            label={`تحديد جميع صلاحيات الوحدة ${module}`}
+                            selected={selected}
+                            onChange={selectPermissions}
+                            compact
+                          />
+                        </div>
+                        <details className="group h-fit min-w-0 rounded-xl border border-gray-200 bg-white">
+                          <summary
+                            className="flex cursor-pointer list-none items-center gap-3 rounded-xl bg-gray-50 py-3 pr-12 pl-4 text-right font-medium hover:bg-gray-100 [&::-webkit-details-marker]:hidden"
+                            dir="rtl"
+                          >
+                            <bdi className="min-w-0 flex-1 break-words">
+                              {module}
+                            </bdi>
+                            <ChevronDown
+                              size={18}
+                              className="shrink-0 text-gray-600 transition-transform group-open:rotate-180"
+                              aria-hidden="true"
+                            />
+                          </summary>
+                          {resources.map(
+                            ({
+                              resource,
+                              displayNameAr,
+                              displayName,
+                              permissions,
+                            }) => (
+                              <fieldset
+                                key={resource}
+                                dir="rtl"
+                                className="m-4 min-w-0 rounded-lg border border-gray-200"
+                              >
+                                <legend className="mx-3 px-2 text-sm font-semibold text-gray-700">
+                                  <bdi>
+                                    {displayNameAr || displayName || resource}
+                                  </bdi>
+                                </legend>
+                                <div className="divide-y divide-gray-100">
+                                  {permissions.map((permission) => (
+                                    <PermissionCheckbox
+                                      key={permission.code}
+                                      code={permission.code}
+                                      label={
+                                        permission.displayNameAr ||
+                                        permission.displayName ||
+                                        permission.code
+                                      }
+                                      selected={selected}
+                                      onToggle={toggle}
+                                    />
+                                  ))}
+                                </div>
+                              </fieldset>
+                            )
+                          )}
+                        </details>
+                      </div>
+                    )
+                )}
+              </div>
+            ))}
+          </div>
           {otherCodes.length > 0 && (
             <fieldset className="space-y-2 rounded-lg border border-gray-200 p-3">
               <legend className="px-1">صلاحيات أخرى مرتبطة بالدور</legend>
@@ -226,21 +383,23 @@ const RoleForm = ({ id, role, modules }) => {
             </fieldset>
           )}
         </section>
-        {isError && (
-          <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-700">
-            تعذر حفظ الدور. حاول مرة أخرى.
-          </p>
-        )}
-        <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4">
-          <button
-            type="submit"
-            className="rounded-lg bg-primary px-4 py-2 text-white disabled:opacity-50"
-          >
-            {isPending ? 'جاري الحفظ...' : 'حفظ الدور'}
-          </button>
-          <Link to="/roles" className="text-primary hover:underline">
-            إلغاء
-          </Link>
+        <div className="sticky bottom-0 z-10 space-y-3 rounded-b-xl border-t border-gray-200 bg-white px-6 py-4">
+          {isError && (
+            <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-700">
+              تعذر حفظ الدور. حاول مرة أخرى.
+            </p>
+          )}
+          <div className="flex items-center justify-end gap-4">
+            <button
+              type="submit"
+              className="rounded-lg bg-primary px-4 py-2 text-white disabled:opacity-50"
+            >
+              {isPending ? 'جاري الحفظ...' : 'حفظ الدور'}
+            </button>
+            <Link to="/roles" className="text-primary hover:underline">
+              إلغاء
+            </Link>
+          </div>
         </div>
       </fieldset>
     </form>
