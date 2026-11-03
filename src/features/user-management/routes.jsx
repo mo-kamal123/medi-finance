@@ -23,6 +23,20 @@ export const userManagementRoutes = [
     ),
   },
   {
+    path: '/roles/new',
+    element: lazyPage(
+      () => import('./pages/role-form-page'),
+      'جاري تحميل نموذج الدور...'
+    ),
+  },
+  {
+    path: '/roles/:id',
+    element: lazyPage(
+      () => import('./pages/role-form-page'),
+      'جاري تحميل بيانات الدور...'
+    ),
+  },
+  {
     path: '/roles',
     element: lazyPage(
       () => import('./pages/roles-page'),

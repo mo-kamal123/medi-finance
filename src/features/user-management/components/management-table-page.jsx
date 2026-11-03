@@ -19,6 +19,7 @@ const ManagementTablePage = ({
   serverPagination,
   loading = false,
   error,
+  errorMessage = 'تعذر تحميل المستخدمين.',
   onRetry,
   isDemo = true,
 }) => {
@@ -122,7 +123,7 @@ const ManagementTablePage = ({
           role="alert"
           className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700"
         >
-          تعذر تحميل المستخدمين.
+          {errorMessage}
           <button type="button" onClick={onRetry} className="mx-3 underline">
             إعادة المحاولة
           </button>
