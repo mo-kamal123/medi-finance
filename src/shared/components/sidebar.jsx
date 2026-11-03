@@ -2,15 +2,18 @@ import SidebarItem from '../ui/sidebar-item';
 import { useDispatch, useSelector } from 'react-redux';
 import { LogOut, ShieldCheck, UserRound } from 'lucide-react';
 import { clearCredentials } from '../../features/auth/store/auth-slice';
+import { filterNavigation } from '../../features/auth/route-permissions';
 import { removeFromLocalStorage } from '../utils/local-storage-actions';
 import logo from '../../app/assets/logo.png';
 import { links } from '../utils/sidebar-data';
 import { useState } from 'react';
 
-const Sidebar = () => {
+const Sidebar = ({ profile }) => {
   const dispatch = useDispatch();
   const openSidebar = useSelector((state) => state.main.sidebar);
-  const user = useSelector((state) => state.auth.user);
+  const storedUser = useSelector((state) => state.auth.user);
+  const user = profile ?? storedUser;
+  const visibleLinks = filterNavigation(links, profile?.permissions);
   const [openGroup, setOpenGroup] = useState(null);
   const displayName =
     [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
@@ -60,7 +63,7 @@ const Sidebar = () => {
           `}
         >
           <ul className="space-y-1.5 pb-4">
-            {links.map((link) => (
+            {visibleLinks.map((link) => (
               <SidebarItem
                 key={link.name}
                 item={link}

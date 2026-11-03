@@ -4,14 +4,14 @@ export const userManagementRoutes = [
   {
     path: '/users/:id',
     element: lazyPage(
-      () => import('./pages/edit-user-page'),
+      () => import('./pages/user-form-page'),
       'جاري تحميل بيانات المستخدم...'
     ),
   },
   {
     path: '/users/new',
     element: lazyPage(
-      () => import('./pages/new-user-page'),
+      () => import('./pages/user-form-page'),
       'جاري تحميل نموذج المستخدم...'
     ),
   },

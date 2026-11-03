@@ -11,7 +11,7 @@ export const useUser = (id) => {
   return useQuery({
     queryKey: ['users', 'detail', id],
     queryFn: ({ signal }) => getUser(id, signal),
-    enabled: Boolean(id) && !id.startsWith('USR-'),
-    staleTime: 30_000,
+    enabled: Boolean(id),
+    gcTime: 0,
   });
 };

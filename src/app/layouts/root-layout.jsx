@@ -1,20 +1,29 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { useId } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import Navbar from '../../shared/components/navbar';
 import Sidebar from '../../shared/components/sidebar';
 import { useSelector } from 'react-redux';
+import { getCurrentUser } from '../../features/auth/api/auh-api';
+import { canViewRoute } from '../../features/auth/route-permissions';
+import PageLoader from '../../shared/ui/page-loader';
 import khusmLogo from '../assets/Khusm Logo (1).png';
 
-const RootLayout = () => {
-  const loggedIn = useSelector((state) => state.auth.token);
-
-  if (!loggedIn) {
-    return <Navigate to="/auth" replace />;
-  }
+const AuthenticatedLayout = () => {
+  const sessionId = useId();
+  const { pathname } = useLocation();
+  const profile = useQuery({
+    queryKey: ['auth', 'me', sessionId],
+    queryFn: ({ signal }) => getCurrentUser(signal),
+    staleTime: 0,
+    gcTime: 0,
+  });
+  const user = profile.isError ? undefined : profile.data;
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {/* Sidebar */}
-      <Sidebar />
+      <Sidebar profile={user} />
 
       {/* Right side (Navbar + Content) */}
       <div className="flex min-w-0 flex-1 flex-col">
@@ -23,7 +32,22 @@ const RootLayout = () => {
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
           <div className="flex min-h-full flex-col">
             <div className="flex-1 p-4 sm:p-6">
-              <Outlet />
+              {profile.isPending ? (
+                <PageLoader label="جاري تحميل صلاحيات المستخدم..." />
+              ) : profile.isError ? (
+                <div role="alert" className="rounded-xl bg-red-50 p-6 text-red-700">
+                  تعذر تحميل صلاحيات المستخدم.
+                  <button type="button" onClick={() => void profile.refetch()} className="mx-3 underline">
+                    إعادة المحاولة
+                  </button>
+                </div>
+              ) : canViewRoute(user.permissions, pathname) ? (
+                <Outlet context={user.permissions} />
+              ) : (
+                <div role="alert" className="rounded-xl bg-amber-50 p-6 text-amber-800">
+                  ليس لديك صلاحية لعرض هذه الصفحة.
+                </div>
+              )}
             </div>
             <footer className="shrink-0 border-t border-gray-200 bg-white px-4 py-4 sm:px-6">
               <div dir="ltr" className="flex items-center justify-center gap-3">
@@ -36,6 +60,11 @@ const RootLayout = () => {
       </div>
     </div>
   );
+};
+
+const RootLayout = () => {
+  const token = useSelector((state) => state.auth.token);
+  return token ? <AuthenticatedLayout key={token} /> : <Navigate to="/auth" replace />;
 };
 
 export default RootLayout;

@@ -12,9 +12,11 @@ import StatisticsCard from '../components/statistics-card';
 import QuickActionsSection from '../components/quick-actions-section';
 import RecentActivitySection from '../components/recent-activity-section';
 import SystemOverviewSection from '../components/system-overview-section';
-import Pagination from '../../../shared/components/pagination';
+import { useOutletContext } from 'react-router-dom';
+import { canViewRoute } from '../../auth/route-permissions';
 
 const Home = () => {
+  const permissions = useOutletContext();
   // Sample data - replace with real data from your API
   const stats = [
     {
@@ -84,10 +86,10 @@ const Home = () => {
       title: 'الفواتير',
       description: 'اداره الفواتير للعملاء والمورديين',
       icon: Calculator,
-      link: '/invoices',
+      link: '/customers-invoices',
       color: 'bg-purple-500',
     },
-  ];
+  ].filter(({ link }) => canViewRoute(permissions, link));
 
   const recentActivity = [
     {

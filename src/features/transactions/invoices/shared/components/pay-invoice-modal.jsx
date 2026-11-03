@@ -27,7 +27,8 @@ import {
 } from '../utils/pay-invoice-utils';
 
 // PayInvoiceModal
-const PayInvoiceModal = ({ invoiceId, remainingAmount, isOpen, onClose, onSuccess }) => {
+const PayInvoiceModal = ({ invoiceId, remainingAmount, isCollection, isOpen, onClose, onSuccess }) => {
+  const action = isCollection ? 'تحصيل' : 'دفع';
   // Cache & data fetching
   const queryClient = useQueryClient();
   const { data: banksResponse = [] } = useBanks();
@@ -51,8 +52,7 @@ const PayInvoiceModal = ({ invoiceId, remainingAmount, isOpen, onClose, onSucces
       bankID: '',
       bankAccountID: '',
       checkNumber: '',
-      fromBankAccountID: '',
-      toBankAccountID: '',
+      referenceNumber: '',
     },
     resolver: zodResolver(payInvoiceSchema),
   });
@@ -98,7 +98,7 @@ const PayInvoiceModal = ({ invoiceId, remainingAmount, isOpen, onClose, onSucces
       <div className="mx-4 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 text-right shadow-xl">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-gray-900">دفع الفاتورة</h3>
+          <h3 className="text-xl font-bold text-gray-900">{action} الفاتورة</h3>
           <button onClick={onClose} className="rounded-lg p-2 text-gray-500 hover:bg-gray-100">
             <X size={20} />
           </button>
@@ -113,7 +113,7 @@ const PayInvoiceModal = ({ invoiceId, remainingAmount, isOpen, onClose, onSucces
               render={({ field }) => (
                 <FormInput
                   as="select"
-                  label="طريقة الدفع"
+                  label={isCollection ? 'طريقة التحصيل' : 'طريقة الدفع'}
                   value={field.value ?? '3'}
                   error={errors.paymentMode?.message}
                   onChange={(e) => {
@@ -121,8 +121,6 @@ const PayInvoiceModal = ({ invoiceId, remainingAmount, isOpen, onClose, onSucces
                     setValue('bankID', '');
                     setValue('bankAccountID', '');
                     setValue('checkNumber', '');
-                    setValue('fromBankAccountID', '');
-                    setValue('toBankAccountID', '');
                   }}
                   required
                 >
@@ -155,7 +153,7 @@ const PayInvoiceModal = ({ invoiceId, remainingAmount, isOpen, onClose, onSucces
               control={control}
               render={({ field }) => (
                 <DateInput
-                  label="تاريخ الدفع"
+                  label={isCollection ? 'تاريخ التحصيل' : 'تاريخ الدفع'}
                   value={field.value ?? ''}
                   onChange={(event) => field.onChange(event.target.value)}
                   error={errors.paymentDate?.message}
@@ -164,7 +162,7 @@ const PayInvoiceModal = ({ invoiceId, remainingAmount, isOpen, onClose, onSucces
               )}
             />
 
-            <Controller
+            {watchedPaymentMode === '1' && <Controller
               name="dueDate"
               control={control}
               render={({ field }) => (
@@ -176,7 +174,7 @@ const PayInvoiceModal = ({ invoiceId, remainingAmount, isOpen, onClose, onSucces
                   required
                 />
               )}
-            />
+            />}
 
           </div>
 
@@ -251,32 +249,30 @@ const PayInvoiceModal = ({ invoiceId, remainingAmount, isOpen, onClose, onSucces
           {watchedPaymentMode === '3' ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Controller
-                name="fromBankAccountID"
+                name="bankAccountID"
                 control={control}
                 render={({ field }) => (
                   <SearchableSelect
                     value={field.value ?? ''}
                     onChange={(event) => field.onChange(event.target.value)}
                     options={allBankAccountOptions}
-                    placeholder="اختر الحساب المحول منه"
-                    label="من حساب"
-                    error={errors.fromBankAccountID?.message}
+                    placeholder="اختر حساب البنك"
+                    label={isCollection ? 'الحساب المحول إليه' : 'الحساب المحول منه'}
+                    error={errors.bankAccountID?.message}
                     required
                   />
                 )}
               />
 
               <Controller
-                name="toBankAccountID"
+                name="referenceNumber"
                 control={control}
                 render={({ field }) => (
-                  <SearchableSelect
+                  <FormInput
+                    label="الرقم المرجعي للتحويل"
                     value={field.value ?? ''}
-                    onChange={(event) => field.onChange(event.target.value)}
-                    options={allBankAccountOptions}
-                    placeholder="اختر الحساب المحول إليه"
-                    label="إلى حساب"
-                    error={errors.toBankAccountID?.message}
+                    onChange={field.onChange}
+                    error={errors.referenceNumber?.message}
                     required
                   />
                 )}
@@ -298,7 +294,7 @@ const PayInvoiceModal = ({ invoiceId, remainingAmount, isOpen, onClose, onSucces
               disabled={payMutation.isPending}
               className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2 text-white hover:bg-primary/90 disabled:opacity-60"
             >
-              {payMutation.isPending ? 'جاري الدفع...' : 'دفع'}
+              {payMutation.isPending ? `جاري ${action} الفاتورة...` : action}
             </button>
           </div>
         </form>

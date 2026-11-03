@@ -21,16 +21,14 @@ test('cheque payment includes due date and only the cheque banking fields', () =
   });
 });
 
-test('transfer payment clears stale cheque fields and sends numeric account IDs', () => {
+test('transfer sends one numeric bank account, a date, and the trimmed reference', () => {
   const form = payInvoiceSchema.parse({
-    ...common, paymentMode: '3', fromBankAccountID: '12', toBankAccountID: '24',
-    bankID: '5', bankAccountID: '12', checkNumber: 'OLD',
+    ...common, paymentMode: '3', bankAccountID: '12',
+    referenceNumber: ' TR-CUST-001 ', bankID: '5', checkNumber: 'OLD',
   });
   assert.deepEqual(buildPaymentPayload(form), {
-    amount: 125.5, paymentMode: 'BankTransfer', paymentMethodID: null,
-    paymentDate: '2026-10-18T00:00:00', dueDate: '2026-11-01T00:00:00',
-    bankID: null, bankAccountID: null, checkNumber: null,
-    fromBankAccountID: 12, toBankAccountID: 24,
+    amount: 125.5, paymentMode: 'BankTransfer', bankAccountID: 12,
+    paymentDate: '2026-10-18', referenceNumber: 'TR-CUST-001',
   });
 });
 
@@ -42,17 +40,18 @@ test('cash and unsupported payment modes are rejected', () => {
 });
 
 test('invalid dates, nonpositive amounts, and incomplete banking details are rejected', () => {
-  const transfer = { ...common, paymentMode: '3', fromBankAccountID: '12', toBankAccountID: '24' };
-  for (const dueDate of ['', '2026-02-30', '2026-11']) {
-    assert.equal(payInvoiceSchema.safeParse({ ...transfer, dueDate }).success, false);
-  }
+  const transfer = { amount: common.amount, paymentDate: common.paymentDate, paymentMode: '3', bankAccountID: '12', referenceNumber: 'TR-SUP-001' };
+  assert.equal(payInvoiceSchema.safeParse(transfer).success, true);
   for (const amount of ['', '0', '-1', 'Infinity', 'abc']) {
     assert.equal(payInvoiceSchema.safeParse({ ...transfer, amount }).success, false);
   }
-  for (const changes of [{ fromBankAccountID: '' }, { toBankAccountID: '' }, { toBankAccountID: '12' }, { paymentDate: '' }]) {
+  for (const changes of [{ bankAccountID: '' }, { bankAccountID: 'abc' }, { referenceNumber: ' ' }, { paymentDate: '' }]) {
     assert.equal(payInvoiceSchema.safeParse({ ...transfer, ...changes }).success, false);
   }
   const cheque = { ...common, paymentMode: '1', bankID: '5', bankAccountID: '12', checkNumber: '42' };
+  for (const dueDate of ['', '2026-02-30', '2026-11']) {
+    assert.equal(payInvoiceSchema.safeParse({ ...cheque, dueDate }).success, false);
+  }
   for (const changes of [{ bankID: '' }, { bankAccountID: '' }, { checkNumber: '   ' }]) {
     assert.equal(payInvoiceSchema.safeParse({ ...cheque, ...changes }).success, false);
   }

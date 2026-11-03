@@ -3,7 +3,10 @@ import { axiosInstance } from '../../../app/api/axiosInstance';
 export const mapUser = (user) => ({
   ...user,
   id: String(user.userID),
-  name: [user.firstName, user.lastName].filter(Boolean).join(' ') || user.fullName || '',
+  name:
+    [user.firstName, user.lastName].filter(Boolean).join(' ') ||
+    user.fullName ||
+    '',
   status: user.isActive ? 'active' : 'inactive',
 });
 
@@ -24,10 +27,17 @@ export const getUsers = async (
   };
 };
 
+const userPath = (id) => `/users/${encodeURIComponent(id)}`;
+
 export const getUser = async (id, signal) => {
-  const { data } = await axiosInstance.get(`/users/${encodeURIComponent(id)}`, {
+  const { data } = await axiosInstance.get(userPath(id), {
     signal,
   });
-  const user = data.data ?? data;
+  const user = data?.data ?? data;
   return user ? mapUser(user) : null;
 };
+
+export const createUser = (values) => axiosInstance.post('/users', values);
+
+export const updateUser = (id, values) =>
+  axiosInstance.put(userPath(id), values);

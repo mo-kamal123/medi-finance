@@ -29,16 +29,18 @@ export const payInvoiceSchema = z
           Number(value) > 0,
         'المبلغ مطلوب'
       ),
-    paymentDate: z.iso.date({ error: 'تاريخ الدفع غير صالح أو غير مكتمل' }),
-    dueDate: z.iso.date({ error: 'تاريخ الاستحقاق غير صالح أو غير مكتمل' }),
+    paymentDate: z.iso.date({ error: 'تاريخ العملية غير صالح أو غير مكتمل' }),
+    dueDate: z.string().optional(),
     bankID: z.string().optional().default(''),
     bankAccountID: z.string().optional().default(''),
     checkNumber: z.string().optional().default(''),
-    fromBankAccountID: z.string().optional().default(''),
-    toBankAccountID: z.string().optional().default(''),
+    referenceNumber: z.string().trim().optional().default(''),
   })
   .superRefine((data, ctx) => {
     if (data.paymentMode === '1') {
+      if (!z.iso.date().safeParse(data.dueDate).success) {
+        ctx.addIssue({ code: 'custom', path: ['dueDate'], message: 'تاريخ الاستحقاق غير صالح أو غير مكتمل' });
+      }
       if (!data.bankID) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['bankID'], message: 'البنك مطلوب' });
       }
@@ -50,14 +52,11 @@ export const payInvoiceSchema = z
       }
     }
     if (data.paymentMode === '3') {
-      if (!data.fromBankAccountID) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['fromBankAccountID'], message: 'من حساب مطلوب' });
+      if (!/^[1-9]\d*$/.test(data.bankAccountID) || !Number.isSafeInteger(Number(data.bankAccountID))) {
+        ctx.addIssue({ code: 'custom', path: ['bankAccountID'], message: 'حساب البنك مطلوب' });
       }
-      if (!data.toBankAccountID) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['toBankAccountID'], message: 'إلى حساب مطلوب' });
-      }
-      if (data.fromBankAccountID && data.fromBankAccountID === data.toBankAccountID) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['toBankAccountID'], message: 'يجب أن يختلف الحساب المحول إليه عن الحساب المحول منه' });
+      if (!data.referenceNumber) {
+        ctx.addIssue({ code: 'custom', path: ['referenceNumber'], message: 'الرقم المرجعي مطلوب' });
       }
     }
   });
@@ -78,18 +77,30 @@ export const normalizeCollection = (value) => {
 /**
  * Transform the raw form values into the payload expected by the pay-invoice API.
  */
-export const buildPaymentPayload = (data) => ({
-  amount: Number(data.amount),
-  paymentMode: data.paymentMode === '1' ? 'Check' : 'BankTransfer',
-  paymentMethodID: null,
-  paymentDate: `${data.paymentDate}T00:00:00`,
-  dueDate: `${data.dueDate}T00:00:00`,
-  bankID: data.paymentMode === '1' ? Number(data.bankID) : null,
-  bankAccountID: data.paymentMode === '1' ? Number(data.bankAccountID) : null,
-  checkNumber: data.paymentMode === '1' ? data.checkNumber : null,
-  fromBankAccountID: data.paymentMode === '3' ? Number(data.fromBankAccountID) : null,
-  toBankAccountID: data.paymentMode === '3' ? Number(data.toBankAccountID) : null,
-});
+export const buildPaymentPayload = (data) => {
+  if (data.paymentMode === '3') {
+    return {
+      amount: Number(data.amount),
+      paymentMode: 'BankTransfer',
+      bankAccountID: Number(data.bankAccountID),
+      paymentDate: data.paymentDate,
+      referenceNumber: data.referenceNumber,
+    };
+  }
+
+  return {
+    amount: Number(data.amount),
+    paymentMode: 'Check',
+    paymentMethodID: null,
+    paymentDate: `${data.paymentDate}T00:00:00`,
+    dueDate: `${data.dueDate}T00:00:00`,
+    bankID: Number(data.bankID),
+    bankAccountID: Number(data.bankAccountID),
+    checkNumber: data.checkNumber,
+    fromBankAccountID: null,
+    toBankAccountID: null,
+  };
+};
 
 /**
  * Build { value, label } options for bank dropdowns.

@@ -72,6 +72,12 @@ const EditInvoice = () => {
     invoice?.invoiceTypeNameAr ||
     invoice?.invoiceTypeNameEn ||
     (invoice?.customerID ? 'فاتورة عميل' : 'فاتورة مورد');
+  const isCollection = Boolean(
+    invoice?.customerID ||
+      (!invoice?.supplierID &&
+        (/مبيعات|عميل/.test(invoice?.invoiceTypeNameAr ?? '') ||
+          /sales?|customer/i.test(invoice?.invoiceTypeNameEn ?? '')))
+  );
   const partyName =
     invoice?.customerNameAr ||
     invoice?.customerName ||
@@ -162,7 +168,7 @@ const EditInvoice = () => {
                 className="flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/30"
               >
                 <DollarSign size={16} />
-                دفع الفاتورة
+                {isCollection ? 'تحصيل الفاتورة' : 'دفع الفاتورة'}
               </button>
             </div>
           </div>
@@ -182,6 +188,7 @@ const EditInvoice = () => {
         <PayInvoiceModal
           invoiceId={id}
           remainingAmount={remainingAmount}
+          isCollection={isCollection}
           isOpen={isPayModalOpen}
           onClose={() => setIsPayModalOpen(false)}
           onSuccess={refetch}
