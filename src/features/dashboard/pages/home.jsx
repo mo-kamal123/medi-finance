@@ -1,17 +1,16 @@
 import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
   FileText,
   BarChart3,
   Calculator,
   FolderTree,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Wallet,
 } from 'lucide-react';
 import WelcomeSection from '../components/welcome-section';
 import StatisticsCard from '../components/statistics-card';
 import QuickActionsSection from '../components/quick-actions-section';
 import RecentActivitySection from '../components/recent-activity-section';
-import SystemOverviewSection from '../components/system-overview-section';
 import { useOutletContext } from 'react-router-dom';
 import { canViewRoute, filterNavigation } from '../../auth/route-permissions';
 import { links } from '../../../shared/utils/sidebar-data';
@@ -22,7 +21,7 @@ const getModuleShortcuts = (items) =>
       ? getModuleShortcuts(sub)
       : link === '/'
         ? []
-        : [{ title: name, link, icon, color: 'bg-primary' }]
+        : [{ title: name, link, icon }]
   );
 
 const Home = () => {
@@ -37,6 +36,7 @@ const Home = () => {
           <QuickActionsSection
             title="الأقسام المتاحة لك"
             quickActions={modules}
+            fourColumns
           />
         ) : (
           permissions && (
@@ -56,9 +56,8 @@ const Home = () => {
       currency: 'ج.م',
       change: '+12.5%',
       trend: 'up',
-      icon: DollarSign,
-      color: 'bg-emerald-500',
-      bgColor: 'bg-emerald-50',
+      icon: ArrowDownLeft,
+      tone: 'bg-teal-50 text-teal-700',
     },
     {
       title: 'إجمالي المصروفات',
@@ -66,9 +65,8 @@ const Home = () => {
       currency: 'ج.م',
       change: '-5.2%',
       trend: 'down',
-      icon: TrendingDown,
-      color: 'bg-red-500',
-      bgColor: 'bg-red-50',
+      icon: ArrowUpRight,
+      tone: 'bg-red-50 text-red-700',
     },
     {
       title: 'صافي الربح',
@@ -76,9 +74,8 @@ const Home = () => {
       currency: 'ج.م',
       change: '+18.3%',
       trend: 'up',
-      icon: TrendingUp,
-      color: 'bg-primary',
-      bgColor: 'bg-primary/10',
+      icon: Wallet,
+      tone: 'bg-emerald-50 text-emerald-700',
     },
     {
       title: 'عدد الحسابات',
@@ -86,8 +83,7 @@ const Home = () => {
       change: '+24',
       trend: 'up',
       icon: FolderTree,
-      color: 'bg-blue-500',
-      bgColor: 'bg-blue-50',
+      tone: 'bg-sky-50 text-sky-700',
     },
   ];
 
@@ -97,28 +93,24 @@ const Home = () => {
       description: 'إدارة الحسابات والتصنيفات',
       icon: FolderTree,
       link: '/accounts-tree',
-      color: 'bg-primary',
     },
     {
       title: 'القيود اليومية',
       description: 'عرض القيود المحاسبية',
       icon: FileText,
       link: '/entries',
-      color: 'bg-blue-500',
     },
     {
       title: 'ميزان المراجعة',
       description: 'عرض تقرير ميزان المراجعة',
       icon: BarChart3,
       link: '/trial-balance',
-      color: 'bg-emerald-500',
     },
     {
       title: 'فواتير العملاء',
       description: 'عرض فواتير العملاء',
       icon: Calculator,
       link: '/customers-invoices',
-      color: 'bg-purple-500',
     },
   ].filter(({ link }) => canViewRoute(permissions, link));
 
@@ -148,11 +140,11 @@ const Home = () => {
       {/* Welcome Section */}
       <WelcomeSection />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <dl className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
-          <StatisticsCard key={stat.title} stat={stat} Icon={stat.icon} />
+          <StatisticsCard key={stat.title} stat={stat} />
         ))}
-      </div>
+      </dl>
 
       <div
         className={
@@ -164,8 +156,6 @@ const Home = () => {
         )}
         <RecentActivitySection recentActivity={recentActivity} />
       </div>
-
-      <SystemOverviewSection />
     </div>
   );
 };

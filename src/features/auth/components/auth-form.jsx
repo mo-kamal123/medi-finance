@@ -9,7 +9,7 @@ const AuthForm = ({ loginData, onChange, onSubmit, isPending }) => {
           type="tel"
           required
           autoComplete="username"
-          placeholder="201000000099"
+          placeholder="أدخل رقم الهاتف"
           value={loginData.mobileNumber}
           className="w-full px-4 py-3 text-gray-900 bg-white border border-gray-200 rounded-lg transition-all duration-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-start"
           onChange={(e) => onChange('mobileNumber', e.target.value)}

@@ -127,6 +127,7 @@ export const links = [
           sub: [
             { name: 'دفتر الأستاذ', link: '/general-ledger', icon: BookOpen },
             { name: 'أعمار الذمم', link: '/aging-report', icon: BookOpen },
+            { name: 'ذمم MEDICONSULT', link: '/mediconsult-payables', icon: FileText },
           ],
         },
       ],

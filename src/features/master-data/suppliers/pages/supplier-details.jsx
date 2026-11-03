@@ -306,6 +306,10 @@ const SupplierDetails = () => {
               />
               <ReadOnlyField label="التصنيف" value={basicInfo.categoryName} />
               <ReadOnlyField
+                label="نوع مقدم الخدمة"
+                value={basicInfo.providerType ?? supplier.providerType}
+              />
+              <ReadOnlyField
                 label="التخصص العام"
                 value={basicInfo.generalSpecialist}
               />

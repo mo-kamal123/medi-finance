@@ -4,10 +4,17 @@ import { useLogin } from '../hooks/useLogin';
 import { useSearchParams } from 'react-router-dom';
 import { getErrorMessage } from '../../../shared/lib/toast';
 
+const autofillData = import.meta.env.DEV
+  ? {
+      mobileNumber: import.meta.env.VITE_DEV_LOGIN_MOBILE,
+      password: import.meta.env.VITE_DEV_LOGIN_PASSWORD,
+    }
+  : null;
+
 const Login = () => {
   const [loginData, setLoginData] = useState({
-    mobileNumber: '201000000099',
-    password: 'Fin!N5CTvbES6rwhhHyqs-xZ9a',
+    mobileNumber: '',
+    password: '',
   });
   const [searchParams] = useSearchParams();
   const { mutate: login, isPending, isError, error, reset } = useLogin();
@@ -29,7 +36,25 @@ const Login = () => {
       {/* Title */}
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-semibold text-gray-900">تسجيل الدخول</h1>
-        <p className="text-gray-600 text-sm">أهلاً بك، الرجاء إدخال بياناتك</p>
+        <p className="text-gray-600 text-sm">
+          {autofillData?.mobileNumber && autofillData.password ? (
+            <button
+              type="button"
+              disabled={isPending}
+              className="rounded hover:text-primary hover:underline focus-visible:outline-primary"
+              aria-label="أهلاً بك، ملء بيانات تسجيل الدخول"
+              onClick={() => {
+                reset();
+                setLoginData(autofillData);
+              }}
+            >
+              أهلاً بك
+            </button>
+          ) : (
+            'أهلاً بك'
+          )}
+          ، الرجاء إدخال بياناتك
+        </p>
       </div>
 
       {/* Form */}

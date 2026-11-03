@@ -31,6 +31,7 @@ const routeResources = new Map([
   ['trial-balance', 'TrialBalance'],
   ['general-ledger', 'GeneralLedger'],
   ['aging-report', 'ARAging'],
+  ['mediconsult-payables', 'MediconsultPayables'],
 ]);
 
 export const canViewRoute = (permissions, pathname) => {
