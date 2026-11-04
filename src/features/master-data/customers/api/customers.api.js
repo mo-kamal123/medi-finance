@@ -15,3 +15,19 @@ export const getCustomerById = async (id) => {
   const { data } = await axiosInstance.get(`/customers/${id}`);
   return data;
 };
+
+export const getCustomerPolicies = async (customerId, signal) => {
+  const { data } = await axiosInstance.get('/customers/policies', {
+    params: { customerId, isWithWataniya: true },
+    signal,
+  });
+  return data;
+};
+
+export const exportCustomerConsumption = async (params) => {
+  const { data } = await axiosInstance.get('/integrations/hcms/account-export', {
+    params,
+    responseType: 'blob',
+  });
+  return data;
+};

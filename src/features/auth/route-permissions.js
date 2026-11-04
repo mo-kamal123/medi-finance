@@ -14,6 +14,7 @@ const routeResources = new Map([
   ['cheques', 'Cheques'],
   ['reconciliations', 'BankReconciliations'],
   ['customers', 'Customers'],
+  ['consumption-report', 'Customers'],
   ['suppliers', 'Suppliers'],
   ['batches', 'Batches'],
   ['users', 'Users'],

@@ -5,11 +5,13 @@ import {
   Building2,
   Users,
   GitBranch,
+  FileSpreadsheet,
 } from 'lucide-react';
 import PageLoader from '../../../../shared/ui/page-loader';
 import Pagination from '../../../../shared/ui/pagination';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import { useCustomer } from '../hooks/customers.queries';
+import CustomerConsumptionPanel from '../components/customer-consumption-panel';
 
 const ReadOnlyField = ({ label, value, className = '' }) => (
   <div className={className}>
@@ -49,6 +51,7 @@ const TABS = [
   { key: 'basic', label: 'المعلومات الأساسية', icon: Building2 },
   { key: 'contacts', label: 'جهات الاتصال', icon: Users },
   { key: 'branches', label: 'الفروع', icon: GitBranch },
+  { key: 'consumption', label: 'الاستهلاكات', icon: FileSpreadsheet },
 ];
 
 const CustomerDetails = () => {
@@ -256,6 +259,9 @@ const CustomerDetails = () => {
             </div>
           )}
 
+          {activeTab === 'consumption' && (
+            <CustomerConsumptionPanel key={id} customerId={customer.customerID ?? id} />
+          )}
         </div>
       </div>
     </div>
