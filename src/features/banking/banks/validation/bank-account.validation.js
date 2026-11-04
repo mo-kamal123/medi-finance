@@ -49,8 +49,5 @@ export const bankAccountSchema = z.object({
 
 export const createBankAccountSchema = bankAccountSchema.extend({
   accountType: z.coerce.number().int().positive('نوع الحساب مطلوب'),
-  counterpartAccountID: z.coerce
-    .number()
-    .int()
-    .positive('الحساب المقابل مطلوب'),
+  isOpeningBalanceDebit: z.boolean().default(true),
 });

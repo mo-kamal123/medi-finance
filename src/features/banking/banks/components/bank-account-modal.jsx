@@ -13,7 +13,6 @@ import {
   bankAccountSchema,
   createBankAccountSchema,
 } from '../validation/bank-account.validation';
-import AccountSearchSelect from '../../../transactions/entries/components/account-search-select';
 
 const getInitialValues = (account = {}, isEditMode) => ({
   accountNumber: account.accountNumber ?? '',
@@ -30,10 +29,8 @@ const getInitialValues = (account = {}, isEditMode) => ({
     ? {}
     : {
         openingBalance: account.openingBalance ?? '',
+        isOpeningBalanceDebit: account.isOpeningBalanceDebit ?? true,
         accountType: String(account.accountType ?? 1),
-        counterpartAccountID: account.counterpartAccountID
-          ? String(account.counterpartAccountID)
-          : '',
       }),
   minBalance: account.minBalance ?? '',
   isActive: account.isActive ?? true,
@@ -128,8 +125,8 @@ const BankAccountModal = ({
           }
         : {
             openingBalance: Number(data.openingBalance) || 0,
+            isOpeningBalanceDebit: data.isOpeningBalanceDebit,
             accountType: Number(data.accountType),
-            counterpartAccountID: Number(data.counterpartAccountID),
           }),
       currencyID: Number(data.currencyID),
       isActive: Boolean(data.isActive),
@@ -250,33 +247,40 @@ const BankAccountModal = ({
 
             {!isEditMode && (
               <>
-                <Controller
-                  name="counterpartAccountID"
-                  control={control}
-                  render={({ field }) => (
-                    <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">
-                        الحساب المقابل *
-                      </label>
-                      <AccountSearchSelect
-                        value={field.value}
-                        onChange={(event) => {
-                          field.onChange(event.target.value);
-                          trigger('counterpartAccountID');
-                        }}
-                        onBlur={field.onBlur}
-                        error={errors.counterpartAccountID?.message}
-                      />
-                    </div>
-                  )}
-                />
                 <FormInput
                   type="number"
                   min="0"
+                  step="any"
                   label="الرصيد الافتتاحي"
                   placeholder="مثال: 1000"
                   {...registerBlur('openingBalance')}
                   error={errors.openingBalance?.message}
+                />
+                <Controller
+                  name="isOpeningBalanceDebit"
+                  control={control}
+                  render={({ field }) => (
+                    <fieldset>
+                      <legend className="mb-1 font-medium text-gray-700 text-[15px]">
+                        طبيعة الرصيد الافتتاحي
+                      </legend>
+                      <div className="flex gap-6 py-2">
+                        {[true, false].map((isDebit) => (
+                          <label key={String(isDebit)} className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name={field.name}
+                              value={String(isDebit)}
+                              checked={field.value === isDebit}
+                              onChange={() => field.onChange(isDebit)}
+                              onBlur={field.onBlur}
+                            />
+                            {isDebit ? 'مدين' : 'دائن'}
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                  )}
                 />
               </>
             )}
