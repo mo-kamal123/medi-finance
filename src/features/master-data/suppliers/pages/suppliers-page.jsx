@@ -1,6 +1,7 @@
-﻿import { useMemo, useState } from 'react';
+import PageHeading from '../../../../shared/ui/page-heading';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Paperclip, Search, X } from 'lucide-react';
+import { Building2, Check, Paperclip, Search, X } from 'lucide-react';
 import FormInput from '../../../../shared/ui/input';
 import NormalSelect from '../../../../shared/ui/NormalSelect';
 import FilterBar from '../../../../shared/ui/filter-bar';
@@ -218,8 +219,10 @@ const SuppliersPage = () => {
 
       <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-gray-200 bg-white p-6 sm:flex-row sm:items-center">
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold md:text-2xl">الموردين</h1>
-          <p className="text-sm text-gray-600">إدارة جميع الموردين</p>
+          <PageHeading icon={<Building2 size={20} />}>
+            <h1 className="text-xl font-bold md:text-2xl">الموردين</h1>
+            <p className="text-sm text-gray-600">إدارة جميع الموردين</p>
+          </PageHeading>
         </div>
       </div>
 

@@ -1,7 +1,8 @@
+import PageHeading from '../../../../../shared/ui/page-heading';
 import Breadcrumb from '../../../../../shared/ui/breadcrumb';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Download } from 'lucide-react';
+import { BookOpen, Download } from 'lucide-react';
 import PageLoader from '../../../../../shared/ui/page-loader';
 import { useGeneralLedger } from '../hooks/general-ledger.queries';
 import { useGeneralLedgerExport } from '../hooks/use-general-ledger-export';
@@ -41,10 +42,12 @@ const GeneralLedgerPage = () => {
       <Breadcrumb items={[{ label: 'التقارير' }, { label: 'تقارير محاسبية' }, { label: 'دفتر الأستاذ العام' }]} />
       <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">دفتر الأستاذ العام</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            عرض الحركات المحاسبية مجمعة حسب الحساب مع الرصيد
-          </p>
+          <PageHeading icon={<BookOpen size={20} />}>
+            <h1 className="text-2xl font-bold text-gray-900">دفتر الأستاذ العام</h1>
+            <p className="mt-1 text-sm text-gray-600">
+              عرض الحركات المحاسبية مجمعة حسب الحساب مع الرصيد
+            </p>
+          </PageHeading>
         </div>
         <button
           type="button"

@@ -1,4 +1,5 @@
-﻿import { useMemo, useState } from 'react';
+import PageHeading from '../../../../shared/ui/page-heading';
+import { useMemo, useState } from 'react';
 import { Eye, Pencil, Plus, Trash2, Wallet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import FormInput from '../../../../shared/ui/input';
@@ -90,8 +91,10 @@ const CashTransactionsPage = () => {
     <div className="space-y-6 p-6">
       <div className="flex flex-col gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">الحركات النقدية</h1>
-          <p className="text-sm text-gray-600">إدارة الإيداعات والسحوبات النقدية</p>
+          <PageHeading icon={<Wallet size={20} />}>
+            <h1 className="text-2xl font-bold">الحركات النقدية</h1>
+            <p className="text-sm text-gray-600">إدارة الإيداعات والسحوبات النقدية</p>
+          </PageHeading>
         </div>
         <button onClick={() => navigate('/cash-vouchers/new', { state: { fromCashTransactions: true } })} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary/90">
           <Plus size={16} /> إضافة حركة نقدية

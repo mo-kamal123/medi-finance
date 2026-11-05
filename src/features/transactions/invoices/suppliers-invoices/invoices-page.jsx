@@ -1,8 +1,9 @@
+import PageHeading from '../../../../shared/ui/page-heading';
 // Supplier invoices list page.
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { FileClock, Plus } from 'lucide-react';
 
 import InvoiceFilters from '../shared/components/invoice-filter';
 import Pagination from '../../../../shared/ui/pagination';
@@ -48,10 +49,10 @@ const SupplierInvoicesPage = () => {
             <Breadcrumb items={[{ label: 'فواتير المورديين' }]} />
       <div className="flex justify-between items-center bg-white rounded-xl p-6 border border-gray-200">
         <div>
-          <h1 className="text-2xl font-bold">فواتير الموردين</h1>
-          <p className="text-sm text-gray-600">
-            إدارة فواتير الموردين من مكان واحد
-          </p>
+          <PageHeading icon={<FileClock size={20} />}>
+            <h1 className="text-2xl font-bold">فواتير الموردين</h1>
+            <p className="text-sm text-gray-600">إدارة فواتير الموردين من مكان واحد</p>
+          </PageHeading>
         </div>
 
         <button

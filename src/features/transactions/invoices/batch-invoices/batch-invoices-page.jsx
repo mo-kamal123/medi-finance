@@ -1,7 +1,8 @@
+import PageHeading from '../../../../shared/ui/page-heading';
 // Batch invoices list page.
 
 import { useMemo, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Files, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import InvoiceFilters from '../shared/components/invoice-filter';
 import Pagination from '../../../../shared/ui/pagination';
@@ -39,10 +40,12 @@ const BatchInvoicesPage = () => {
       <Breadcrumb items={[{ label: 'فواتير المطالبات' }]} />
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white p-6">
         <div>
-          <h1 className="text-2xl font-bold">فواتير المطالبات</h1>
-          <p className="text-sm text-gray-600">
-            متابعة الفواتير التي تم إنشاؤها من دفعات المطالبات
-          </p>
+          <PageHeading icon={<Files size={20} />}>
+            <h1 className="text-2xl font-bold">فواتير المطالبات</h1>
+            <p className="text-sm text-gray-600">
+              متابعة الفواتير التي تم إنشاؤها من دفعات المطالبات
+            </p>
+          </PageHeading>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">

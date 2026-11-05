@@ -1,4 +1,5 @@
-import { Plus } from 'lucide-react';
+import PageHeading from '../../../../shared/ui/page-heading';
+import { BookOpen, Plus } from 'lucide-react';
 import PageLoader from '../../../../shared/ui/page-loader';
 import Pagination from '../../../../shared/ui/pagination';
 import Table from '../../../../shared/ui/table';
@@ -31,10 +32,10 @@ const DailyEntriesPage = () => {
 
       <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-gray-200 bg-white p-6 sm:flex-row sm:items-center">
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold md:text-2xl">القيود اليومية</h1>
-          <p className="text-sm text-gray-600">
-            إدارة جميع القيود اليومية بسهولة.
-          </p>
+          <PageHeading icon={<BookOpen size={20} />}>
+            <h1 className="text-xl font-bold md:text-2xl">القيود اليومية</h1>
+            <p className="text-sm text-gray-600">إدارة جميع القيود اليومية بسهولة.</p>
+          </PageHeading>
         </div>
 
         <button

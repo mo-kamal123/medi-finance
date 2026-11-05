@@ -1,5 +1,6 @@
-﻿import { useState } from 'react';
-import { Eye, Plus, RotateCcw, Search, Trash2 } from 'lucide-react';
+import PageHeading from '../../../../shared/ui/page-heading';
+import { useState } from 'react';
+import { Landmark, Eye, Plus, RotateCcw, Search, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import FormInput from '../../../../shared/ui/input';
@@ -91,8 +92,10 @@ const BanksPage = () => {
 
       <div className="flex justify-between items-center bg-white rounded-xl p-6 border border-gray-200">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold">البنوك</h1>
-          <p className="text-sm text-gray-600">إدارة بيانات البنوك</p>
+          <PageHeading icon={<Landmark size={20} />}>
+            <h1 className="text-2xl font-bold">البنوك</h1>
+            <p className="text-sm text-gray-600">إدارة بيانات البنوك</p>
+          </PageHeading>
         </div>
 
         <button

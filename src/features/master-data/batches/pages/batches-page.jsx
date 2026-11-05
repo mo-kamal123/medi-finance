@@ -1,7 +1,8 @@
+import PageHeading from '../../../../shared/ui/page-heading';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Search } from 'lucide-react';
+import { Layers, Search } from 'lucide-react';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import Table from '../../../../shared/ui/table';
 import Pagination from '../../../../shared/ui/pagination';
@@ -98,8 +99,12 @@ const BatchesPage = () => {
     <div className="space-y-6 p-6">
       <Breadcrumb items={[{ label: 'الدفعات' }]} />
       <div className="rounded-xl border border-gray-200 bg-white p-6">
-        <h1 className="text-2xl font-bold">الدفعات</h1>
-        <p className="mt-1 text-sm text-gray-600">عرض جميع دفعات المطالبات. اختر دفعة لعرض بياناتها وتفاصيلها.</p>
+        <PageHeading icon={<Layers size={20} />}>
+          <h1 className="text-2xl font-bold">الدفعات</h1>
+          <p className="mt-1 text-sm text-gray-600">
+            عرض جميع دفعات المطالبات. اختر دفعة لعرض بياناتها وتفاصيلها.
+          </p>
+        </PageHeading>
       </div>
       <FilterBar
         primaryFilters={[

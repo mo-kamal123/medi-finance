@@ -1,5 +1,6 @@
-﻿import { useMemo, useState } from 'react';
-import { Eye, Plus, Search, Trash2 } from 'lucide-react';
+import PageHeading from '../../../../shared/ui/page-heading';
+import { useMemo, useState } from 'react';
+import { CreditCard, Eye, Plus, Search, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import FormInput from '../../../../shared/ui/input';
@@ -189,8 +190,10 @@ const ChequesPage = () => {
 
       <div className="flex justify-between items-center bg-white rounded-xl p-6 border border-gray-200">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold">الشيكات</h1>
-          <p className="text-sm text-gray-600">إدارة ومتابعة الشيكات</p>
+          <PageHeading icon={<CreditCard size={20} />}>
+            <h1 className="text-2xl font-bold">الشيكات</h1>
+            <p className="text-sm text-gray-600">إدارة ومتابعة الشيكات</p>
+          </PageHeading>
         </div>
 
         <button

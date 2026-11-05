@@ -1,3 +1,4 @@
+import PageHeading from '../../../../shared/ui/page-heading';
 import { useEffect, useState } from 'react';
 import FormInput from '../../../../shared/ui/input';
 import FilterBar from '../../../../shared/ui/filter-bar';
@@ -7,7 +8,7 @@ import Pagination from '../../../../shared/ui/pagination';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import CustomerTable from '../components/customer-table';
 import { useCustomers } from '../hooks/customers.queries';
-import { Search } from 'lucide-react';
+import { Users, Search } from 'lucide-react';
 
 const CustomersPage = () => {
   const [filters, setFilters] = useState({});
@@ -42,8 +43,10 @@ const CustomersPage = () => {
       <Breadcrumb items={[{ label: 'العملاء' }]} />
       <div className="rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold">العملاء</h1>
-          <p className="text-sm text-gray-600">إدارة جميع العملاء</p>
+          <PageHeading icon={<Users size={20} />}>
+            <h1 className="text-2xl font-bold">العملاء</h1>
+            <p className="text-sm text-gray-600">إدارة جميع العملاء</p>
+          </PageHeading>
         </div>
       </div>
 

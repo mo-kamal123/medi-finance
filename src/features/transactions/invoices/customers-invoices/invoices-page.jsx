@@ -1,8 +1,9 @@
+import PageHeading from '../../../../shared/ui/page-heading';
 // Customer invoices list page.
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { FileCheck, Plus } from 'lucide-react';
 
 import InvoiceFilters from '../shared/components/invoice-filter';
 import Pagination from '../../../../shared/ui/pagination';
@@ -19,7 +20,6 @@ import { buildStandardPageColumns } from '../shared/utils/invoice-columns';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 
 const pageType = 'customer';
-const newInvoiceType = 'customer';
 
 const CustomerInvoicesPage = () => {
   const navigate = useNavigate();
@@ -36,7 +36,7 @@ const CustomerInvoicesPage = () => {
   const { data: suppliers } = useSuppliers();
   const { mutate: deleteInvoice, isPending: isDeleting } = useDeleteInvoice();
 
-  const { items = [], totalPages = 1, totalCount = 0 } = data || {};
+  const { items = [], totalPages = 1 } = data || {};
 
   const columns = buildStandardPageColumns({
     partyNameKey: 'customerNameAr',
@@ -54,10 +54,10 @@ const CustomerInvoicesPage = () => {
       <Breadcrumb items={[{ label: 'فواتير العملاء' }]} />
       <div className="flex justify-between items-center bg-white rounded-xl p-6 border border-gray-200">
         <div>
-          <h1 className="text-2xl font-bold">فواتير العملاء</h1>
-          <p className="text-sm text-gray-600">
-            إدارة فواتير العملاء من مكان واحد
-          </p>
+          <PageHeading icon={<FileCheck size={20} />}>
+            <h1 className="text-2xl font-bold">فواتير العملاء</h1>
+            <p className="text-sm text-gray-600">إدارة فواتير العملاء من مكان واحد</p>
+          </PageHeading>
         </div>
 
         <button

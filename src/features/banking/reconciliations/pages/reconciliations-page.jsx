@@ -1,6 +1,7 @@
+import PageHeading from '../../../../shared/ui/page-heading';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Plus, Search } from 'lucide-react';
+import { Scale, Eye, Plus, Search } from 'lucide-react';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import Pagination from '../../../../shared/ui/pagination';
 import Table from '../../../../shared/ui/table';
@@ -334,12 +335,14 @@ const ReconciliationsPage = () => {
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">تسويات البنك</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {totalCount
-              ? `إجمالي التسويات (${totalCount})`
-              : 'عرض كل التسويات البنكية ومطابقتها'}
-          </p>
+          <PageHeading icon={<Scale size={20} />}>
+            <h1 className="text-2xl font-bold text-gray-900">تسويات البنك</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              {totalCount
+                ? `إجمالي التسويات (${totalCount})`
+                : 'عرض كل التسويات البنكية ومطابقتها'}
+            </p>
+          </PageHeading>
         </div>
         <button
           type="button"

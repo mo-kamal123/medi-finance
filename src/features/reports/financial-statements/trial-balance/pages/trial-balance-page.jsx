@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import DateInput from '../../../../../shared/ui/date-input';
 import FormInput from '../../../../../shared/ui/input';
+import ResetFiltersButton from '../../../../../shared/ui/reset-filters-button';
 import { formatCurrency } from '../../../../../shared/utils/formatters';
 import { useFinancialPeriods } from '../../../../transactions/invoices/shared/hooks/invoices.queries';
 import { useTrialBalanceRoots } from '../hooks/trial-balance.queries';
@@ -177,7 +178,11 @@ const TrialBalancePage = () => {
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 gap-4 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-3">
+      <div className="relative grid grid-cols-1 gap-4 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-3">
+        <ResetFiltersButton
+          filters={filters}
+          onReset={() => setFilters({ fromDate: '', toDate: '', financialPeriodId: '' })}
+        />
         <DateInput
           label="من تاريخ"
           value={filters.fromDate}

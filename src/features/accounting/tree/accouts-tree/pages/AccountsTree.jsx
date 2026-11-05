@@ -212,7 +212,7 @@ const AccountsTree = () => {
             className="rounded-xl border border-gray-200 bg-white p-5"
           >
             <div className="text-sm text-gray-500">{card.label}</div>
-            <div className={`mt-2 text-lg font-semibold ${card.color}`}>
+            <div className={`mt-2 text-2xl font-semibold ${card.color}`}>
               {card.value}
             </div>
           </div>

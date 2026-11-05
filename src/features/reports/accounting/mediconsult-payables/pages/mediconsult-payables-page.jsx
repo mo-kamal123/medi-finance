@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { FileText } from 'lucide-react';
+import PageHeading from '../../../../../shared/ui/page-heading';
 import Breadcrumb from '../../../../../shared/ui/breadcrumb';
 import DateInput from '../../../../../shared/ui/date-input';
 import FormInput from '../../../../../shared/ui/input';
@@ -142,12 +144,14 @@ const MediconsultPayablesPage = () => {
     <div className="space-y-6 p-6">
       <Breadcrumb items={[{ label: 'التقارير' }, { label: title }]} />
       <header className="rounded-xl border border-gray-200 bg-white p-6">
-        <h1 className="text-2xl font-bold">{data?.reportName || title}</h1>
-        {data && (
-          <p className="mt-1 text-sm text-gray-600">
-            عدد الدفعات: {formatNumber(data.totalCount)}
-          </p>
-        )}
+        <PageHeading icon={<FileText size={20} />}>
+          <h1 className="text-2xl font-bold">{data?.reportName || title}</h1>
+          {data && (
+            <p className="mt-1 text-sm text-gray-600">
+              عدد الدفعات: {formatNumber(data.totalCount)}
+            </p>
+          )}
+        </PageHeading>
       </header>
       <FilterBar
         gridClassName="xl:grid-cols-5"

@@ -5,6 +5,7 @@ import FormInput from '../../../shared/ui/input';
 import SearchableSelect from '../../../shared/ui/searchable-select';
 import Table from '../../../shared/ui/table';
 import Pagination from '../../../shared/ui/pagination';
+import PageHeading from '../../../shared/ui/page-heading';
 
 const ManagementTablePage = ({
   title,
@@ -15,10 +16,10 @@ const ManagementTablePage = ({
   searchPlaceholder,
   roleOptions,
   headerAction,
+  headerIcon,
   onRowClick,
   serverPagination,
   serverFilters,
-  showResultCount = true,
   loading = false,
   error,
   errorMessage = 'تعذر تحميل المستخدمين.',
@@ -62,10 +63,10 @@ const ManagementTablePage = ({
       <Breadcrumb items={[{ label: 'إدارة المستخدمين' }, { label: title }]} />
       <div className="rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
+          <PageHeading icon={headerIcon}>
             <h1 className="text-2xl font-bold">{title}</h1>
             <p className="mt-1 text-sm text-gray-600">{description}</p>
-          </div>
+          </PageHeading>
           {headerAction}
         </div>
         {isDemo && (
@@ -134,13 +135,6 @@ const ManagementTablePage = ({
         )}
       </div>
 
-      {showResultCount && <p role="status" className="text-sm text-gray-600">
-        {serverPagination
-          ? serverFilters
-            ? `إجمالي النتائج: ${serverPagination.totalCount}`
-            : `نتائج الصفحة الحالية: ${filtered.length} — إجمالي المستخدمين: ${serverPagination.totalCount}. البحث وفلاتر الحالة تطبق على الصفحة الحالية.`
-          : `عدد النتائج: ${filtered.length} من ${data.length}`}
-      </p>}
       {error ? (
         <div
           role="alert"

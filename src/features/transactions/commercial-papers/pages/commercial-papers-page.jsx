@@ -1,6 +1,7 @@
-﻿import { useMemo, useState } from 'react';
+import PageHeading from '../../../../shared/ui/page-heading';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
+import { FileCheck, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 
 import FormInput from '../../../../shared/ui/input';
 import Pagination from '../../../../shared/ui/pagination';
@@ -169,9 +170,10 @@ const CommercialPapersPage = ({ paperType }) => {
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between">
-        <h1 className="text-xl font-bold">{pageConfig.title}</h1>
-
-        <button
+        <PageHeading icon={<FileCheck size={20} />}>
+          <h1 className="text-xl font-bold">{pageConfig.title}</h1>
+        </PageHeading>
+<button
           onClick={() => navigate(pageConfig.newPath)}
           className="bg-primary text-white px-4 py-2 flex justify-between items-center gap-3 rounded"
         >

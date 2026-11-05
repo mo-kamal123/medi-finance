@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
 import ManagementTablePage from '../components/management-table-page';
 import StatusBadge from '../components/status-badge';
 import { useUsers } from '../hooks/users.queries';
@@ -106,7 +106,7 @@ const UsersPage = () => {
       )}
       <ManagementTablePage
         title="المستخدمون"
-        showResultCount={false}
+        headerIcon={<Users size={20} />}
         description="عرض المستخدمين وبيانات حساباتهم"
         data={response?.items ?? []}
         isDemo={false}

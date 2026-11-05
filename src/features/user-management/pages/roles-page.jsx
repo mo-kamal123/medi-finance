@@ -45,6 +45,7 @@ const RolesPage = () => {
   return (
     <ManagementTablePage
       title="الأدوار"
+      headerIcon={<ShieldCheck size={20} />}
       description="عرض أدوار المستخدمين وعدد الصلاحيات لكل دور"
       data={data}
       columns={columns}
