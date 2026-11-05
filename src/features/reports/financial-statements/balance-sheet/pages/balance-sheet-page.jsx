@@ -48,13 +48,13 @@ const primaryTotals = [
   {
     key: 'totalAssets',
     label: 'إجمالي الأصول',
-    tone: 'from-teal-50 via-emerald-50/60 to-white',
+    tone: 'border-teal-200 bg-linear-to-r from-transparent to-teal-50',
     dot: 'bg-teal-500',
   },
   {
     key: 'totalLiabilitiesAndEquity',
     label: 'إجمالي الخصوم وحقوق الملكية',
-    tone: 'from-violet-50 via-indigo-50/60 to-white',
+    tone: 'border-violet-200 bg-linear-to-r from-transparent to-violet-50',
     dot: 'bg-violet-500',
   },
 ];
@@ -306,26 +306,24 @@ const BalanceSheetPage = () => {
                   </span>
                 )}
               </div>
-              <div className="grid divide-y divide-gray-100 md:grid-cols-2 md:divide-y-0 md:divide-x md:divide-x-reverse">
+              <dl className="grid grid-cols-1 gap-4 border-t border-gray-100 p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-4">
                 {primaryTotals.map((item) => (
                   <div
                     key={item.key}
-                    className={'bg-linear-to-l p-5 sm:p-6 ' + item.tone}
+                    className={'rounded-xl border p-6 xl:col-span-2 ' + item.tone}
                   >
-                    <p className="flex items-center gap-2 text-sm font-medium text-gray-600">
+                    <dt className="flex items-center gap-2 text-xs text-gray-600">
                       <span
                         aria-hidden="true"
-                        className={'h-2 w-2 rounded-full ' + item.dot}
+                        className={'h-1.5 w-1.5 shrink-0 rounded-full ' + item.dot}
                       />
                       {item.label}
-                    </p>
-                    <p className="mt-2 break-words">
+                    </dt>
+                    <dd className="mt-3 break-words">
                       <Amount value={report[item.key]} large />
-                    </p>
+                    </dd>
                   </div>
                 ))}
-              </div>
-              <dl className="grid grid-cols-1 gap-5 border-t border-gray-100 p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-4">
                 {secondaryTotals.map((item) => (
                   <div
                     key={item.key}

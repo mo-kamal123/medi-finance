@@ -16,9 +16,9 @@ export const getCustomerById = async (id) => {
   return data;
 };
 
-export const getCustomerPolicies = async (customerId, signal) => {
+export const getCustomerPolicies = async (customerId, signal, isWithWataniya = true) => {
   const { data } = await axiosInstance.get('/customers/policies', {
-    params: { customerId, isWithWataniya: true },
+    params: { customerId, isWithWataniya },
     signal,
   });
   return data;

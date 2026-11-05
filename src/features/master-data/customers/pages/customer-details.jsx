@@ -260,7 +260,7 @@ const CustomerDetails = () => {
           )}
 
           {activeTab === 'consumption' && (
-            <CustomerConsumptionPanel key={id} customerId={customer.customerID ?? id} />
+            <CustomerConsumptionPanel key={id} customerId={customer.customerID ?? id} isWithWataniya={false} />
           )}
         </div>
       </div>

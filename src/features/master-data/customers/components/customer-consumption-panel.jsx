@@ -6,13 +6,13 @@ import FormInput from '../../../../shared/ui/input';
 import { exportCustomerConsumption } from '../api/customers.api';
 import { useCustomerPolicies } from '../hooks/customers.queries';
 
-const CustomerConsumptionPanel = ({ customerId }) => {
+const CustomerConsumptionPanel = ({ customerId, isWithWataniya = true }) => {
   const {
     data: policies = [],
     isPending: isLoadingPolicies,
     isError: hasPolicyError,
     refetch,
-  } = useCustomerPolicies(customerId);
+  } = useCustomerPolicies(customerId, isWithWataniya);
   const [policyId, setPolicyId] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');

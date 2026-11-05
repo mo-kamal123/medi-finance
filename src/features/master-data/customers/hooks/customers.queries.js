@@ -16,8 +16,8 @@ export const useCustomer = (id) =>
     enabled: !!id,
   });
 
-export const useCustomerPolicies = (id) =>
+export const useCustomerPolicies = (id, isWithWataniya = true) =>
   useQuery({
-    queryKey: customersKeys.policies(id),
-    queryFn: ({ signal }) => getCustomerPolicies(id, signal),
+    queryKey: customersKeys.policies(id, isWithWataniya),
+    queryFn: ({ signal }) => getCustomerPolicies(id, signal, isWithWataniya),
   });
