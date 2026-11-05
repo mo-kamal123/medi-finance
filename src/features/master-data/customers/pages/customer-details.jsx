@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import {
   ArrowLeft,
   Building2,
@@ -12,6 +12,7 @@ import Pagination from '../../../../shared/ui/pagination';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import { useCustomer } from '../hooks/customers.queries';
 import CustomerConsumptionPanel from '../components/customer-consumption-panel';
+import { canViewRoute } from '../../../auth/route-permissions';
 
 const ReadOnlyField = ({ label, value, className = '' }) => (
   <div className={className}>
@@ -55,6 +56,8 @@ const TABS = [
 ];
 
 const CustomerDetails = () => {
+  const permissions = useOutletContext();
+  const canViewConsumption = canViewRoute(permissions, '/consumption-report');
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: customer, isLoading } = useCustomer(id);
@@ -122,7 +125,7 @@ const CustomerDetails = () => {
 
       <div className="rounded-xl border border-gray-200 bg-white">
         <div className="flex gap-1 overflow-x-auto border-b border-gray-100 px-4 pt-3">
-          {TABS.map((tab) => {
+          {TABS.filter((tab) => tab.key !== 'consumption' || canViewConsumption).map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
             return (
@@ -259,7 +262,7 @@ const CustomerDetails = () => {
             </div>
           )}
 
-          {activeTab === 'consumption' && (
+          {activeTab === 'consumption' && canViewConsumption && (
             <CustomerConsumptionPanel key={id} customerId={customer.customerID ?? id} isWithWataniya={false} />
           )}
         </div>

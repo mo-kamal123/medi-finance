@@ -5,8 +5,8 @@ import { useSearchParams } from 'react-router-dom';
 import { getErrorMessage } from '../../../shared/lib/toast';
 
 const autofillData = {
-  mobileNumber: import.meta.env.VITE_LOGIN_MOBILE,
-  password: import.meta.env.VITE_LOGIN_PASSWORD,
+  mobileNumber: "201000000099",
+  password: "Fin!N5CTvbES6rwhhHyqs-xZ9a",
 };
 
 const Login = () => {
