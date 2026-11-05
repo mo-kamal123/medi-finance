@@ -4,12 +4,10 @@ import { useLogin } from '../hooks/useLogin';
 import { useSearchParams } from 'react-router-dom';
 import { getErrorMessage } from '../../../shared/lib/toast';
 
-const autofillData = import.meta.env.DEV
-  ? {
-      mobileNumber: import.meta.env.VITE_DEV_LOGIN_MOBILE,
-      password: import.meta.env.VITE_DEV_LOGIN_PASSWORD,
-    }
-  : null;
+const autofillData = {
+  mobileNumber: import.meta.env.VITE_LOGIN_MOBILE,
+  password: import.meta.env.VITE_LOGIN_PASSWORD,
+};
 
 const Login = () => {
   const [loginData, setLoginData] = useState({

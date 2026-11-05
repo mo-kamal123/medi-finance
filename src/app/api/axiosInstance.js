@@ -27,7 +27,9 @@ axiosInstance.interceptors.response.use(
     const isLoginRequest = /\/Auth\/login\/?$/i.test(error.config?.url || '');
 
     // A rejected login should stay on the form so its error can be displayed.
-    if (error.response?.status === 401 && !isLoginRequest && !redirectingToLogin) {
+    const isAuthorizationError =
+      error.response?.status === 401 || error.response?.status === 403;
+    if (isAuthorizationError && !isLoginRequest && !redirectingToLogin) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       store.dispatch(clearCredentials());

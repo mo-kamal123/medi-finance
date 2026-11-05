@@ -15,10 +15,40 @@ const AuthenticatedLayout = () => {
   const profile = useQuery({
     queryKey: ['auth', 'me', sessionId],
     queryFn: ({ signal }) => getCurrentUser(signal),
-    staleTime: 0,
+    staleTime: 60 * 60 * 1000,
+    refetchInterval: 60 * 60 * 1000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    retry: false,
     gcTime: 0,
   });
-  const user = profile.isError ? undefined : profile.data;
+  if (profile.isPending || profile.isFetching) {
+    return (
+      <div role="status" aria-busy="true" className="h-dvh w-full">
+        <PageLoader
+          label="جاري تحميل صلاحيات المستخدم..."
+          className="h-full rounded-none border-0 bg-white"
+        />
+      </div>
+    );
+  }
+
+  if (profile.isError) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center p-6">
+        <div role="alert" className="rounded-xl bg-red-50 p-6 text-red-700">
+          تعذر تحميل صلاحيات المستخدم.
+          <button type="button" onClick={() => void profile.refetch()} className="mx-3 underline">
+            إعادة المحاولة
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const user = profile.data;
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
@@ -32,18 +62,7 @@ const AuthenticatedLayout = () => {
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
           <div className="flex min-h-full flex-col">
             <div className="flex-1 p-4 sm:p-6">
-              {pathname === '/' ? (
-                <Outlet context={user?.permissions} />
-              ) : profile.isPending ? (
-                <PageLoader label="جاري تحميل صلاحيات المستخدم..." />
-              ) : profile.isError ? (
-                <div role="alert" className="rounded-xl bg-red-50 p-6 text-red-700">
-                  تعذر تحميل صلاحيات المستخدم.
-                  <button type="button" onClick={() => void profile.refetch()} className="mx-3 underline">
-                    إعادة المحاولة
-                  </button>
-                </div>
-              ) : canViewRoute(user.permissions, pathname) ? (
+              {canViewRoute(user.permissions, pathname) ? (
                 <Outlet context={user.permissions} />
               ) : (
                 <div role="alert" className="rounded-xl bg-amber-50 p-6 text-amber-800">

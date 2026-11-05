@@ -57,9 +57,9 @@ export const links = [
           ],
         },
         { name: 'القيود اليومية', link: '/entries', icon: FileText },
-        { name: 'الصندوق', link: '/cash-transactions', icon: Wallet },
+        // { name: 'الصندوق', link: '/cash-transactions', icon: Wallet },
         { name: 'السندات', link: '/cash-vouchers', icon: Receipt },
-        { name: 'الأوراق التجارية', link: '/commercial-papers', icon: FileCheck },
+        // { name: 'الأوراق التجارية', link: '/commercial-papers', icon: FileCheck },
       ],
     },
     {
