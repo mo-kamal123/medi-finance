@@ -123,16 +123,6 @@ const TrialBalancePage = () => {
     [roots, childrenCache]
   );
 
-  const walk = useCallback((nodes, result = []) => {
-    for (const n of nodes) {
-      result.push(n);
-      if (n.children?.length) walk(n.children, result);
-    }
-    return result;
-  }, []);
-
-  const allAccounts = useMemo(() => walk(treeData), [treeData, walk]);
-
   const handleToggle = useCallback(
     async (node) => {
       const id = node.accountID;
@@ -157,31 +147,11 @@ const TrialBalancePage = () => {
     [expandedNodes, filters]
   );
 
-  const handleExpandAll = () => {
-    setExpandedNodes(() => {
-      const allTrue = {};
-      const expandRecursive = (nodes) => {
-        nodes.forEach((n) => {
-          if (n.hasChildren) {
-            allTrue[n.accountID] = true;
-            if (n.children?.length) expandRecursive(n.children);
-          }
-        });
-      };
-      expandRecursive(treeData);
-      return allTrue;
-    });
-  };
-
-  const handleCollapseAll = () => {
-    setExpandedNodes({});
-  };
-
   return (
     <div className="space-y-6 p-6">
       <Breadcrumb items={[{ label: 'التقارير' }, { label: 'القوائم المالية' }, { label: "ميزان المراجعة" }]} />
       {/* Header */}
-      <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
@@ -207,7 +177,7 @@ const TrialBalancePage = () => {
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 gap-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-3">
         <DateInput
           label="من تاريخ"
           value={filters.fromDate}
@@ -247,31 +217,7 @@ const TrialBalancePage = () => {
       </div>
 
       {/* Tree Table */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-gray-200 bg-gradient-to-l from-primary/5 via-primary/[0.02] to-transparent px-6 py-3.5">
-          <h2 className="text-sm font-semibold text-gray-700">
-            ميزان المراجعة
-            <span className="mr-2 text-gray-400 font-normal">
-              ({allAccounts.length} حساب)
-            </span>
-          </h2>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleExpandAll}
-              className="text-xs text-primary hover:text-primary/80 font-medium"
-            >
-              توسيع الكل
-            </button>
-            <span className="text-gray-300">|</span>
-            <button
-              onClick={handleCollapseAll}
-              className="text-xs text-primary hover:text-primary/80 font-medium"
-            >
-              طي الكل
-            </button>
-          </div>
-        </div>
-
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
         {isLoading ? (
           <div className="flex items-center justify-center py-16 text-gray-400">
             <RefreshCw size={24} className="animate-spin ml-2" />

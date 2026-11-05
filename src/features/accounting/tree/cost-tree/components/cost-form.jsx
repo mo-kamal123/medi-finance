@@ -1,6 +1,7 @@
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Save } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import FormInput from '../../../../../shared/ui/input';
 import SearchableSelect from '../../../../../shared/ui/searchable-select';
 import Toggle from '../../../../../shared/ui/toggle';
@@ -114,7 +115,13 @@ const CostCenterForm = ({
             />
           </div>
         </div>
-        <div className="flex justify-end">
+        <div className="flex flex-wrap justify-end gap-3">
+          <Link
+            to="/cost-tree"
+            className="flex items-center gap-2 rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            إلغاء
+          </Link>
           <button
             type="submit"
             disabled={saving}

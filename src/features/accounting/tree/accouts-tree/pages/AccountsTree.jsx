@@ -1,5 +1,15 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Ban, CheckCircle, FileText, FolderTree, Layers, Link, Lock, Pencil, PlusIcon, PlusCircle, RefreshCw, XCircle } from 'lucide-react';
+import {
+  Ban,
+  FileText,
+  FolderTree,
+  // Link,
+  Lock,
+  Pencil,
+  PlusIcon,
+  PlusCircle,
+  RefreshCw,
+} from 'lucide-react';
 import TreeNode, { GRID_COLUMNS } from '../../components/tree-node';
 import AccountActionsMenu from '../../components/account-actions-menu';
 import { filterTree } from '../../utils/filterTree';
@@ -29,33 +39,34 @@ const flattenTree = (nodes) => {
 const AccountsTree = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
-  const [expandedAll, setExpandedAll] = useState(null);
+  const expandedAll = null;
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
   const [childrenCache, setChildrenCache] = useState({});
   const [loadingNodes, setLoadingNodes] = useState({});
   const pendingRef = useRef({});
 
-  const { data: roots = [], isLoading: rootsLoading } = useAccountRoots({ isActive: true });
+  const { data: roots = [], isLoading: rootsLoading } = useAccountRoots({
+    isActive: true,
+  });
   const navigate = useNavigate();
 
   const debouncedSearch = useDebounce(searchQuery, 500);
   const isSearching = searchQuery.trim().length > 0;
 
-  const {
-    data: searchResults = [],
-    isFetching: searchLoading,
-  } = useSearchAccounts({
-    searchText: debouncedSearch,
-    accountType: filterType,
-  });
+  const { data: searchResults = [], isFetching: searchLoading } =
+    useSearchAccounts({
+      searchText: debouncedSearch,
+      accountType: filterType,
+    });
 
   const attachChildren = (nodes, cache) =>
     nodes.map((node) => ({
       ...node,
-      children: node.hasChildren && cache[node.accountID]
-        ? attachChildren(cache[node.accountID], cache)
-        : (node.children ?? []),
+      children:
+        node.hasChildren && cache[node.accountID]
+          ? attachChildren(cache[node.accountID], cache)
+          : (node.children ?? []),
     }));
 
   const treeWithChildren = useMemo(
@@ -63,7 +74,10 @@ const AccountsTree = () => {
     [roots, childrenCache]
   );
 
-  const allAccounts = useMemo(() => flattenTree(treeWithChildren), [treeWithChildren]);
+  const allAccounts = useMemo(
+    () => flattenTree(treeWithChildren),
+    [treeWithChildren]
+  );
 
   const filteredTree = useMemo(() => {
     return filterTree(treeWithChildren, searchQuery, filterType);
@@ -100,7 +114,10 @@ const AccountsTree = () => {
     }
   }, []);
 
-  const isLoading = useCallback((node) => !!loadingNodes[node.accountID], [loadingNodes]);
+  const isLoading = useCallback(
+    (node) => !!loadingNodes[node.accountID],
+    [loadingNodes]
+  );
 
   const editAccount = (account) => {
     navigate(`${getAccountId(account)}`);
@@ -136,25 +153,30 @@ const AccountsTree = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <Breadcrumb items={[{ label: 'شجرة الحسابات' }]} />
       {/* Header */}
       <div className="bg-white rounded-xl p-6  border border-gray-200">
-        <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-xl font-bold md:text-2xl">شجرة الحسابات</h1>
-            <p className="text-gray-600 text-sm">
-              عرض وإدارة جميع الحسابات المحاسبية
-            </p>
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <FolderTree size={20} aria-hidden="true" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <h1 className="text-xl font-bold md:text-2xl">شجرة الحسابات</h1>
+              <p className="text-gray-600 text-sm">
+                عرض وإدارة جميع الحسابات المحاسبية
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
+            {/* <button
               onClick={() => navigate('/link')}
               className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors flex items-center gap-2"
             >
               <Link size={16} />
               ربط
-            </button>
+            </button> */}
             <button
               onClick={() => navigate('new')}
               className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
@@ -164,64 +186,40 @@ const AccountsTree = () => {
             </button>
           </div>
         </div>
-
-        {/* Statistics */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-4 ">
-            <div className="flex items-center justify-between">
-              <div className="mt-3 text-lg font-medium text-gray-600 mb-1">
-                إجمالي الحسابات
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-gray-600">
-                <FolderTree size={20} />
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-gray-900">
-              {stats.total}
-            </div>
-          </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 ">
-            <div className="flex items-center justify-between">
-              <div className="mt-3 text-lg font-medium text-emerald-600 mb-1">
-                نشطة
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
-                <CheckCircle size={20} />
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-emerald-700">
-              {stats.active}
-            </div>
-          </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 ">
-            <div className="flex items-center justify-between">
-              <div className="mt-3 text-lg font-medium text-red-600 mb-1">
-                غير نشطة
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 text-red-600">
-                <XCircle size={20} />
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-red-700">
-              {stats.total - stats.active}
+      </div>
+      {/* Statistics */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {[
+          {
+            label: 'إجمالي الحسابات',
+            value: stats.total,
+            color: 'text-gray-900',
+          },
+          { label: 'نشطة', value: stats.active, color: 'text-emerald-700' },
+          {
+            label: 'غير نشطة',
+            value: stats.total - stats.active,
+            color: 'text-red-600',
+          },
+          {
+            label: 'أنواع الحسابات',
+            value: accountTypes.length,
+            color: 'text-primary',
+          },
+        ].map((card) => (
+          <div
+            key={card.label}
+            className="rounded-xl border border-gray-200 bg-white p-5"
+          >
+            <div className="text-sm text-gray-500">{card.label}</div>
+            <div className={`mt-2 text-lg font-semibold ${card.color}`}>
+              {card.value}
             </div>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 ">
-            <div className="flex items-center justify-between">
-              <div className="mt-3 text-lg font-medium text-primary mb-1">
-                أنواع الحسابات
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Layers size={20} />
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-primary">
-              {accountTypes.length}
-            </div>
-          </div>
-        </div>
-
-        {/* Search and Filter */}
+        ))}
+      </div>
+      {/* Search and Filter */}
+      <div className="rounded-xl border border-gray-200 bg-white p-4">
         <SearchFilter
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -235,108 +233,108 @@ const AccountsTree = () => {
 
       {/* Tree View */}
       <div className="bg-white rounded-xl  border border-gray-200 overflow-hidden">
-        {/* <div className="p-4 border-b border-gray-200 bg-gray-50">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">عرض الشجرة</h2>
-            <button
-              onClick={() => setExpandedAll((prev) => !prev)}
-              className="text-sm text-primary hover:text-primary/80 font-medium"
-            >
-              {expandedAll ? 'طي الكل' : 'توسيع الكل'}
-            </button>
-          </div>
-        </div> */}
-
         {/* Header Row */}
-        <div
-          className="grid items-center py-4 px-4 border-b-2 border-gray-200 bg-gray-50 text-sm font-semibold text-gray-600 select-none"
-          style={{ gridTemplateColumns: GRID_COLUMNS }}
-        >
-          <span>اسم الحساب</span>
-          <span>الكود</span>
-          <span>الحالة</span>
-          <span>مقفل</span>
-          <span className="text-right">الإجراءات</span>
-        </div>
+        <div className="max-h-150 overflow-auto">
+          <div className="min-w-[620px]">
+            <div
+              className="sticky top-0 z-10 grid items-center bg-primary px-3 py-4 text-start text-sm font-semibold text-white select-none"
+              style={{ gridTemplateColumns: GRID_COLUMNS }}
+            >
+              <span className="ps-[54px]">اسم الحساب</span>
+              <span>الكود</span>
+              <span>الحالة</span>
+              <span>مقفل</span>
+              <span>الإجراءات</span>
+            </div>
 
-        <div className="max-h-150 overflow-y-auto">
-          {rootsLoading ? (
-            <div className="flex items-center justify-center py-12 text-gray-400">
-              <RefreshCw size={24} className="animate-spin ml-2" />
-              جاري تحميل الحسابات...
-            </div>
-          ) : isSearching ? (
-            searchLoading && searchResults.length === 0 ? (
-              <div className="flex items-center justify-center py-12 text-gray-400">
-                <RefreshCw size={24} className="animate-spin ml-2" />
-                جاري البحث...
-              </div>
-            ) : searchResults.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500">لا توجد حسابات مطابقة للبحث</p>
-              </div>
-            ) : (
-              <div>
-                {searchResults.map((account) => (
-                  <div
-                    key={getAccountId(account)}
-                    className="grid items-center border-b border-gray-200 py-4 px-3 hover:bg-gray-50 transition-colors"
-                    style={{ gridTemplateColumns: GRID_COLUMNS }}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <FileText size={18} className="shrink-0 text-gray-400" />
-                      <span className="text-lg font-medium text-gray-900 truncate">
-                        {account.nameAr || account.nameEn}
-                      </span>
-                    </div>
-                    <span className="text-sm font-mono text-gray-500 truncate">
-                      {account.accountCode}
-                    </span>
-                    <span
-                      className={`text-sm font-medium ${account.isActive !== false ? 'text-emerald-600' : 'text-red-500'}`}
-                    >
-                      {account.isActive !== false ? 'نشط' : 'غير نشط'}
-                    </span>
-                    {account.lockedInJournal ? (
-                      <span className="flex items-center gap-1 text-amber-600">
-                        <Lock size={12} />
-                        <span className="text-[10px] font-semibold">مقفل</span>
-                      </span>
-                    ) : (
-                      <span className="text-sm text-gray-300">-</span>
-                    )}
-                    <div
-                      className="flex justify-end"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <AccountActionsMenu node={account} actions={actions} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          ) : filteredTree.length > 0 ? (
             <div>
-              {filteredTree.map((account) => (
-                <TreeNode
-                  key={account.accountID}
-                  node={account}
-                  expandedAll={expandedAll}
-                  getLabel={(a) => a.nameAr}
-                  getCode={(a) => a.accountCode}
-                  getChildren={(a) => a.children}
-                  getParentId={(a) => a.parentId}
-                  onExpand={handleExpand}
-                  isLoading={isLoading}
-                  actions={actions}
-                />
-              ))}
+              {rootsLoading ? (
+                <div className="flex items-center justify-center py-12 text-gray-400">
+                  <RefreshCw size={24} className="animate-spin ml-2" />
+                  جاري تحميل الحسابات...
+                </div>
+              ) : isSearching ? (
+                searchLoading && searchResults.length === 0 ? (
+                  <div className="flex items-center justify-center py-12 text-gray-400">
+                    <RefreshCw size={24} className="animate-spin ml-2" />
+                    جاري البحث...
+                  </div>
+                ) : searchResults.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500">لا توجد حسابات مطابقة للبحث</p>
+                  </div>
+                ) : (
+                  <div>
+                    {searchResults.map((account) => (
+                      <div
+                        key={getAccountId(account)}
+                        className="grid items-center border-b border-gray-200 py-4 px-3 hover:bg-gray-50 transition-colors"
+                        style={{ gridTemplateColumns: GRID_COLUMNS }}
+                      >
+                        <div className="flex items-center gap-2 min-w-0 ps-7">
+                          <FileText
+                            size={18}
+                            className="shrink-0 text-gray-400"
+                          />
+                          <span className="text-lg font-medium text-gray-900 truncate">
+                            {account.nameAr || account.nameEn}
+                          </span>
+                        </div>
+                        <span className="text-sm font-mono text-gray-500 truncate">
+                          {account.accountCode}
+                        </span>
+                        <span
+                          className={`text-sm font-medium ${account.isActive !== false ? 'text-emerald-600' : 'text-red-500'}`}
+                        >
+                          {account.isActive !== false ? 'نشط' : 'غير نشط'}
+                        </span>
+                        {account.lockedInJournal ? (
+                          <span className="flex items-center gap-1 text-amber-600">
+                            <Lock size={12} />
+                            <span className="text-[10px] font-semibold">
+                              مقفل
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-300">-</span>
+                        )}
+                        <div
+                          className="flex justify-start"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <AccountActionsMenu
+                            node={account}
+                            actions={actions}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              ) : filteredTree.length > 0 ? (
+                <div>
+                  {filteredTree.map((account) => (
+                    <TreeNode
+                      key={account.accountID}
+                      node={account}
+                      expandedAll={expandedAll}
+                      getLabel={(a) => a.nameAr}
+                      getCode={(a) => a.accountCode}
+                      getChildren={(a) => a.children}
+                      getParentId={(a) => a.parentId}
+                      onExpand={handleExpand}
+                      isLoading={isLoading}
+                      actions={actions}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">لا توجد حسابات مطابقة للبحث</p>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-500">لا توجد حسابات مطابقة للبحث</p>
-            </div>
-          )}
+          </div>
         </div>
       </div>
       <ConfirmModal

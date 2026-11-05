@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ChevronDown, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { ChevronDown, SlidersHorizontal } from 'lucide-react';
+import ResetFiltersButton from './reset-filters-button';
 import { cn } from '../lib/cn';
 
 const FilterBar = ({
@@ -72,15 +73,7 @@ const FilterBar = ({
           </div>
         ) : null}
 
-        {activeCount > 0 ? (
-          <button
-            type="button"
-            onClick={onReset}
-            className="absolute top-0 left-0 inline-flex h-11 items-center justify-center gap-2 px-4 text-sm text-gray-600 transition-colors hover:border-red-300 hover:text-red-600"
-          >
-            <RotateCcw size={16} />
-          </button>
-        ) : null}
+        <ResetFiltersButton onReset={onReset} active={activeCount > 0} />
       </div>
     </div>
   );

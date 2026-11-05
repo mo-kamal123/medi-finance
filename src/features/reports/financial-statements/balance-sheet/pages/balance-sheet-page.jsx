@@ -178,81 +178,79 @@ const BalanceSheetPage = () => {
           { label: 'الميزانية العمومية' },
         ]}
       />
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-        <div className="flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
-          <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Scale size={23} />
-            </span>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
-                الميزانية العمومية
-              </h1>
-              <p className="mt-1 text-sm text-gray-500">
-                الأصول والخصوم وحقوق الملكية
-              </p>
-            </div>
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white p-6">
+        <div className="flex items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Scale size={23} />
+          </span>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
+              الميزانية العمومية
+            </h1>
+            <p className="mt-1 text-sm text-gray-500">
+              الأصول والخصوم وحقوق الملكية
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={() => handleExport(filters)}
-            disabled={!report || isExporting || isLoading || isError}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Download size={16} />
-            {isExporting ? 'جاري التصدير...' : 'تصدير Excel'}
-          </button>
         </div>
-        <div className="grid grid-cols-1 gap-4 border-t border-gray-100 bg-gray-50/60 p-5 sm:grid-cols-3 sm:p-6">
-          <DateInput
-            label="حتى تاريخ"
-            value={filters.asOfDate}
-            onChange={({ target: { value } }) =>
-              setFilters((prev) => ({ ...prev, asOfDate: value }))
-            }
-          />
-          <FormInput
-            as="select"
-            label="الفترة المالية"
-            value={filters.financialPeriodId}
-            onChange={(event) =>
-              setFilters((prev) => ({
-                ...prev,
-                financialPeriodId: event.target.value,
-              }))
-            }
-          >
-            <option value="">كل الفترات</option>
-            {financialPeriods.map((period) => (
-              <option
-                key={period.financialPeriodID}
-                value={period.financialPeriodID}
-              >
-                {period.nameAr || period.financialPeriodNameAr || period.nameEn}
-              </option>
-            ))}
-          </FormInput>
-          <FormInput
-            as="select"
-            label="مستوى الحساب"
-            value={filters.accountLevel}
-            onChange={(event) =>
-              setFilters((prev) => ({
-                ...prev,
-                accountLevel: event.target.value
-                  ? Number(event.target.value)
-                  : '',
-              }))
-            }
-          >
-            <option value="">كل المستويات</option>
-            {[1, 2, 3, 4, 5, 6].map((level) => (
-              <option key={level} value={level}>
-                المستوى {level}
-              </option>
-            ))}
-          </FormInput>
-        </div>
+        <button
+          type="button"
+          onClick={() => handleExport(filters)}
+          disabled={!report || isExporting || isLoading || isError}
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Download size={16} />
+          {isExporting ? 'جاري التصدير...' : 'تصدير Excel'}
+        </button>
+      </div>
+      <div className="grid grid-cols-1 gap-4 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-3">
+        <DateInput
+          label="حتى تاريخ"
+          value={filters.asOfDate}
+          onChange={({ target: { value } }) =>
+            setFilters((prev) => ({ ...prev, asOfDate: value }))
+          }
+        />
+        <FormInput
+          as="select"
+          label="الفترة المالية"
+          value={filters.financialPeriodId}
+          onChange={(event) =>
+            setFilters((prev) => ({
+              ...prev,
+              financialPeriodId: event.target.value,
+            }))
+          }
+        >
+          <option value="">كل الفترات</option>
+          {financialPeriods.map((period) => (
+            <option
+              key={period.financialPeriodID}
+              value={period.financialPeriodID}
+            >
+              {period.nameAr || period.financialPeriodNameAr || period.nameEn}
+            </option>
+          ))}
+        </FormInput>
+        <FormInput
+          as="select"
+          label="مستوى الحساب"
+          value={filters.accountLevel}
+          onChange={(event) =>
+            setFilters((prev) => ({
+              ...prev,
+              accountLevel: event.target.value
+                ? Number(event.target.value)
+                : '',
+            }))
+          }
+        >
+          <option value="">كل المستويات</option>
+          {[1, 2, 3, 4, 5, 6].map((level) => (
+            <option key={level} value={level}>
+              المستوى {level}
+            </option>
+          ))}
+        </FormInput>
       </div>
       {isLoading ? (
         <div
@@ -310,12 +308,16 @@ const BalanceSheetPage = () => {
                 {primaryTotals.map((item) => (
                   <div
                     key={item.key}
-                    className={'rounded-xl border p-6 xl:col-span-2 ' + item.tone}
+                    className={
+                      'rounded-xl border p-6 xl:col-span-2 ' + item.tone
+                    }
                   >
                     <dt className="flex items-center gap-2 text-xs text-gray-600">
                       <span
                         aria-hidden="true"
-                        className={'h-1.5 w-1.5 shrink-0 rounded-full ' + item.dot}
+                        className={
+                          'h-1.5 w-1.5 shrink-0 rounded-full ' + item.dot
+                        }
                       />
                       {item.label}
                     </dt>

@@ -27,7 +27,7 @@ export const links = [
       sub: [
         { name: 'شجرة الحسابات', link: '/accounts-tree', icon: FolderTree },
         { name: 'شجرة التكاليف', link: '/cost-tree', icon: FolderTree },
-        { name: 'ربط حساب بمركز تكلفة', link: '/link', icon: Link2 },
+        // { name: 'ربط حساب بمركز تكلفة', link: '/link', icon: Link2 },
       ],
     },
     {

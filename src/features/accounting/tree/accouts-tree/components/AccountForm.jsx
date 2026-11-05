@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Save, ShieldAlert } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { accountSchema } from '../validation/accounts-validation';
 import FormInput from '../../../../../shared/ui/input';
 import SearchableSelect from '../../../../../shared/ui/searchable-select';
@@ -199,7 +200,15 @@ const AccountForm = ({ mode = 'create', defaultValues = {}, onSubmit }) => {
         </div>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-3">
+        {mode === 'create' && (
+          <Link
+            to="/accounts-tree"
+            className="flex items-center gap-2 rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            إلغاء
+          </Link>
+        )}
         <button
           type="submit"
           disabled={isSubmitting}

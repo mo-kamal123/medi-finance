@@ -71,7 +71,7 @@ const UpdateAccount = () => {
   }
 
   return (
-    <div className="min-h-screen px-4 py-10">
+    <div className="min-h-screen p-6">
       <div className="mx-auto w-full">
         <div className="mb-6">
           <Breadcrumb

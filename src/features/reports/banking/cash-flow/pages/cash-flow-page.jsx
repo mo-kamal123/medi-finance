@@ -1,6 +1,7 @@
+import ResetFiltersButton from '../../../../../shared/ui/reset-filters-button';
 import Breadcrumb from '../../../../../shared/ui/breadcrumb';
 import { useMemo, useState } from 'react';
-import { Download, Wallet, RotateCcw } from 'lucide-react';
+import { Download, Wallet } from 'lucide-react';
 import DateInput from '../../../../../shared/ui/date-input';
 import SearchableSelect from '../../../../../shared/ui/searchable-select';
 import Table from '../../../../../shared/ui/table';
@@ -175,7 +176,8 @@ const CashFlowPage = () => {
         </button>
       </div>
 
-      <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4">
+      <div className="relative space-y-4 rounded-xl border border-gray-200 bg-white p-4">
+        <ResetFiltersButton filters={filters} onReset={handleReset} />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <SearchableSelect
             label="البنك"
@@ -198,16 +200,7 @@ const CashFlowPage = () => {
           />
         </div>
 
-        <div className="flex items-center justify-end">
-          <button
-            type="button"
-            onClick={handleReset}
-            className="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
-          >
-            <RotateCcw size={16} />
-            مسح الفلاتر
-          </button>
-        </div>
+        
       </div>
 
       {filters.bankID && (

@@ -1,7 +1,8 @@
+import ResetFiltersButton from '../../../../../shared/ui/reset-filters-button';
 import Breadcrumb from '../../../../../shared/ui/breadcrumb';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Download, ExternalLink, FileText, RotateCcw } from 'lucide-react';
+import { Download, ExternalLink, FileText } from 'lucide-react';
 import SearchableSelect from '../../../../../shared/ui/searchable-select';
 import Pagination from '../../../../../shared/ui/pagination';
 import Table from '../../../../../shared/ui/table';
@@ -130,6 +131,10 @@ const BankTransfersReportPage = () => {
     setFilters((prev) => ({ ...prev, [key]: value, pageNumber: 1 }));
   };
 
+  const handleReset = () => {
+    setFilters({ ...DEFAULT_FILTERS });
+  };
+
   const handlePageChange = (page) => {
     setFilters((prev) => ({ ...prev, pageNumber: page }));
   };
@@ -250,7 +255,8 @@ const BankTransfersReportPage = () => {
         </button>
       </div>
 
-      <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4">
+      <div className="relative space-y-4 rounded-xl border border-gray-200 bg-white p-4">
+        <ResetFiltersButton filters={filters} onReset={handleReset} />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <SearchableSelect
             label="البنك"
@@ -271,16 +277,7 @@ const BankTransfersReportPage = () => {
           />
         </div>
 
-        <div className="flex items-center justify-end">
-          {/* <button
-            type="button"
-            onClick={handleReset}
-            className="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
-          >
-            <RotateCcw size={16} />
-            مسح الفلاتر
-          </button> */}
-        </div>
+        
       </div>
 
       {isLoading ? (

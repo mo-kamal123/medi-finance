@@ -61,13 +61,14 @@ const TreeNode = ({
         className="grid items-center border-b border-gray-200 py-3 px-3 cursor-pointer hover:bg-gray-50 transition-colors"
         style={{
           gridTemplateColumns: GRID_COLUMNS,
-          paddingInlineStart: `${indentPx}px`,
-          paddingInlineEnd: '12px',
         }}
         onClick={handleClick}
       >
         {/* Name */}
-        <div className="flex items-center gap-2 min-w-0">
+        <div
+          className="flex items-center gap-2 min-w-0"
+          style={{ paddingInlineStart: level * 24 }}
+        >
           {hasChildren ? (
             <div className="w-5 h-5 flex items-center justify-center shrink-0">
               {loading ? (
@@ -125,7 +126,10 @@ const TreeNode = ({
         )}
 
         {/* Actions */}
-        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="flex justify-start"
+          onClick={(e) => e.stopPropagation()}
+        >
           {actions.length > 0 && (
             <AccountActionsMenu node={node} actions={actions} />
           )}
