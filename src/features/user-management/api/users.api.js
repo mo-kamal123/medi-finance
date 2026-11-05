@@ -11,11 +11,11 @@ export const mapUser = (user) => ({
 });
 
 export const getUsers = async (
-  { pageNumber = 1, pageSize = 10 } = {},
+  { searchTerm, isActive, pageNumber = 1, pageSize = 10 } = {},
   signal
 ) => {
   const { data } = await axiosInstance.get('/Users', {
-    params: { pageNumber, pageSize },
+    params: { searchTerm, isActive, pageNumber, pageSize },
     signal,
   });
   return {

@@ -241,7 +241,7 @@ const ChequeDetails = () => {
         <div className="bg-linear-to-r from-primary to-primary/80 px-6 py-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/20 text-white shadow-inner">
+              <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/20 text-white">
                 <CreditCard size={26} />
               </div>
               <div className="text-white">
@@ -287,7 +287,7 @@ const ChequeDetails = () => {
                     disabled={isStatusUpdating}
                     aria-label={'تغيير الحالة إلى ' + nextStatus.label}
                     className={
-                      'inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-bold shadow-sm transition-colors hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-60 ' +
+                      'inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-colors hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-60 ' +
                       statusClass(nextStatus.label)
                     }
                   >
@@ -398,7 +398,7 @@ const ChequeDetails = () => {
       </Dropdown>
 
       <div className="rounded-xl border border-gray-200 bg-white">
-        <div className="flex gap-1 overflow-x-auto border-b border-gray-100 px-4 pt-3">
+        <div className="flex gap-1 overflow-x-auto border-b border-gray-200 px-4 pt-3">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;

@@ -35,7 +35,7 @@ const UpdateCost = () => {
           defaultValues={centerData}
           parentCenters={parentCenters}
           onSubmit={handleUpdate}
-          isSubmitting={isUpdating}
+          isPending={isUpdating}
         />
       </div>
     </div>

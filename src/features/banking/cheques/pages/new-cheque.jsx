@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { FileText, Settings } from 'lucide-react';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import ChequeForm from '../components/cheque-form';
@@ -21,8 +21,8 @@ const NewCheque = () => {
         ]}
       />
       <div ref={setInvoiceSelectionContainer} className="empty:hidden" />
-      <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
-        <div className="flex gap-1 overflow-x-auto border-b border-gray-100 px-4 pt-3">
+      <div className="rounded-xl border border-gray-200 bg-white">
+        <div className="flex gap-1 overflow-x-auto border-b border-gray-200 px-4 pt-3">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;

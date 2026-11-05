@@ -457,7 +457,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
   };
 
   return (
-    <div className={isTabMode ? '' : 'p-6 bg-white rounded-xl shadow-sm border border-gray-300 space-y-6'}>
+    <div className={isTabMode ? '' : 'p-6 bg-white rounded-xl border border-gray-200 space-y-6'}>
       {invoiceSelectionContainer ? createPortal(invoiceSelector, invoiceSelectionContainer) : null}
       {!isTabMode && (
         <div>
@@ -485,7 +485,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
           <button
             type="button"
             onClick={() => navigate('/cheques')}
-            className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+            className="px-6 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
           >
             رجوع
           </button>

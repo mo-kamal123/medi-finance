@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { BadgeCheck, Lock, Save, ShieldAlert } from 'lucide-react';
+import { Save, ShieldAlert } from 'lucide-react';
 import { accountSchema } from '../validation/accounts-validation';
 import FormInput from '../../../../../shared/ui/input';
 import SearchableSelect from '../../../../../shared/ui/searchable-select';
+import Toggle from '../../../../../shared/ui/toggle';
 import AccountSearchSelect from '../../../../transactions/entries/components/account-search-select';
 
 const ACCOUNT_TYPES = [
@@ -89,9 +90,7 @@ const AccountForm = ({ mode = 'create', defaultValues = {}, onSubmit }) => {
       ) : (
         <div className="flex items-start gap-3 rounded-xl border border-sky-100 bg-sky-50 p-4 text-sm text-sky-800">
           <ShieldAlert size={18} className="mt-0.5 shrink-0" />
-          <p>
-            رقم الحساب يتم توليده تلقائياً بواسطة النظام بعد الإنشاء.
-          </p>
+          <p>رقم الحساب يتم توليده تلقائياً بواسطة النظام بعد الإنشاء.</p>
         </div>
       )}
 
@@ -163,65 +162,57 @@ const AccountForm = ({ mode = 'create', defaultValues = {}, onSubmit }) => {
 
       {/* Toggles */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <label
-          className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 transition-colors ${
+        <div
+          className={`rounded-xl border p-4 transition-colors ${
             lockedInJournal
               ? 'border-amber-200 bg-amber-50'
               : 'border-gray-200 bg-white hover:border-gray-300'
           }`}
         >
-          <input
-            type="checkbox"
+          <Toggle
             {...register('lockedInJournal')}
-            className="h-4 w-4 rounded border-gray-300 text-amber-500 focus:ring-amber-400"
+            label="مقفل في القيود"
+            role="switch"
+            disabled={isSubmitting}
           />
-          <div>
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-800">
-              <Lock size={15} className="text-amber-600" />
-              مقفل في القيود
-            </div>
-            <p className="mt-0.5 text-xs text-gray-500">
-              منع استخدام هذا الحساب في القيود اليومية
-            </p>
-          </div>
-        </label>
+          <p className="mt-2 text-xs text-gray-500">
+            منع استخدام هذا الحساب في القيود اليومية
+          </p>
+        </div>
 
-        <label
-          className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 transition-colors ${
+        <div
+          className={`rounded-xl border p-4 transition-colors ${
             isActive
               ? 'border-emerald-200 bg-emerald-50'
               : 'border-gray-200 bg-white hover:border-gray-300'
           }`}
         >
-          <input
-            type="checkbox"
+          <Toggle
             {...register('isActive')}
-            className="h-4 w-4 rounded border-gray-300 text-emerald-500 focus:ring-emerald-400"
+            label="الحساب نشط"
+            role="switch"
+            disabled={isSubmitting}
           />
-          <div>
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-800">
-              <BadgeCheck size={15} className="text-emerald-600" />
-              الحساب نشط
-            </div>
-            <p className="mt-0.5 text-xs text-gray-500">
-              الحساب النشط فقط يمكن استخدامه
-            </p>
-          </div>
-        </label>
+          <p className="mt-2 text-xs text-gray-500">
+            الحساب النشط فقط يمكن استخدامه
+          </p>
+        </div>
       </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
-      >
-        <Save size={18} />
-        {isSubmitting
-          ? 'جاري الحفظ...'
-          : mode === 'create'
-            ? 'إنشاء الحساب'
-            : 'حفظ التعديلات'}
-      </button>
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+        >
+          <Save size={18} />
+          {isSubmitting
+            ? 'جاري الحفظ...'
+            : mode === 'create'
+              ? 'إنشاء الحساب'
+              : 'حفظ التعديلات'}
+        </button>
+      </div>
     </form>
   );
 };

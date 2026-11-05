@@ -25,6 +25,7 @@ const TreeNode = ({
   actions = [],
   onExpand,
   isLoading,
+  renderExtraColumn,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -102,12 +103,16 @@ const TreeNode = ({
         </span>
 
         {/* Status */}
-        <span className={`text-sm font-medium ${node.isActive !== false ? 'text-emerald-600' : 'text-red-500'}`}>
+        <span
+          className={`text-sm font-medium ${node.isActive !== false ? 'text-emerald-600' : 'text-red-500'}`}
+        >
           {node.isActive !== false ? 'نشط' : 'غير نشط'}
         </span>
 
         {/* Locked in Journal */}
-        {node.lockedInJournal ? (
+        {renderExtraColumn ? (
+          renderExtraColumn(node)
+        ) : node.lockedInJournal ? (
           <span
             className="flex items-center gap-1 text-amber-600"
             title="هذا الحساب مقفل ولا يمكن استخدامه في القيود"
@@ -121,7 +126,9 @@ const TreeNode = ({
 
         {/* Actions */}
         <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
-          {actions.length > 0 && <AccountActionsMenu node={node} actions={actions} />}
+          {actions.length > 0 && (
+            <AccountActionsMenu node={node} actions={actions} />
+          )}
         </div>
       </div>
 
@@ -155,6 +162,7 @@ const TreeNode = ({
                 actions={actions}
                 onExpand={onExpand}
                 isLoading={isLoading}
+                renderExtraColumn={renderExtraColumn}
               />
             </div>
           ))}

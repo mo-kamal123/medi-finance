@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import ManagementTablePage from '../components/management-table-page';
@@ -34,7 +34,11 @@ const columns = [
     render: (row) => (
       <div className="flex flex-wrap gap-1.5">
         {(row.roles ?? []).map((role) => (
-          <span key={role} dir="auto" className="rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+          <span
+            key={role}
+            dir="auto"
+            className="rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
+          >
             {role}
           </span>
         ))}
@@ -67,12 +71,28 @@ const UsersPage = () => {
   const notice = state?.notice;
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [filters, setFilters] = useState({ search: '', status: '' });
+  const [appliedFilters, setAppliedFilters] = useState(filters);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAppliedFilters(filters);
+      setPageNumber(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [filters]);
   const {
     data: response,
     isFetching,
     isError,
     refetch,
-  } = useUsers({ pageNumber, pageSize });
+  } = useUsers({
+    pageNumber,
+    pageSize,
+    searchTerm: appliedFilters.search.trim() || undefined,
+    isActive: appliedFilters.status
+      ? appliedFilters.status === 'active'
+      : undefined,
+  });
 
   return (
     <>
@@ -86,12 +106,14 @@ const UsersPage = () => {
       )}
       <ManagementTablePage
         title="المستخدمون"
+        showResultCount={false}
         description="عرض المستخدمين وبيانات حساباتهم"
         data={response?.items ?? []}
         isDemo={false}
         loading={isFetching}
         error={isError}
         onRetry={refetch}
+        serverFilters={{ ...filters, onChange: setFilters }}
         serverPagination={{
           pageNumber: response?.pageNumber ?? pageNumber,
           pageSize,

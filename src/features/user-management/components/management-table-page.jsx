@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search } from 'lucide-react';
+import { RotateCcw, Search } from 'lucide-react';
 import Breadcrumb from '../../../shared/ui/breadcrumb';
 import FormInput from '../../../shared/ui/input';
 import SearchableSelect from '../../../shared/ui/searchable-select';
@@ -17,29 +17,35 @@ const ManagementTablePage = ({
   headerAction,
   onRowClick,
   serverPagination,
+  serverFilters,
+  showResultCount = true,
   loading = false,
   error,
   errorMessage = 'تعذر تحميل المستخدمين.',
   onRetry,
   isDemo = true,
 }) => {
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
+  const [localSearch, setSearch] = useState('');
+  const [localStatus, setStatus] = useState('');
+  const search = serverFilters?.search ?? localSearch;
+  const status = serverFilters?.status ?? localStatus;
   const [roleId, setRoleId] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
   const query = search.trim().toLocaleLowerCase('ar');
-  const filtered = data.filter(
-    (row) =>
-      (!status || row.status === status) &&
-      (!roleId || row.roleId === roleId) &&
-      searchKeys.some((key) =>
-        String(row[key] ?? '')
-          .toLocaleLowerCase('ar')
-          .includes(query)
-      )
-  );
+  const filtered = serverFilters
+    ? data
+    : data.filter(
+        (row) =>
+          (!status || row.status === status) &&
+          (!roleId || row.roleId === roleId) &&
+          searchKeys.some((key) =>
+            String(row[key] ?? '')
+              .toLocaleLowerCase('ar')
+              .includes(query)
+          )
+      );
   const totalPages = serverPagination
     ? Math.max(1, serverPagination.totalPages)
     : Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -52,7 +58,7 @@ const ManagementTablePage = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <Breadcrumb items={[{ label: 'إدارة المستخدمين' }, { label: title }]} />
       <div className="rounded-xl border border-gray-200 bg-white p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -69,15 +75,23 @@ const ManagementTablePage = ({
         )}
       </div>
 
-      <div className="grid grid-cols-1 items-end gap-4 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="relative grid grid-cols-1 items-end gap-4 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-2 xl:grid-cols-4">
         <FormInput
-          label={serverPagination ? 'بحث في الصفحة الحالية' : 'بحث'}
-          aria-label={serverPagination ? 'بحث في الصفحة الحالية' : 'بحث'}
+          label={
+            serverPagination && !serverFilters ? 'بحث في الصفحة الحالية' : 'بحث'
+          }
+          aria-label={
+            serverPagination && !serverFilters ? 'بحث في الصفحة الحالية' : 'بحث'
+          }
           value={search}
           icon={Search}
-          onChange={(event) => updateFilter(setSearch, event.target.value)}
+          onChange={(event) =>
+            serverFilters
+              ? serverFilters.onChange({ search: event.target.value, status })
+              : updateFilter(setSearch, event.target.value)
+          }
           placeholder={searchPlaceholder}
-          containerClass="xl:col-span-2"
+          containerClass={serverFilters ? 'xl:col-span-3' : 'xl:col-span-2'}
         />
         {roleOptions && (
           <SearchableSelect
@@ -90,7 +104,11 @@ const ManagementTablePage = ({
         <SearchableSelect
           label="الحالة"
           value={status}
-          onChange={(event) => updateFilter(setStatus, event.target.value)}
+          onChange={(event) =>
+            serverFilters
+              ? serverFilters.onChange({ search, status: event.target.value })
+              : updateFilter(setStatus, event.target.value)
+          }
           options={[
             { value: '', label: 'جميع الحالات' },
             { value: 'active', label: 'نشط' },
@@ -105,19 +123,24 @@ const ManagementTablePage = ({
               setStatus('');
               setRoleId('');
               setPage(1);
+              serverFilters?.onChange({ search: '', status: '' });
             }}
-            className="justify-self-start text-sm text-primary hover:underline"
+            aria-label="مسح الفلاتر"
+            title="مسح الفلاتر"
+            className="absolute top-0 left-0 inline-flex h-11 items-center justify-center px-4 text-gray-600 hover:text-red-600"
           >
-            مسح الفلاتر
+            <RotateCcw size={16} />
           </button>
         )}
       </div>
 
-      <p role="status" className="text-sm text-gray-600">
+      {showResultCount && <p role="status" className="text-sm text-gray-600">
         {serverPagination
-          ? `نتائج الصفحة الحالية: ${filtered.length} — إجمالي المستخدمين: ${serverPagination.totalCount}. البحث وفلاتر الحالة تطبق على الصفحة الحالية.`
+          ? serverFilters
+            ? `إجمالي النتائج: ${serverPagination.totalCount}`
+            : `نتائج الصفحة الحالية: ${filtered.length} — إجمالي المستخدمين: ${serverPagination.totalCount}. البحث وفلاتر الحالة تطبق على الصفحة الحالية.`
           : `عدد النتائج: ${filtered.length} من ${data.length}`}
-      </p>
+      </p>}
       {error ? (
         <div
           role="alert"

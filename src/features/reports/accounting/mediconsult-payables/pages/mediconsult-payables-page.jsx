@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Breadcrumb from '../../../../../shared/ui/breadcrumb';
 import DateInput from '../../../../../shared/ui/date-input';
 import FormInput from '../../../../../shared/ui/input';
+import FilterBar from '../../../../../shared/ui/filter-bar';
 import Pagination from '../../../../../shared/ui/pagination';
 import PartySearchSelect from '../../../../../shared/ui/party-search-select';
 import SearchableSelect from '../../../../../shared/ui/searchable-select';
@@ -28,6 +29,11 @@ const paymentStatuses = [
   { value: 'Paid', label: 'مدفوع' },
 ];
 const displayAmount = (value) => (value == null ? '—' : formatCurrency(value));
+const paymentStatusStyles = {
+  Unpaid: 'border-red-200 bg-red-50 text-red-700',
+  PartiallyPaid: 'border-amber-200 bg-amber-50 text-amber-700',
+  Paid: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+};
 const columns = [
   { header: 'المورد', key: 'supplierName' },
   { header: 'المحافظة', key: 'governorate' },
@@ -42,19 +48,44 @@ const columns = [
     header: 'المبلغ الأصلي',
     key: 'originalAmount',
     type: 'custom',
-    render: (row) => displayAmount(row.originalAmount),
+    render: (row) => (
+      <span
+        dir="ltr"
+        className="inline-block font-semibold text-primary tabular-nums"
+      >
+        {displayAmount(row.originalAmount)}
+      </span>
+    ),
   },
   {
     header: 'المبلغ المتبقي',
     key: 'remainingAmount',
     type: 'custom',
-    render: (row) => displayAmount(row.remainingAmount),
+    render: (row) => (
+      <span
+        dir="ltr"
+        className={`inline-block font-semibold tabular-nums ${row.remainingAmount == null ? 'text-gray-500' : Number(row.remainingAmount) === 0 ? 'text-emerald-700' : 'text-red-700'}`}
+      >
+        {displayAmount(row.remainingAmount)}
+      </span>
+    ),
   },
   {
     header: 'حالة الدفع',
     key: 'paymentStatusName',
     type: 'custom',
-    render: (row) => row.paymentStatusName || row.paymentStatus || '—',
+    render: (row) => (
+      <span
+        className={`inline-flex whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium ${paymentStatusStyles[row.paymentStatus] ?? 'border-gray-200 bg-gray-50 text-gray-600'}`}
+      >
+        {paymentStatuses.find(
+          ({ value }) => value && value === row.paymentStatus
+        )?.label ||
+          row.paymentStatusName ||
+          row.paymentStatus ||
+          '—'}
+      </span>
+    ),
   },
   { header: 'العملية', key: 'operation' },
   { header: 'الفئة', key: 'category' },
@@ -79,6 +110,14 @@ const MediconsultPayablesPage = () => {
   const [filters, setFilters] = useState({});
   const invalidDateRange =
     draft.FromDate && draft.ToDate && draft.FromDate > draft.ToDate;
+  useEffect(() => {
+    if (invalidDateRange) return;
+    const timer = setTimeout(() => {
+      setFilters(draft);
+      setPageNumber(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [draft, invalidDateRange]);
   const filterField = (key) => ({
     value: draft[key] ?? '',
     onChange: (event) =>
@@ -100,7 +139,7 @@ const MediconsultPayablesPage = () => {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <Breadcrumb items={[{ label: 'التقارير' }, { label: title }]} />
       <header className="rounded-xl border border-gray-200 bg-white p-6">
         <h1 className="text-2xl font-bold">{data?.reportName || title}</h1>
@@ -110,18 +149,28 @@ const MediconsultPayablesPage = () => {
           </p>
         )}
       </header>
-      <form
-        className="space-y-4 rounded-xl border border-gray-200 bg-white p-5"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (invalidDateRange) return;
+      <FilterBar
+        gridClassName="xl:grid-cols-5"
+        activeCount={
+          Object.values(draft).filter((value) => value.trim()).length
+        }
+        extraCount={
+          textFilters.map(([key]) => key).filter((key) => draft[key]?.trim())
+            .length
+        }
+        onReset={() => {
+          setDraft({});
+          setFilters({});
           setPageNumber(1);
-          setFilters(draft);
         }}
-      >
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <DateInput label="من تاريخ" {...filterField('FromDate')} />
+        primaryFilters={[
           <DateInput
+            key="from"
+            label="من تاريخ"
+            {...filterField('FromDate')}
+          />,
+          <DateInput
+            key="to"
             label="إلى تاريخ"
             {...filterField('ToDate')}
             error={
@@ -129,8 +178,8 @@ const MediconsultPayablesPage = () => {
                 ? 'تاريخ النهاية يجب أن يكون في تاريخ البداية أو بعده'
                 : undefined
             }
-          />
-          <div>
+          />,
+          <div key="supplier">
             <label className="mb-1 block text-sm font-medium text-gray-700">
               المورد
             </label>
@@ -139,14 +188,17 @@ const MediconsultPayablesPage = () => {
               placeholder="ابحث باسم المورد"
               {...filterField('SupplierId')}
             />
-          </div>
+          </div>,
           <SearchableSelect
+            key="status"
             label="حالة الدفع"
             placeholder="جميع الحالات"
             options={paymentStatuses}
             {...filterField('PaymentStatus')}
-          />
-          {textFilters.map(([key, label]) => (
+          />,
+        ]}
+        extraFilters={[
+          ...textFilters.map(([key, label]) => (
             <FormInput
               key={key}
               label={label}
@@ -154,29 +206,9 @@ const MediconsultPayablesPage = () => {
               placeholder={`أدخل ${label}`}
               {...filterField(key)}
             />
-          ))}
-        </div>
-        <div className="flex flex-wrap justify-end gap-3">
-          <button
-            type="button"
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm"
-            onClick={() => {
-              setDraft({});
-              setFilters({});
-              setPageNumber(1);
-            }}
-          >
-            مسح الفلاتر
-          </button>
-          <button
-            type="submit"
-            disabled={Boolean(invalidDateRange)}
-            className="rounded-lg bg-primary px-4 py-2 text-sm text-white disabled:opacity-60"
-          >
-            تطبيق الفلاتر
-          </button>
-        </div>
-      </form>
+          )),
+        ]}
+      />
       {isError ? (
         <div role="alert" className="rounded-xl bg-red-50 p-4 text-red-700">
           تعذر تحميل تقرير الذمم.
@@ -191,6 +223,7 @@ const MediconsultPayablesPage = () => {
       ) : (
         <>
           <Table
+            tableClassName="whitespace-nowrap"
             columns={columns}
             data={data?.data ?? []}
             loading={isPending}

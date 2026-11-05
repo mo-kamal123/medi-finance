@@ -16,6 +16,7 @@ const Table = ({
   emptyMessage = 'لا توجد بيانات',
   extraRenderArg,
   showColumnPicker = true,
+  tableClassName = '',
 }) => {
   const [showColPicker, setShowColPicker] = useState(false);
   const pickerBtnRef = useRef(null);
@@ -178,7 +179,7 @@ const Table = ({
         : null}
 
       <div className="overflow-x-auto rounded-xl  bg-white">
-        <table className="w-full table-auto overflow-x-auto rounded-xl border-collapse text-sm">
+        <table className={`w-full table-auto overflow-x-auto rounded-xl border-collapse text-sm ${tableClassName}`}>
         <thead className="bg-primary text-white">
           <tr>
             {visibleColumns.map((col, index) => (

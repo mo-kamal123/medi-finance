@@ -1,33 +1,34 @@
-﻿import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import FormInput from '../../../../shared/ui/input';
+import FilterBar from '../../../../shared/ui/filter-bar';
+import SearchableSelect from '../../../../shared/ui/searchable-select';
 import PageLoader from '../../../../shared/ui/page-loader';
 import Pagination from '../../../../shared/ui/pagination';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
-import { useDebounce } from '../../../../shared/lib/use-debounce';
 import CustomerTable from '../components/customer-table';
 import { useCustomers } from '../hooks/customers.queries';
 import { Search } from 'lucide-react';
 
 const CustomersPage = () => {
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [filters, setFilters] = useState({});
+  const [appliedFilters, setAppliedFilters] = useState({});
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const debouncedSearchTerm = useDebounce(search, 500);
-  const isFirstRender = useRef(true);
-
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    setDebouncedSearch(debouncedSearchTerm);
-    setPageNumber(1);
-  }, [debouncedSearchTerm]);
+    const timer = setTimeout(() => {
+      setAppliedFilters(filters);
+      setPageNumber(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [filters]);
 
   const { data: response, isLoading } = useCustomers({
-    search: debouncedSearch || undefined,
+    ...Object.fromEntries(
+      Object.entries(appliedFilters)
+        .map(([key, value]) => [key, value.trim()])
+        .filter(([, value]) => value !== '')
+    ),
     pageNumber,
     pageSize,
   });
@@ -46,16 +47,70 @@ const CustomersPage = () => {
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-4">
-        <FormInput
-          label="بحث"
-          value={search}
-          icon={Search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="ابحث بالكود أو الاسم"
-          autoFocus
-        />
-      </div>
+      <FilterBar
+        gridClassName="xl:grid-cols-4"
+        activeCount={
+          Object.values(filters).filter((value) => value.trim()).length
+        }
+        onReset={() => {
+          setFilters({});
+          setAppliedFilters({});
+          setPageNumber(1);
+        }}
+        primaryFilters={[
+          <FormInput
+            key="search"
+            label="بحث"
+            aria-label="بحث"
+            value={filters.search ?? ''}
+            icon={Search}
+            onChange={(event) =>
+              setFilters((previous) => ({
+                ...previous,
+                search: event.target.value,
+              }))
+            }
+            placeholder="ابحث بالكود أو الاسم"
+            autoFocus
+          />,
+          <SearchableSelect
+            key="status"
+            label="الحالة"
+            placeholder="جميع الحالات"
+            value={filters.status ?? ''}
+            options={[
+              { value: '', label: 'جميع الحالات' },
+              { value: 'Deactived', label: 'Deactived' },
+              { value: 'Activated', label: 'Activated' },
+              { value: 'Hold', label: 'Hold' },
+            ]}
+            onChange={(event) =>
+              setFilters((previous) => ({
+                ...previous,
+                status: event.target.value,
+              }))
+            }
+          />,
+          ...[
+            ['category', 'التصنيف'],
+            ['clientType', 'نوع العميل'],
+          ].map(([key, label]) => (
+            <FormInput
+              key={key}
+              label={label}
+              aria-label={label}
+              placeholder={`أدخل ${label}`}
+              value={filters[key] ?? ''}
+              onChange={(event) =>
+                setFilters((previous) => ({
+                  ...previous,
+                  [key]: event.target.value,
+                }))
+              }
+            />
+          )),
+        ]}
+      />
 
       <CustomerTable data={customers} />
 

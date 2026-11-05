@@ -9,6 +9,7 @@ const FilterBar = ({
   activeCount = 0,
   extraCount = 0,
   className,
+  gridClassName,
 }) => {
   const [showExtra, setShowExtra] = useState(false);
 
@@ -20,7 +21,7 @@ const FilterBar = ({
       )}
     >
       {/* Primary filters row */}
-      <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className={cn('grid grid-cols-1 items-end gap-4 md:grid-cols-2 xl:grid-cols-5', gridClassName)}>
         {primaryFilters}
 
         {extraFilters.length > 0 ? (

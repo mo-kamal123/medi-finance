@@ -53,7 +53,7 @@ const BatchInvoiceSelector = ({ batches, onChange, onLoadingChange }) => {
   };
 
   return (
-    <section className="overflow-hidden rounded-xl border border-primary/15 bg-white shadow-sm" aria-label="فواتير الدفعات">
+    <section className="overflow-hidden rounded-xl border border-gray-200 bg-white" aria-label="فواتير الدفعات">
       <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[1fr_minmax(320px,440px)] lg:items-center">
         <div>
           <div className="flex flex-wrap items-center gap-3">
@@ -96,7 +96,7 @@ const BatchInvoiceSelector = ({ batches, onChange, onLoadingChange }) => {
 
       {batches.length > 0 ? (
         <>
-          <div className="max-h-64 overflow-auto border-t border-gray-100">
+          <div className="max-h-64 overflow-auto border-t border-gray-200">
             <table className="w-full text-start text-sm">
               <thead className="sticky top-0 bg-gray-50 text-gray-500">
                 <tr>
@@ -124,13 +124,13 @@ const BatchInvoiceSelector = ({ batches, onChange, onLoadingChange }) => {
               </tbody>
             </table>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-primary/10 bg-primary/5 px-5 py-3" aria-live="polite">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 bg-primary/5 px-5 py-3" aria-live="polite">
             <span className="text-sm font-medium text-gray-600">إجمالي قيمة الشيك</span>
             <span className="text-lg font-bold tabular-nums text-primary">{formatCurrency(totalBatchInvoiceAmount(batches))}</span>
           </div>
         </>
       ) : (
-        <p className="border-t border-gray-100 bg-gray-50/50 px-5 py-3 text-sm text-gray-400" aria-live="polite">لم يتم اختيار فواتير بعد. أضف رقم دفعة للبدء.</p>
+        <p className="border-t border-gray-200 bg-gray-50/50 px-5 py-3 text-sm text-gray-400" aria-live="polite">لم يتم اختيار فواتير بعد. أضف رقم دفعة للبدء.</p>
       )}
     </section>
   );
