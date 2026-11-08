@@ -1,3 +1,4 @@
+import KpiCard from '../../../../../shared/ui/kpi-card';
 import Breadcrumb from '../../../../../shared/ui/breadcrumb';
 import { useMemo, useState } from 'react';
 import { Download, FileText, RotateCcw } from 'lucide-react';
@@ -336,33 +337,13 @@ const AgingReportPage = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="text-sm text-gray-500">إجمالي الفواتير</div>
-          <div className="mt-2 text-2xl font-bold text-gray-900">
-            {formatCurrency(Number(reportData.totalAmount) || 0)}
-          </div>
-        </div>
+        <KpiCard label="إجمالي الفواتير" value={formatCurrency(Number(reportData.totalAmount) || 0)} tone="text-gray-900" />
 
-        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="text-sm text-gray-500">إجمالي المدفوع</div>
-          <div className="mt-2 text-2xl font-bold text-emerald-700">
-            {formatCurrency(Number(reportData.paidAmount) || 0)}
-          </div>
-        </div>
+        <KpiCard label="إجمالي المدفوع" value={formatCurrency(Number(reportData.paidAmount) || 0)} tone="text-emerald-700" />
 
-        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="text-sm text-gray-500">إجمالي المتأخر</div>
-          <div className="mt-2 text-2xl font-bold text-amber-700">
-            {formatCurrency(Number(reportData.overdueAmount) || 0)}
-          </div>
-        </div>
+        <KpiCard label="إجمالي المتأخر" value={formatCurrency(Number(reportData.overdueAmount) || 0)} tone="text-amber-700" />
 
-        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="text-sm text-gray-500">إجمالي المتبقي</div>
-          <div className="mt-2 text-2xl font-bold text-red-600">
-            {formatCurrency(Number(reportData.totalRemainingAmount) || 0)}
-          </div>
-        </div>
+        <KpiCard label="إجمالي المتبقي" value={formatCurrency(Number(reportData.totalRemainingAmount) || 0)} tone="text-red-600" />
       </div>
 
       {isLoading ? (

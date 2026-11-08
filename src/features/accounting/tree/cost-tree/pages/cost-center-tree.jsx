@@ -1,3 +1,4 @@
+import KpiCard from '../../../../../shared/ui/kpi-card';
 import { useMemo, useState } from 'react';
 import {
   Ban,
@@ -133,15 +134,7 @@ const CostCenterTree = () => {
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {summaryCards.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-xl border border-gray-200 bg-white p-5"
-          >
-            <div className="text-sm text-gray-500">{card.label}</div>
-            <div className={`mt-2 text-lg font-semibold ${card.text}`}>
-              {card.value}
-            </div>
-          </div>
+          <KpiCard key={card.label} label={card.label} value={card.value} tone={card.text} />
         ))}
       </div>
       <div className="rounded-xl border border-gray-200 bg-white p-4">

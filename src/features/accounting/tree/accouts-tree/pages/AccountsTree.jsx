@@ -1,3 +1,4 @@
+import KpiCard from '../../../../../shared/ui/kpi-card';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Ban,
@@ -207,15 +208,7 @@ const AccountsTree = () => {
             color: 'text-primary',
           },
         ].map((card) => (
-          <div
-            key={card.label}
-            className="rounded-xl border border-gray-200 bg-white p-5"
-          >
-            <div className="text-sm text-gray-500">{card.label}</div>
-            <div className={`mt-2 text-2xl font-semibold ${card.color}`}>
-              {card.value}
-            </div>
-          </div>
+          <KpiCard key={card.label} label={card.label} value={card.value} tone={card.color} />
         ))}
       </div>
       {/* Search and Filter */}

@@ -1,3 +1,4 @@
+import KpiCard from '../../../../../shared/ui/kpi-card';
 import { useMemo } from 'react';
 import { Banknote, Download } from 'lucide-react';
 import PageLoader from '../../../../../shared/ui/page-loader';
@@ -8,37 +9,15 @@ import {
 import { useBankChequesSummary } from '../hooks/bank-cheques-summary.queries';
 import { useBankChequesSummaryExport } from '../hooks/use-bank-cheques-summary-export';
 
-const SummaryCard = ({
-  label,
-  count,
-  amount,
-  countTone,
-  amountTone,
-  iconClass,
-  icon,
-}) => {
-  const CardIcon = icon;
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="text-sm text-gray-500">{label}</div>
-          <div className={`mt-2 text-3xl font-bold ${countTone}`}>
-            {formatNumber(count)}
-          </div>
-          <div className={`mt-1 text-sm font-semibold ${amountTone}`}>
-            {formatCurrency(amount)}
-          </div>
-        </div>
-        <div
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${iconClass}`}
-        >
-          <CardIcon size={20} />
-        </div>
-      </div>
-    </div>
-  );
-};
+const SummaryCard = ({ label, count, amount, countTone, amountTone, icon }) => (
+  <KpiCard
+    label={label}
+    value={formatNumber(count)}
+    tone={countTone}
+    icon={icon}
+    secondary={<span dir="ltr" className={amountTone}>{formatCurrency(amount)}</span>}
+  />
+);
 
 const ChequesSummarySection = ({ bankId }) => {
   const { handleExport, isExporting } = useBankChequesSummaryExport();
@@ -74,7 +53,6 @@ const ChequesSummarySection = ({ bankId }) => {
             amount={Number(summary?.totalAmount) || 0}
             countTone="text-primary"
             amountTone="text-gray-600"
-            iconClass="bg-primary/10 text-primary"
             icon={Banknote}
           />
           <SummaryCard
@@ -83,7 +61,6 @@ const ChequesSummarySection = ({ bankId }) => {
             amount={Number(summary?.collectedAmount) || 0}
             countTone="text-emerald-700"
             amountTone="text-emerald-700"
-            iconClass="bg-emerald-100 text-emerald-700"
             icon={Banknote}
           />
           <SummaryCard
@@ -92,7 +69,6 @@ const ChequesSummarySection = ({ bankId }) => {
             amount={Number(summary?.pendingAmount) || 0}
             countTone="text-amber-600"
             amountTone="text-amber-600"
-            iconClass="bg-amber-100 text-amber-600"
             icon={Banknote}
           />
           <SummaryCard
@@ -101,7 +77,6 @@ const ChequesSummarySection = ({ bankId }) => {
             amount={Number(summary?.returnedAmount) || 0}
             countTone="text-red-600"
             amountTone="text-red-600"
-            iconClass="bg-red-100 text-red-600"
             icon={Banknote}
           />
         </div>

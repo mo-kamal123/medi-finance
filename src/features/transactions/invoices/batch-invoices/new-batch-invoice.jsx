@@ -1,3 +1,4 @@
+import KpiCard from '../../../../shared/ui/kpi-card';
 // New batch invoice page.
 
 import { useEffect, useMemo, useState } from 'react';
@@ -321,17 +322,7 @@ const DiscountsTab = ({ discounts, onDiscountChange }) => {
         </div>
         <div className="grid grid-cols-1 gap-3 p-5 sm:grid-cols-4">
           {batchDiscounts.map((discount) => (
-            <div
-              key={discount.discountType}
-              className="group rounded-xl border border-gray-200 bg-linear-to-b from-gray-50/80 to-white px-4 py-3 transition-colors hover:border-sky-200"
-            >
-              <p className="truncate text-xs font-medium text-gray-500" title={discount.discountType}>
-                {discount.discountType}
-              </p>
-              <p className="mt-1 text-lg font-bold text-gray-900 tabular-nums">
-                {formatCurrency(toAmount(discount.amount))}
-              </p>
-            </div>
+            <KpiCard key={discount.discountType} label={discount.discountType} value={formatCurrency(toAmount(discount.amount))} tone="text-gray-900" />
           ))}
         </div>
       </section>
@@ -656,40 +647,15 @@ const NewBatchInvoicePage = ({ initialBatch = null, previewOnly = false }) => {
               </p>
             </div> */}
 
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <p className="text-sm text-gray-500">قيمة الدفعة</p>
-              <p className="mt-2 text-lg font-semibold text-gray-900">
-                {formatCurrency(formData.batchAmount)}
-              </p>
-            </div>
+            <KpiCard label="قيمة الدفعة" value={formatCurrency(formData.batchAmount)} tone="text-gray-900" />
 
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <p className="text-sm text-gray-500">خصم المطالبه</p>
-              <p className="mt-2 text-lg font-semibold text-red-500">
-                {formatCurrency(batchDiscountAmount)}
-              </p>
-            </div>
+            <KpiCard label="خصم المطالبه" value={formatCurrency(batchDiscountAmount)} tone="text-red-500" />
 
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <p className="text-sm text-gray-500">إجمالي التفاصيل</p>
-              <p className="mt-2 text-lg font-semibold text-gray-900">
-                {formatCurrency(totalAmount)}
-              </p>
-            </div>
+            <KpiCard label="إجمالي التفاصيل" value={formatCurrency(totalAmount)} tone="text-gray-900" />
 
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <p className="text-sm text-gray-500">الخصم الماليه</p>
-              <p className="mt-2 text-lg font-semibold text-red-500">
-                {formatCurrency(financeDiscountAmount)}
-              </p>
-            </div>
+            <KpiCard label="الخصم الماليه" value={formatCurrency(financeDiscountAmount)} tone="text-red-500" />
 
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <p className="text-sm text-gray-500">المستحق</p>
-              <p className="mt-2 text-lg font-semibold text-primary">
-                {formatCurrency(netAmount)}
-              </p>
-            </div>
+            <KpiCard label="المستحق" value={formatCurrency(netAmount)} tone="text-primary" />
           </div>
 
           {batchData.invoiceID ? (

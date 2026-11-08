@@ -1,3 +1,4 @@
+import KpiCard from '../../../../../shared/ui/kpi-card';
 import ResetFiltersButton from '../../../../../shared/ui/reset-filters-button';
 import Breadcrumb from '../../../../../shared/ui/breadcrumb';
 import { useMemo, useState } from 'react';
@@ -301,33 +302,13 @@ const BankStatementPage = () => {
       {summary && (
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <div className="text-sm text-gray-500">رصيد افتتاحي</div>
-              <div className="mt-2 text-lg font-semibold text-gray-900">
-                {formatCurrency(Number(summary.openingBalance) || 0)}
-              </div>
-            </div>
+            <KpiCard label="رصيد افتتاحي" value={formatCurrency(Number(summary.openingBalance) || 0)} tone="text-gray-900" />
 
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <div className="text-sm text-gray-500">إجمالي الوارد</div>
-              <div className="mt-2 text-lg font-semibold text-emerald-700">
-                {formatCurrency(Number(summary.totalIncoming) || 0)}
-              </div>
-            </div>
+            <KpiCard label="إجمالي الوارد" value={formatCurrency(Number(summary.totalIncoming) || 0)} tone="text-emerald-700" />
 
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <div className="text-sm text-gray-500">إجمالي الصادر</div>
-              <div className="mt-2 text-lg font-semibold text-red-600">
-                {formatCurrency(Number(summary.totalOutgoing) || 0)}
-              </div>
-            </div>
+            <KpiCard label="إجمالي الصادر" value={formatCurrency(Number(summary.totalOutgoing) || 0)} tone="text-red-600" />
 
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <div className="text-sm text-gray-500">الرصيد الختامي</div>
-              <div className="mt-2 text-lg font-semibold text-primary">
-                {formatCurrency(Number(summary.closingBalance) || 0)}
-              </div>
-            </div>
+            <KpiCard label="الرصيد الختامي" value={formatCurrency(Number(summary.closingBalance) || 0)} tone="text-primary" />
           </div>
 
           {/* <div className="rounded-xl border border-gray-200 bg-white px-5 py-4">

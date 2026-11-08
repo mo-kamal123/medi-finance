@@ -1,3 +1,4 @@
+import KpiCard from '../../../../shared/ui/kpi-card';
 import PageHeading from '../../../../shared/ui/page-heading';
 import { useMemo, useState } from 'react';
 import { Eye, Pencil, Plus, Trash2, Wallet } from 'lucide-react';
@@ -102,18 +103,9 @@ const CashTransactionsPage = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="mb-2 flex items-center gap-2 text-gray-500"><Wallet size={18} /> إجمالي الإيداعات</div>
-          <div className="text-2xl font-bold text-green-600">{formatCurrency(balance?.totalDeposits ?? 0)}</div>
-        </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="mb-2 flex items-center gap-2 text-gray-500"><Wallet size={18} /> إجمالي السحوبات</div>
-          <div className="text-2xl font-bold text-red-600">{formatCurrency(balance?.totalWithdrawals ?? 0)}</div>
-        </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="mb-2 flex items-center gap-2 text-gray-500"><Wallet size={18} /> الرصيد</div>
-          <div className={`text-2xl font-bold ${(balance?.balance ?? 0) >= 0 ? 'text-primary' : 'text-red-600'}`}>{formatCurrency(balance?.balance ?? 0)}</div>
-        </div>
+        <KpiCard label="إجمالي الإيداعات" value={formatCurrency(balance?.totalDeposits ?? 0)} icon={Wallet} tone="text-green-600" />
+        <KpiCard label="إجمالي السحوبات" value={formatCurrency(balance?.totalWithdrawals ?? 0)} icon={Wallet} tone="text-red-600" />
+        <KpiCard label="الرصيد" value={formatCurrency(balance?.balance ?? 0)} icon={Wallet} tone={(balance?.balance ?? 0) >= 0 ? 'text-primary' : 'text-red-600'} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:grid-cols-3">

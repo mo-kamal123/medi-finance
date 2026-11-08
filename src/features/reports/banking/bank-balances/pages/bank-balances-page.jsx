@@ -1,3 +1,4 @@
+import KpiCard from '../../../../../shared/ui/kpi-card';
 import ResetFiltersButton from '../../../../../shared/ui/reset-filters-button';
 import Breadcrumb from '../../../../../shared/ui/breadcrumb';
 import { useMemo, useState } from 'react';
@@ -178,33 +179,13 @@ const BankBalancesPage = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <div className="text-sm text-gray-500">إجمالي الرصيد الافتتاحي</div>
-          <div className="mt-2 text-lg font-semibold text-gray-900">
-            {formatCurrency(totalOpening)}
-          </div>
-        </div>
+        <KpiCard label="إجمالي الرصيد الافتتاحي" value={formatCurrency(totalOpening)} tone="text-gray-900" />
 
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <div className="text-sm text-gray-500">إجمالي الوارد</div>
-          <div className="mt-2 text-lg font-semibold text-emerald-700">
-            {formatCurrency(totalIncoming)}
-          </div>
-        </div>
+        <KpiCard label="إجمالي الوارد" value={formatCurrency(totalIncoming)} tone="text-emerald-700" />
 
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <div className="text-sm text-gray-500">إجمالي الصادر</div>
-          <div className="mt-2 text-lg font-semibold text-red-600">
-            {formatCurrency(totalOutgoing)}
-          </div>
-        </div>
+        <KpiCard label="إجمالي الصادر" value={formatCurrency(totalOutgoing)} tone="text-red-600" />
 
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <div className="text-sm text-gray-500">الرصيد الختامي</div>
-          <div className="mt-2 text-lg font-semibold text-primary">
-            {formatCurrency(totalClosing)}
-          </div>
-        </div>
+        <KpiCard label="الرصيد الختامي" value={formatCurrency(totalClosing)} tone="text-primary" />
       </div>
 
       <div className="relative space-y-4 rounded-xl border border-gray-200 bg-white p-4">

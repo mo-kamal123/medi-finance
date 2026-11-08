@@ -1,4 +1,5 @@
 import ResetFiltersButton from '../../../../../shared/ui/reset-filters-button';
+import KpiCard from '../../../../../shared/ui/kpi-card';
 import Breadcrumb from '../../../../../shared/ui/breadcrumb';
 import { useMemo, useState } from 'react';
 import { Download, Wallet } from 'lucide-react';
@@ -176,6 +177,18 @@ const CashFlowPage = () => {
         </button>
       </div>
 
+      {filters.bankID && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {[
+            { label: 'إجمالي الوارد', value: totalInflows, tone: 'text-emerald-700', dot: 'bg-emerald-400' },
+            { label: 'إجمالي الصادر', value: totalOutflows, tone: 'text-red-600', dot: 'bg-rose-400' },
+            { label: 'صافي التدفق النقدي', value: netCashFlow, tone: netCashFlow >= 0 ? 'text-primary' : 'text-red-600', dot: netCashFlow >= 0 ? 'bg-primary' : 'bg-rose-400' },
+          ].map((item) => (
+            <KpiCard key={item.label} label={item.label} value={formatCurrency(item.value)} tone={item.tone} dotClassName={item.dot} />
+          ))}
+        </div>
+      )}
+
       <div className="relative space-y-4 rounded-xl border border-gray-200 bg-white p-4">
         <ResetFiltersButton filters={filters} onReset={handleReset} />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -202,35 +215,6 @@ const CashFlowPage = () => {
 
         
       </div>
-
-      {filters.bankID && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
-            <div className="text-sm text-gray-500">إجمالي الوارد</div>
-            <div className="mt-2 text-2xl font-bold text-emerald-700">
-              {formatCurrency(totalInflows)}
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
-            <div className="text-sm text-gray-500">إجمالي الصادر</div>
-            <div className="mt-2 text-2xl font-bold text-red-600">
-              {formatCurrency(totalOutflows)}
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
-            <div className="text-sm text-gray-500">صافي التدفق النقدي</div>
-            <div
-              className={`mt-2 text-2xl font-bold ${
-                netCashFlow >= 0 ? 'text-primary' : 'text-red-600'
-              }`}
-            >
-              {formatCurrency(netCashFlow)}
-            </div>
-          </div>
-        </div>
-      )}
 
       {isLoading ? (
         <PageLoader label="جاري تحميل التدفقات النقدية..." />

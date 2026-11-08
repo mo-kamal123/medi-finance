@@ -1,3 +1,4 @@
+import KpiCard from '../../../../../shared/ui/kpi-card';
 import ResetFiltersButton from '../../../../../shared/ui/reset-filters-button';
 import Breadcrumb from '../../../../../shared/ui/breadcrumb';
 import { useMemo, useState } from 'react';
@@ -214,6 +215,13 @@ const OutstandingChequesPage = () => {
         </button>
       </div>
 
+      {filters.bankAccountID && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <KpiCard label={`شيكات قبض معلقة (${formatNumber(incomingCount)})`} value={formatCurrency(incomingAmount)} tone="text-emerald-700" />
+          <KpiCard label={`شيكات صرف معلقة (${formatNumber(outgoingCount)})`} value={formatCurrency(outgoingAmount)} tone="text-red-600" />
+        </div>
+      )}
+
       <div className="relative space-y-4 rounded-xl border border-gray-200 bg-white p-4">
         <ResetFiltersButton filters={filters} onReset={handleReset} />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -245,30 +253,6 @@ const OutstandingChequesPage = () => {
 
         
       </div>
-
-      {filters.bankAccountID && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
-            <div className="text-sm text-gray-500">شيكات قبض معلقة</div>
-            <div className="mt-2 text-2xl font-bold text-gray-900">
-              {formatNumber(incomingCount)}
-            </div>
-            <div className="mt-1 text-sm font-semibold text-emerald-700">
-              {formatCurrency(incomingAmount)}
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
-            <div className="text-sm text-gray-500">شيكات صرف معلقة</div>
-            <div className="mt-2 text-2xl font-bold text-gray-900">
-              {formatNumber(outgoingCount)}
-            </div>
-            <div className="mt-1 text-sm font-semibold text-red-600">
-              {formatCurrency(outgoingAmount)}
-            </div>
-          </div>
-        </div>
-      )}
 
       {isLoading ? (
         <PageLoader label="جاري تحميل الشيكات المعلقة..." />

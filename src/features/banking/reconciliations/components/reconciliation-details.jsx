@@ -1,3 +1,4 @@
+import KpiCard from '../../../../shared/ui/kpi-card';
 import { useMemo, useState } from 'react';
 import {
   ArrowRight,
@@ -76,24 +77,7 @@ const getItemAmount = (item) =>
   item?.amount ?? getBankTx(item)?.amount ?? getSystemTx(item)?.amount ?? 0;
 
 const SummaryCard = ({ label, value, accent = false, danger = false }) => (
-  <div
-    className={`rounded-xl border p-4 ${
-      danger
-        ? 'border-red-200 bg-red-50'
-        : accent
-          ? 'border-primary/30 bg-primary/5'
-          : 'border-gray-200 bg-gray-50'
-    }`}
-  >
-    <p className="text-xs font-medium text-gray-500">{label}</p>
-    <p
-      className={`mt-1 text-lg font-bold ${
-        danger ? 'text-red-600' : accent ? 'text-primary' : 'text-gray-900'
-      }`}
-    >
-      {value}
-    </p>
-  </div>
+  <KpiCard label={label} value={value} valueDir="auto" tone={danger ? 'text-red-600' : accent ? 'text-primary' : 'text-gray-900'} />
 );
 
 const ReconciliationDetails = ({ reconciliationId, onBack }) => {
@@ -579,7 +563,7 @@ const ReconciliationDetails = ({ reconciliationId, onBack }) => {
       </div>
 
       {/* Summary */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5">
+      <div>
         {/* <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h3 className="font-bold text-gray-900">ملخص التسوية</h3>
           <span
@@ -591,7 +575,7 @@ const ReconciliationDetails = ({ reconciliationId, onBack }) => {
           </span>
         </div> */}
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           <SummaryCard
             label="رصيد كشف البنك الختامي"
             value={formatCurrency(details?.bankStatementClosingBalance ?? 0)}
