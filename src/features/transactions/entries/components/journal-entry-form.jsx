@@ -1,5 +1,6 @@
 ﻿import useJournalEntryForm from '../hooks/use-journal-entry-form';
 import JournalEntryHeader from './journal-entry-header';
+import { useWatch } from 'react-hook-form';
 import JournalEntryHeaderFields from './journal-entry-header-fields';
 import JournalEntryDetails from './journal-entry-details';
 import JournalEntryFormActions from './journal-entry-form-actions';
@@ -47,12 +48,23 @@ const JournalEntryForm = ({
     handleExchangeRateChange,
   } = useJournalEntryForm({ defaultValues, mode, viewOnly });
 
+  const [entryDate, statusID] = useWatch({
+    control,
+    name: ['entryDate', 'statusID'],
+  });
+  const entryStatus = statusOptions.find(
+    (option) => String(option.value) === String(statusID)
+  )?.label || defaultValues.statusName || defaultValues.status || '-';
+
   return (
     <div className="min-w-0 w-full max-w-full space-y-4 md:space-y-6">
       <JournalEntryHeader
         navigate={navigate}
         isEditMode={isEditMode}
         entryId={entryId}
+        entryNumber={defaultValues.journalEntryNumber}
+        entryDate={entryDate}
+        entryStatus={entryStatus}
         showEntryDetailsButton={showEntryDetailsButton}
         viewOnly={viewOnly}
         postMutation={postMutation}

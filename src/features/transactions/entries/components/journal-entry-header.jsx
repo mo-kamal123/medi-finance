@@ -1,10 +1,16 @@
-import { CheckCircle2, ExternalLink, RotateCcw } from 'lucide-react';
+import { BookOpen, CheckCircle2, ExternalLink, RotateCcw } from 'lucide-react';
+
+import { formatDate } from '../../../../shared/utils/formatters';
+import { getJournalEntryStatusMeta } from '../utils/journal-entry.utils';
 
 // Page header with title, entry actions (view/post/reverse)
 const JournalEntryHeader = ({
   navigate,
   isEditMode,
   entryId,
+  entryNumber,
+  entryDate,
+  entryStatus,
   showEntryDetailsButton = false,
   viewOnly = false,
   postMutation,
@@ -14,17 +20,31 @@ const JournalEntryHeader = ({
   handlePostEntry,
   handleReverseEntry,
 }) => {
+  const statusMeta = getJournalEntryStatusMeta({ statusName: entryStatus });
+
   if (!viewOnly) {
     return (
-      <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 md:flex-row md:items-center md:justify-between md:p-6">
+      <div className={`flex flex-col gap-3 md:flex-row md:items-center md:justify-between ${isEditMode ? 'rounded-2xl bg-linear-to-r from-primary to-primary/80 px-4 py-6 text-white md:px-8' : 'rounded-xl border border-gray-200 bg-white p-4 md:p-6'}`}>
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          {isEditMode ? (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/20 text-white shadow-inner">
+              <BookOpen size={20} />
+            </div>
+          ) : null}
           <div className='flex flex-col gap-1'>
             <h1 className="text-xl font-bold md:text-2xl">
-              {isEditMode ? 'تعديل قيد يومي' : 'إنشاء قيد يومي'}
+              {isEditMode ? `قيد ${entryNumber || entryId}` : 'إنشاء قيد يومي'}
             </h1>
-            <p className="text-sm text-gray-600">
-              يجب أن يكون مجموع المدين مساوياً للدائن
-            </p>
+            {isEditMode ? (
+              <div className="flex flex-wrap items-center gap-3 text-sm">
+                <span className="text-white/70">التاريخ: {formatDate(entryDate)}</span>
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusMeta.badgeClass}`}>{statusMeta.label}</span>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-600">
+                يجب أن يكون مجموع المدين مساوياً للدائن
+              </p>
+            )}
           </div>
         </div>
 
@@ -63,7 +83,7 @@ const JournalEntryHeader = ({
                 !isPosted ||
                 isReversed
               }
-              className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-red-600 transition-colors hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <RotateCcw size={16} />
               عكس القيد

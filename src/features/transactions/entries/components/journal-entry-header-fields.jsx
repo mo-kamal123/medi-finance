@@ -38,6 +38,7 @@ const JournalEntryHeaderFields = ({
         <FormInput
           as="select"
           label="نوع القيد"
+          placeholder="اختر نوع القيد"
           value={field.value ?? ''}
           onChange={field.onChange}
           required
@@ -52,9 +53,22 @@ const JournalEntryHeaderFields = ({
       )}
     />
 
-    <FormInput label="رقم المرجع" {...register('referenceNumber')} />
+    <FormInput label="رقم المرجع" placeholder="أدخل رقم المرجع" {...register('referenceNumber')} />
 
-    <FormInput label="الوصف عربي" {...register('description')} />
+    <Controller
+      name="currencyID"
+      control={control}
+      render={({ field }) => (
+        <CurrencyExchangeInput
+          currencyValue={field.value ?? ''}
+          exchangeRateValue={watchedExchangeRate ?? ''}
+          onCurrencyChange={field.onChange}
+          onExchangeRateChange={(e) => handleExchangeRateChange(e)}
+          currencyOptions={currencyOptions}
+          disabled={readOnly}
+        />
+      )}
+    />
 
     <Controller
       name="financialPeriodID"
@@ -63,12 +77,13 @@ const JournalEntryHeaderFields = ({
         <FormInput
           as="select"
           label="الفترة المالية"
+          placeholder="اختر الفترة المالية"
           value={field.value ?? ''}
           onChange={field.onChange}
           required
           error={errors.financialPeriodID?.message}
         >
-          <option value="">اختر</option>
+          <option value="">اختر الفترة المالية</option>
           {periodOptions.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
@@ -85,6 +100,7 @@ const JournalEntryHeaderFields = ({
         <FormInput
           as="select"
           label="الحالة"
+          placeholder="اختر الحالة"
           value={field.value ?? ''}
           onChange={field.onChange}
           required
@@ -99,19 +115,13 @@ const JournalEntryHeaderFields = ({
       )}
     />
 
-    <Controller
-      name="currencyID"
-      control={control}
-      render={({ field }) => (
-        <CurrencyExchangeInput
-          currencyValue={field.value ?? ''}
-          exchangeRateValue={watchedExchangeRate ?? ''}
-          onCurrencyChange={field.onChange}
-          onExchangeRateChange={(e) => handleExchangeRateChange(e)}
-          currencyOptions={currencyOptions}
-          disabled={readOnly}
-        />
-      )}
+    <FormInput
+      as="textarea"
+      label="الوصف عربي"
+      placeholder="أدخل وصف القيد بالعربية"
+      containerClass="md:col-span-2 xl:col-span-3"
+      readOnly={readOnly}
+      {...register('description')}
     />
   </div>
 );

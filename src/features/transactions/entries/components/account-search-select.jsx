@@ -14,6 +14,7 @@ const AccountSearchSelect = ({
   onBlur,
   disabled,
   error,
+  fitContent = false,
   allowLocked = false,
   placeholder = 'ابحث بكود الحساب',
   searchHint = 'ابدأ بكتابة اسم أو كود الحساب للبحث',
@@ -111,13 +112,14 @@ const AccountSearchSelect = ({
       : null;
 
   return (
-    <div ref={wrapperRef} className="w-full">
+    <div ref={wrapperRef} className={fitContent ? 'w-max min-w-full' : 'w-full'}>
       <div className="relative">
         <Search size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
           ref={inputRef}
           type="text"
           value={isOpen ? searchText : displayLabel}
+          size={fitContent ? Math.max(String(isOpen ? searchText : displayLabel).length + 8, 24) : undefined}
           onChange={(e) => {
             setSearchText(e.target.value);
             setIsOpen(true);
@@ -133,7 +135,8 @@ const AccountSearchSelect = ({
           disabled={disabled}
           dir="rtl"
           className={cn(
-            'w-full rounded-lg border py-2 pr-10 outline-none transition-colors',
+            'rounded-lg border py-2 pr-10 outline-none transition-colors',
+            fitContent ? 'w-auto min-w-full' : 'w-full',
             displayAccount ? 'pl-8' : 'pl-3',
             error || lockedError ? 'border-red-500' : 'border-gray-200',
             disabled ? 'cursor-not-allowed bg-gray-100' : 'bg-white',

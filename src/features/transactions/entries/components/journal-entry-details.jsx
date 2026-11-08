@@ -22,14 +22,16 @@ const JournalEntryDetails = ({
   <div className="space-y-4">
     <div className="flex items-center justify-between">
       <h2 className="text-lg font-semibold text-gray-900">تفاصيل القيد</h2>
-      <button
-        type="button"
-        onClick={() => append(createDetailRow())}
-        className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary/90"
-      >
-        <Plus size={16} />
-        إضافة سطر
-      </button>
+      {!readOnly ? (
+        <button
+          type="button"
+          onClick={() => append(createDetailRow())}
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary/90"
+        >
+          <Plus size={16} />
+          إضافة سطر
+        </button>
+      ) : null}
     </div>
 
     <JournalEntryDetailsTable

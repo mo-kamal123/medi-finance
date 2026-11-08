@@ -86,6 +86,7 @@ const JournalEntryDetailsTable = ({
                   render={({ field: f }) => (
                     <input
                       type="number"
+                      placeholder="المبلغ المدين"
                       value={f.value ?? ''}
                       onChange={(e) =>
                         handleAmountChange(index, 'debitAmount', e.target.value)
@@ -109,6 +110,7 @@ const JournalEntryDetailsTable = ({
                   render={({ field: f }) => (
                     <input
                       type="number"
+                      placeholder="المبلغ الدائن"
                       value={f.value ?? ''}
                       onChange={(e) =>
                         handleAmountChange(index, 'creditAmount', e.target.value)
@@ -126,6 +128,7 @@ const JournalEntryDetailsTable = ({
                   control={control}
                   render={({ field: f }) => (
                     <AccountSearchSelect
+                      fitContent
                       value={f.value ?? ''}
                       onChange={f.onChange}
                       disabled={readOnly}
@@ -191,6 +194,7 @@ const JournalEntryDetailsTable = ({
                 <input
                   type="text"
                   {...register(`details.${index}.description`)}
+                  placeholder="أدخل وصف السطر"
                   readOnly={readOnly}
                   className={journalEntryInputClass}
                 />
@@ -214,6 +218,7 @@ const JournalEntryDetailsTable = ({
                 <input
                   type="text"
                   {...register(`details.${index}.documentNumber`)}
+                  placeholder="أدخل رقم المستند"
                   readOnly={readOnly}
                   className={journalEntryInputClass}
                 />
@@ -224,6 +229,7 @@ const JournalEntryDetailsTable = ({
                   <input
                     type="text"
                     {...register(`details.${index}.invoiceNumber`)}
+                    placeholder="أدخل رقم الفاتورة"
                     readOnly={readOnly}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
@@ -264,9 +270,7 @@ const JournalEntryDetailsTable = ({
         <tr>
           <td className="p-3 text-green-600">{totalDebit.toFixed(2)}</td>
           <td className="p-3 text-red-600">{totalCredit.toFixed(2)}</td>
-          <td colSpan={readOnly ? 7 : 9} className="p-3 text-right">
-            الإجمالي
-          </td>
+          <td colSpan={readOnly ? 7 : 9} className="p-3" />
         </tr>
       </tfoot>
     </table>
