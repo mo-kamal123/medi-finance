@@ -1,4 +1,3 @@
-import KpiCard from '../../../../shared/ui/kpi-card';
 // New batch invoice page.
 
 import { useEffect, useMemo, useState } from 'react';
@@ -307,34 +306,44 @@ const DiscountsTab = ({ discounts, onDiscountChange }) => {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10">
+    <div className="mx-auto  space-y-10">
 
       <section aria-label="خصومات الدفعة" className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-gray-50/70 px-5 py-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-main bg-main px-5 py-3.5">
           <div className="flex items-center gap-3">
             {/* <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
               <FileText size={17} aria-hidden="true" />
             </span> */}
             <div>
-              <h3 className="text-sm font-bold text-gray-900">خصومات الدفعة</h3>
+              <h3 className="text-sm font-bold text-white">خصومات الدفعة</h3>
             </div>
           </div>
         </div>
         <div className="grid grid-cols-1 gap-3 p-5 sm:grid-cols-4">
           {batchDiscounts.map((discount) => (
-            <KpiCard key={discount.discountType} label={discount.discountType} value={formatCurrency(toAmount(discount.amount))} tone="text-gray-900" />
+            <div
+              key={discount.discountType}
+              className="group rounded-xl border border-gray-200 bg-linear-to-b from-gray-50/80 to-white px-4 py-3 transition-colors hover:border-sky-200"
+            >
+              <p className="truncate text-xs font-medium text-gray-500" title={discount.discountType}>
+                {discount.discountType}
+              </p>
+              <p className="mt-1 text-lg font-bold text-gray-900 tabular-nums">
+                {formatCurrency(toAmount(discount.amount))}
+              </p>
+            </div>
           ))}
         </div>
       </section>
 
       <section aria-label="خصومات المالية" className="overflow-hidden rounded-2xl border border-primary/20 bg-white">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-primary/10 bg-primary/4 px-5 py-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-main bg-main px-5 py-3.5">
           <div className="flex items-center gap-3">
             {/* <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white">
               <Percent size={17} aria-hidden="true" />
             </span> */}
             <div>
-              <h3 className="text-sm font-bold text-gray-900">خصومات المالية</h3>
+              <h3 className="text-sm font-bold text-white">خصومات المالية</h3>
             </div>
           </div>
         </div>
@@ -579,13 +588,13 @@ const NewBatchInvoicePage = ({ initialBatch = null, previewOnly = false }) => {
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-6 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-main bg-main p-6 text-white md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-white">
               {initialBatch ? 'تفاصيل الدفعة' : 'إنشاء فاتورة دفعة'}
             </h1>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-white/70">
               أدخل رقم الدفعة لتحميل بياناتها ثم عدّل القيم قبل التأكيد
             </p>
           </div>
@@ -600,13 +609,14 @@ const NewBatchInvoicePage = ({ initialBatch = null, previewOnly = false }) => {
             value={batchNumberInput}
             onChange={(event) => setBatchNumberInput(event.target.value)}
             placeholder="مثال: 3990"
-            containerClass="md:min-w-[420px]"
+            containerClass="md:min-w-[420px] [&_label]:text-white"
+            inputClass="bg-white text-gray-900"
           />
 
           <button
             type="submit"
             disabled={isLoadingBatch}
-            className="mt-0 w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-white hover:bg-primary/90 disabled:opacity-60 md:self-end"
+            className="mt-0 w-full flex items-center justify-center gap-2 rounded-xl bg-white/20 px-5 py-3 text-white hover:bg-white/30 disabled:opacity-60 md:self-end"
           >
             <Search size={16} />
             {isLoadingBatch ? 'جاري التحميل...' : 'تحميل'}
@@ -647,15 +657,40 @@ const NewBatchInvoicePage = ({ initialBatch = null, previewOnly = false }) => {
               </p>
             </div> */}
 
-            <KpiCard label="قيمة الدفعة" value={formatCurrency(formData.batchAmount)} tone="text-gray-900" />
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <p className="text-sm text-gray-500">قيمة الدفعة</p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {formatCurrency(formData.batchAmount)}
+              </p>
+            </div>
 
-            <KpiCard label="خصم المطالبه" value={formatCurrency(batchDiscountAmount)} tone="text-red-500" />
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <p className="text-sm text-gray-500">خصم المطالبه</p>
+              <p className="mt-2 text-lg font-semibold text-red-500">
+                {formatCurrency(batchDiscountAmount)}
+              </p>
+            </div>
 
-            <KpiCard label="إجمالي التفاصيل" value={formatCurrency(totalAmount)} tone="text-gray-900" />
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <p className="text-sm text-gray-500">إجمالي التفاصيل</p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {formatCurrency(totalAmount)}
+              </p>
+            </div>
 
-            <KpiCard label="الخصم الماليه" value={formatCurrency(financeDiscountAmount)} tone="text-red-500" />
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <p className="text-sm text-gray-500">الخصم الماليه</p>
+              <p className="mt-2 text-lg font-semibold text-red-500">
+                {formatCurrency(financeDiscountAmount)}
+              </p>
+            </div>
 
-            <KpiCard label="المستحق" value={formatCurrency(netAmount)} tone="text-primary" />
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <p className="text-sm text-gray-500">المستحق</p>
+              <p className="mt-2 text-lg font-semibold text-primary">
+                {formatCurrency(netAmount)}
+              </p>
+            </div>
           </div>
 
           {batchData.invoiceID ? (

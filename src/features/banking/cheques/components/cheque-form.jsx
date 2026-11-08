@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import FormInput from '../../../../shared/ui/input';
 import DateInput from '../../../../shared/ui/date-input';
+import Toggle from '../../../../shared/ui/toggle';
 import NormalSelect from '../../../../shared/ui/NormalSelect';
 import PartySearchSelect from '../../../../shared/ui/party-search-select';
 import ChequeInvoiceSelector from './cheque-invoice-selector';
@@ -395,30 +396,24 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
       <div>
         <SectionHeader title="خصائص الشيك" />
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-3">
-            <input
-              type="checkbox"
-              {...register('isNonCashable')}
-              disabled={isViewMode}
-            />
-            <span className="text-sm">غير قابل للصرف</span>
-          </label>
-          <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-3">
-            <input
-              type="checkbox"
-              {...register('isBearerOnly')}
-              disabled={isViewMode}
-            />
-            <span className="text-sm">لحامله فقط</span>
-          </label>
-          <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-3">
-            <input
-              type="checkbox"
-              {...register('hasAttachmentPage')}
-              disabled={isViewMode}
-            />
-            <span className="text-sm">صفحة مرفقة</span>
-          </label>
+          <Toggle
+            label="غير قابل للصرف"
+            {...register('isNonCashable')}
+            disabled={isViewMode}
+            className="w-full rounded-lg border border-gray-200 bg-white p-3"
+          />
+          <Toggle
+            label="لحامله فقط"
+            {...register('isBearerOnly')}
+            disabled={isViewMode}
+            className="w-full rounded-lg border border-gray-200 bg-white p-3"
+          />
+          <Toggle
+            label="صفحة مرفقة"
+            {...register('hasAttachmentPage')}
+            disabled={isViewMode}
+            className="w-full rounded-lg border border-gray-200 bg-white p-3"
+          />
         </div>
       </div>
 

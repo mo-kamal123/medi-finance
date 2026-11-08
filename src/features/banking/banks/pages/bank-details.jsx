@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Building2, BookOpen, ListChecks, Receipt, Wallet, Banknote, Scale } from 'lucide-react';
+import { ArrowLeft, Building2, BookOpen, ListChecks, Receipt, Wallet, Banknote } from 'lucide-react';
 import PageLoader from '../../../../shared/ui/page-loader';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import BankAccountsPanel from '../components/bank-accounts-panel';
@@ -17,7 +17,6 @@ const TABS = [
   { key: 'cheques', label: 'الشيكات', icon: Banknote },
   { key: 'transactions', label: 'معاملات البنك', icon: Receipt },
   { key: 'transfers', label: 'التحويلات', icon: ListChecks },
-  { key: 'reconciliation', label: 'تسوية البنك', icon: Scale },
 ];
 
 const BankDetails = () => {

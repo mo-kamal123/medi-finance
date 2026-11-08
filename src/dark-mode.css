@@ -1,0 +1,358 @@
+/* Dark mode uses neutral charcoal surfaces; accents remain theme-controlled. */
+:root.dark {
+  --color-body: #0a0a0a;
+  --color-borders: #333333;
+  --color-sec: #444444;
+  --color-dark: #f2f2f2;
+  --color-gray-50: #1a1a1a;
+  --color-gray-100: #222222;
+  --color-gray-200: #333333;
+  --color-gray-300: #555555;
+  --color-gray-400: #929292;
+  --color-gray-500: #aaaaaa;
+  --color-gray-600: #c0c0c0;
+  --color-gray-700: #d4d4d4;
+  --color-gray-800: #e5e5e5;
+  --color-gray-900: #f2f2f2;
+  --surface-dark: #141414;
+  --accent-text-dark: color-mix(in srgb, var(--color-primary) 35%, white);
+  --accent-content: var(--accent-text-dark);
+  --amount-positive: #8ac6ad;
+  --amount-negative: #e5a0a0;
+  scrollbar-color: #444444 #101010;
+
+  /* Shared low-intensity colors also cover borders, gradients and hover states. */
+  --color-red-50: #201414;
+  --color-red-100: #2d1b1b;
+  --color-red-200: #4d2929;
+  --color-rose-50: #211417;
+  --color-rose-100: #2d1b21;
+  --color-rose-200: #4d2933;
+  --color-green-50: #142018;
+  --color-green-100: #1b2a20;
+  --color-green-200: #2b4634;
+  --color-emerald-50: #14201b;
+  --color-emerald-100: #1b2a23;
+  --color-emerald-200: #2b4639;
+  --color-amber-50: #211c14;
+  --color-amber-100: #2c251b;
+  --color-amber-200: #493c29;
+  --color-yellow-50: #211f14;
+  --color-yellow-100: #2c291b;
+  --color-yellow-200: #494329;
+  --color-orange-50: #211914;
+  --color-orange-100: #2c211b;
+  --color-orange-200: #493329;
+  --color-sky-50: #141c21;
+  --color-sky-100: #1b252c;
+  --color-sky-200: #293d49;
+  --color-blue-50: #141921;
+  --color-blue-100: #1b222c;
+  --color-blue-200: #29364a;
+  --color-indigo-50: #171621;
+  --color-indigo-100: #211e2c;
+  --color-indigo-200: #342f49;
+  --color-violet-50: #1b1621;
+  --color-violet-100: #251e2c;
+  --color-violet-200: #3d2f49;
+  --color-teal-50: #14201e;
+  --color-teal-100: #1b2a27;
+  --color-teal-200: #2b4640;
+  --color-cyan-50: #141f21;
+  --color-cyan-100: #1b282c;
+  --color-cyan-200: #2b4146;
+  --color-lime-50: #1b2014;
+  --color-lime-100: #242a1b;
+  --color-lime-200: #3b462b;
+  --color-fuchsia-50: #211621;
+  --color-fuchsia-100: #2c1e2c;
+  --color-fuchsia-200: #492f49;
+}
+
+@layer utilities {
+  /* White text and translucent overlays on colored headers stay white. */
+  .dark :is(.bg-white, .bg-white\/80, .bg-white\/90) {
+    background-color: var(--surface-dark);
+  }
+
+  .dark :is(.bg-gray-800, .bg-gray-900) {
+    background-color: #101010;
+  }
+
+  .dark .to-white {
+    --tw-gradient-to: var(--surface-dark);
+  }
+
+  .dark
+    :is(
+      .text-primary,
+      .text-main,
+      .hover\:text-primary:hover,
+      .hover\:text-main:hover
+    ) {
+    color: var(--accent-text-dark);
+  }
+
+  .dark .shadow-gray-200\/60 {
+    --tw-shadow-color: rgb(0 0 0 / 0.6);
+  }
+
+  /* Muted, readable status colors keep their existing meaning. */
+  .dark
+    :is(
+      .text-red-400,
+      .hover\:text-red-400:hover,
+      .text-red-500,
+      .hover\:text-red-500:hover,
+      .text-red-600,
+      .hover\:text-red-600:hover,
+      .text-red-700,
+      .hover\:text-red-700:hover,
+      .text-red-800,
+      .hover\:text-red-800:hover,
+      .text-red-950,
+      .hover\:text-red-950:hover,
+      .text-red-100
+    ) {
+    color: #e5a0a0;
+  }
+  .dark
+    :is(
+      .text-rose-400,
+      .hover\:text-rose-400:hover,
+      .text-rose-500,
+      .hover\:text-rose-500:hover,
+      .text-rose-600,
+      .hover\:text-rose-600:hover,
+      .text-rose-700,
+      .hover\:text-rose-700:hover,
+      .text-rose-800,
+      .hover\:text-rose-800:hover,
+      .text-rose-950,
+      .hover\:text-rose-950:hover
+    ) {
+    color: #e5a0b1;
+  }
+  .dark
+    :is(
+      .text-green-400,
+      .hover\:text-green-400:hover,
+      .text-green-500,
+      .hover\:text-green-500:hover,
+      .text-green-600,
+      .hover\:text-green-600:hover,
+      .text-green-700,
+      .hover\:text-green-700:hover,
+      .text-green-800,
+      .hover\:text-green-800:hover,
+      .text-green-950,
+      .hover\:text-green-950:hover
+    ) {
+    color: #9ac6a6;
+  }
+  .dark
+    :is(
+      .text-emerald-400,
+      .hover\:text-emerald-400:hover,
+      .text-emerald-500,
+      .hover\:text-emerald-500:hover,
+      .text-emerald-600,
+      .hover\:text-emerald-600:hover,
+      .text-emerald-700,
+      .hover\:text-emerald-700:hover,
+      .text-emerald-800,
+      .hover\:text-emerald-800:hover,
+      .text-emerald-950,
+      .hover\:text-emerald-950:hover
+    ) {
+    color: #8ac6ad;
+  }
+  .dark
+    :is(
+      .text-amber-400,
+      .hover\:text-amber-400:hover,
+      .text-amber-500,
+      .hover\:text-amber-500:hover,
+      .text-amber-600,
+      .hover\:text-amber-600:hover,
+      .text-amber-700,
+      .hover\:text-amber-700:hover,
+      .text-amber-800,
+      .hover\:text-amber-800:hover,
+      .text-amber-950,
+      .hover\:text-amber-950:hover
+    ) {
+    color: #d4b483;
+  }
+  .dark
+    :is(
+      .text-yellow-400,
+      .hover\:text-yellow-400:hover,
+      .text-yellow-500,
+      .hover\:text-yellow-500:hover,
+      .text-yellow-600,
+      .hover\:text-yellow-600:hover,
+      .text-yellow-700,
+      .hover\:text-yellow-700:hover,
+      .text-yellow-800,
+      .hover\:text-yellow-800:hover,
+      .text-yellow-950,
+      .hover\:text-yellow-950:hover
+    ) {
+    color: #d4c383;
+  }
+  .dark
+    :is(
+      .text-orange-400,
+      .hover\:text-orange-400:hover,
+      .text-orange-500,
+      .hover\:text-orange-500:hover,
+      .text-orange-600,
+      .hover\:text-orange-600:hover,
+      .text-orange-700,
+      .hover\:text-orange-700:hover,
+      .text-orange-800,
+      .hover\:text-orange-800:hover,
+      .text-orange-950,
+      .hover\:text-orange-950:hover
+    ) {
+    color: #d4a183;
+  }
+  .dark
+    :is(
+      .text-sky-400,
+      .hover\:text-sky-400:hover,
+      .text-sky-500,
+      .hover\:text-sky-500:hover,
+      .text-sky-600,
+      .hover\:text-sky-600:hover,
+      .text-sky-700,
+      .hover\:text-sky-700:hover,
+      .text-sky-800,
+      .hover\:text-sky-800:hover,
+      .text-sky-950,
+      .hover\:text-sky-950:hover
+    ) {
+    color: #93bdce;
+  }
+  .dark
+    :is(
+      .text-blue-400,
+      .hover\:text-blue-400:hover,
+      .text-blue-500,
+      .hover\:text-blue-500:hover,
+      .text-blue-600,
+      .hover\:text-blue-600:hover,
+      .text-blue-700,
+      .hover\:text-blue-700:hover,
+      .text-blue-800,
+      .hover\:text-blue-800:hover,
+      .text-blue-950,
+      .hover\:text-blue-950:hover
+    ) {
+    color: #a0b5d4;
+  }
+  .dark
+    :is(
+      .text-indigo-400,
+      .hover\:text-indigo-400:hover,
+      .text-indigo-500,
+      .hover\:text-indigo-500:hover,
+      .text-indigo-600,
+      .hover\:text-indigo-600:hover,
+      .text-indigo-700,
+      .hover\:text-indigo-700:hover,
+      .text-indigo-800,
+      .hover\:text-indigo-800:hover,
+      .text-indigo-950,
+      .hover\:text-indigo-950:hover
+    ) {
+    color: #b0a8d4;
+  }
+  .dark
+    :is(
+      .text-violet-400,
+      .hover\:text-violet-400:hover,
+      .text-violet-500,
+      .hover\:text-violet-500:hover,
+      .text-violet-600,
+      .hover\:text-violet-600:hover,
+      .text-violet-700,
+      .hover\:text-violet-700:hover,
+      .text-violet-800,
+      .hover\:text-violet-800:hover,
+      .text-violet-950,
+      .hover\:text-violet-950:hover
+    ) {
+    color: #bea8d4;
+  }
+  .dark
+    :is(
+      .text-teal-400,
+      .hover\:text-teal-400:hover,
+      .text-teal-500,
+      .hover\:text-teal-500:hover,
+      .text-teal-600,
+      .hover\:text-teal-600:hover,
+      .text-teal-700,
+      .hover\:text-teal-700:hover,
+      .text-teal-800,
+      .hover\:text-teal-800:hover,
+      .text-teal-950,
+      .hover\:text-teal-950:hover,
+      .text-teal-100
+    ) {
+    color: #8ac6ba;
+  }
+  .dark
+    :is(
+      .text-cyan-400,
+      .hover\:text-cyan-400:hover,
+      .text-cyan-500,
+      .hover\:text-cyan-500:hover,
+      .text-cyan-600,
+      .hover\:text-cyan-600:hover,
+      .text-cyan-700,
+      .hover\:text-cyan-700:hover,
+      .text-cyan-800,
+      .hover\:text-cyan-800:hover,
+      .text-cyan-950,
+      .hover\:text-cyan-950:hover
+    ) {
+    color: #8abfc6;
+  }
+  .dark
+    :is(
+      .text-lime-400,
+      .hover\:text-lime-400:hover,
+      .text-lime-500,
+      .hover\:text-lime-500:hover,
+      .text-lime-600,
+      .hover\:text-lime-600:hover,
+      .text-lime-700,
+      .hover\:text-lime-700:hover,
+      .text-lime-800,
+      .hover\:text-lime-800:hover,
+      .text-lime-950,
+      .hover\:text-lime-950:hover
+    ) {
+    color: #b3c69a;
+  }
+  .dark
+    :is(
+      .text-fuchsia-400,
+      .hover\:text-fuchsia-400:hover,
+      .text-fuchsia-500,
+      .hover\:text-fuchsia-500:hover,
+      .text-fuchsia-600,
+      .hover\:text-fuchsia-600:hover,
+      .text-fuchsia-700,
+      .hover\:text-fuchsia-700:hover,
+      .text-fuchsia-800,
+      .hover\:text-fuchsia-800:hover,
+      .text-fuchsia-950,
+      .hover\:text-fuchsia-950:hover
+    ) {
+    color: #d4a8d4;
+  }
+}

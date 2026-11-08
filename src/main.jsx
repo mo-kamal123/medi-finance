@@ -8,6 +8,11 @@ import { router } from './app/routes/router.jsx';
 import { store } from './app/store/store.js';
 import ToastProvider from './shared/components/toast-provider.jsx';
 import './index.css';
+import { applyColorTheme, getSavedColorTheme } from './shared/utils/color-theme';
+import { applyColorMode, getSavedColorMode } from './shared/utils/color-mode';
+
+applyColorTheme(getSavedColorTheme());
+applyColorMode(getSavedColorMode());
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

@@ -1,6 +1,12 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { getCustomers, getCustomerById, getCustomerPolicies } from '../api/customers.api';
+import { getCustomers, getCustomerById, getCustomerPolicies, getCustomerCategories } from '../api/customers.api';
 import { customersKeys } from './customers.keys';
+
+export const useCustomerCategories = () =>
+  useQuery({
+    queryKey: ['lookups', 'customer-categories'],
+    queryFn: getCustomerCategories,
+  });
 
 export const useCustomers = (filters) =>
   useQuery({

@@ -98,24 +98,18 @@ const BankForm = ({ defaultValues, mode = 'create' }) => {
       className="rounded-xl border border-gray-200 bg-white p-6"
     >
       <div className="space-y-6">
+        {isViewMode && (
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              {isCreateMode
-                ? 'إضافة بنك'
-                : isEditMode
-                  ? 'تعديل البنك'
-                  : 'تفاصيل البنك'}
+              تفاصيل البنك
             </h1>
             <p className="mt-1 text-sm text-gray-500">
-              {isCreateMode
-                ? 'إدخال بيانات بنك جديد'
-                : isEditMode
-                  ? 'تعديل بيانات البنك'
-                  : 'استعراض بيانات البنك'}
+              استعراض بيانات البنك
             </p>
           </div>
         </div>
+        )}
 
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <FormInput

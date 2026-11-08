@@ -10,6 +10,10 @@ const NewBank = () => {
           { label: 'إضافة بنك' },
         ]}
       />
+      <header className="rounded-2xl border border-main bg-main p-6 text-white">
+        <h1 className="text-2xl font-bold">إضافة بنك</h1>
+        <p className="mt-1 text-sm text-white/70">إدخال بيانات بنك جديد</p>
+      </header>
       <BankForm />
     </div>
   );

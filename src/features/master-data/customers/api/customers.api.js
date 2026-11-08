@@ -16,6 +16,11 @@ export const getCustomerById = async (id) => {
   return data;
 };
 
+export const getCustomerCategories = async () => {
+  const { data } = await axiosInstance.get('/lookups/customer-categories');
+  return Array.isArray(data) ? data : [];
+};
+
 export const getCustomerPolicies = async (customerId, signal, isWithWataniya = true) => {
   const { data } = await axiosInstance.get('/customers/policies', {
     params: { customerId, isWithWataniya },

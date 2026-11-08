@@ -1,4 +1,3 @@
-import KpiCard from '../../../../../shared/ui/kpi-card';
 // Totals cards + submit button.
 
 import { formatCurrency } from '../utils/format-currency';
@@ -13,12 +12,27 @@ const InvoiceTotals = ({
 }) => (
   <div className="space-y-4">
     {showSummary && (
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <KpiCard label="إجمالي الفاتورة" value={formatCurrency(totalAmount)} tone="text-gray-900" />
+      <div className="grid grid-cols-1 gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 md:grid-cols-3">
+        <div className="rounded-xl bg-white p-4 border border-gray-200">
+          <p className="text-sm text-gray-500">إجمالي الفاتورة</p>
+          <p className="mt-2 text-lg font-semibold text-gray-900">
+            {formatCurrency(totalAmount)}
+          </p>
+        </div>
 
-        <KpiCard label="إجمالي الخصومات" value={formatCurrency(totalDiscounts)} tone="text-red-500" />
+        <div className="rounded-xl bg-white p-4 border border-gray-200">
+          <p className="text-sm text-gray-500">إجمالي الخصومات</p>
+          <p className="mt-2 text-lg font-semibold text-red-500">
+            {formatCurrency(totalDiscounts)}
+          </p>
+        </div>
 
-        <KpiCard label="صافي الفاتورة" value={formatCurrency(netAmount)} tone="text-primary" />
+        <div className="rounded-xl bg-white p-4 border border-gray-200">
+          <p className="text-sm text-gray-500">صافي الفاتورة</p>
+          <p className="mt-2 text-lg font-semibold text-primary">
+            {formatCurrency(netAmount)}
+          </p>
+        </div>
       </div>
     )}
 

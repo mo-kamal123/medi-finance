@@ -238,6 +238,7 @@ const BankChequesPanel = ({ bankId }) => {
 
       <div className="mb-4">
         <FilterBar
+          gridClassName="lg:grid-cols-4 xl:grid-cols-4!"
           primaryFilters={primaryFilters}
           extraFilters={extraFilters}
           onReset={handleReset}

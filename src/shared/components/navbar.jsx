@@ -1,8 +1,9 @@
-import { ChevronRight, CircleChevronRight, Power, Settings } from 'lucide-react';
+import { ChevronRight, CircleChevronRight, Power } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearCredentials } from '../../features/auth/store/auth-slice';
 import { toggleSidebar } from '../store/main-slice';
 import { removeFromLocalStorage } from '../utils/local-storage-actions';
+import ThemePicker from './theme-picker';
 
 const Navbar = () => {
   const dispatch = useDispatch();
@@ -46,12 +47,7 @@ const Navbar = () => {
 
       {/* actions */}
       <div className="flex items-center gap-2">
-        <button
-          className="p-2 rounded-lg hover:bg-gray-100 transition"
-          aria-label="Settings"
-        >
-          <Settings className="w-5 h-5 text-gray-600" />
-        </button>
+        <ThemePicker />
 
         <button
           className="p-2 rounded-lg hover:bg-red-50 transition"

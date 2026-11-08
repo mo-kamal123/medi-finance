@@ -18,8 +18,8 @@ const Toggle = ({ label, disabled, className = '', ...props }) => {
           {...props}
           className="peer sr-only"
         />
-        <span className="absolute inset-0 rounded-full bg-gray-200 transition-colors peer-checked:bg-main peer-disabled:cursor-not-allowed" />
-        <span className="absolute right-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5 rtl:peer-checked:-translate-x-5" />
+        <span className="absolute inset-0 rounded-full bg-gray-200 transition-colors peer-checked:bg-main peer-disabled:cursor-not-allowed dark:peer-checked:bg-[var(--accent-text-dark)]" />
+        <span className="absolute right-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5 rtl:peer-checked:-translate-x-5 dark:bg-slate-100!" />
       </span>
       {label ? (
         <span className="text-sm font-medium text-gray-800">{label}</span>

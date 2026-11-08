@@ -7,7 +7,7 @@ import PageLoader from '../../../../shared/ui/page-loader';
 import Pagination from '../../../../shared/ui/pagination';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
 import CustomerTable from '../components/customer-table';
-import { useCustomers } from '../hooks/customers.queries';
+import { useCustomers, useCustomerCategories } from '../hooks/customers.queries';
 import { Users, Search } from 'lucide-react';
 
 const CustomersPage = () => {
@@ -15,6 +15,7 @@ const CustomersPage = () => {
   const [appliedFilters, setAppliedFilters] = useState({});
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const { data: categories = [], isLoading: isLoadingCategories } = useCustomerCategories();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -51,7 +52,7 @@ const CustomersPage = () => {
       </div>
 
       <FilterBar
-        gridClassName="xl:grid-cols-4"
+        gridClassName="lg:grid-cols-4 xl:grid-cols-4!"
         activeCount={
           Object.values(filters).filter((value) => value.trim()).length
         }
@@ -94,24 +95,39 @@ const CustomersPage = () => {
               }))
             }
           />,
-          ...[
-            ['category', 'التصنيف'],
-            ['clientType', 'نوع العميل'],
-          ].map(([key, label]) => (
-            <FormInput
-              key={key}
-              label={label}
-              aria-label={label}
-              placeholder={`أدخل ${label}`}
-              value={filters[key] ?? ''}
-              onChange={(event) =>
-                setFilters((previous) => ({
-                  ...previous,
-                  [key]: event.target.value,
-                }))
-              }
-            />
-          )),
+          <SearchableSelect
+            key="category"
+            label="التصنيف"
+            placeholder={isLoadingCategories ? 'جاري تحميل التصنيفات...' : 'كل التصنيفات'}
+            value={filters.category ?? ''}
+            disabled={isLoadingCategories}
+            options={[
+              { value: '', label: 'كل التصنيفات' },
+              ...categories.map((category) => ({
+                value: String(category.id),
+                label: category.name,
+              })),
+            ]}
+            onChange={(event) =>
+              setFilters((previous) => ({
+                ...previous,
+                category: event.target.value,
+              }))
+            }
+          />,
+          <FormInput
+            key="clientType"
+            label="نوع العميل"
+            aria-label="نوع العميل"
+            placeholder="أدخل نوع العميل"
+            value={filters.clientType ?? ''}
+            onChange={(event) =>
+              setFilters((previous) => ({
+                ...previous,
+                clientType: event.target.value,
+              }))
+            }
+          />,
         ]}
       />
 

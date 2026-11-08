@@ -24,7 +24,7 @@ const JournalEntryHeader = ({
 
   if (!viewOnly) {
     return (
-      <div className={`flex flex-col gap-3 md:flex-row md:items-center md:justify-between ${isEditMode ? 'rounded-2xl bg-linear-to-r from-primary to-primary/80 px-4 py-6 text-white md:px-8' : 'rounded-xl border border-gray-200 bg-white p-4 md:p-6'}`}>
+      <div className={`flex flex-col gap-3 md:flex-row md:items-center md:justify-between ${isEditMode ? 'rounded-2xl bg-linear-to-r from-primary to-primary/80 px-4 py-6 text-white md:px-8' : 'rounded-2xl border border-main bg-main p-4 text-white md:p-6'}`}>
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
           {isEditMode ? (
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/20 text-white shadow-inner">
@@ -41,7 +41,7 @@ const JournalEntryHeader = ({
                 <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusMeta.badgeClass}`}>{statusMeta.label}</span>
               </div>
             ) : (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-white/70">
                 يجب أن يكون مجموع المدين مساوياً للدائن
               </p>
             )}

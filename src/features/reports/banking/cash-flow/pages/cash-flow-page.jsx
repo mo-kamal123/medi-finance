@@ -93,7 +93,7 @@ const CashFlowPage = () => {
       render: (row) =>
         amountCell(
           row.incoming?.[field.key],
-          '#059669',
+          'var(--amount-positive)',
           field.key === 'total'
         ),
     }));
@@ -105,7 +105,7 @@ const CashFlowPage = () => {
       render: (row) =>
         amountCell(
           row.outgoing?.[field.key],
-          '#dc2626',
+          'var(--amount-negative)',
           field.key === 'total'
         ),
     }));
@@ -127,7 +127,7 @@ const CashFlowPage = () => {
         header: 'رصيد افتتاحي',
         key: 'openingBalance',
         type: 'custom',
-        render: (row) => amountCell(row.openingBalance, '#1f2937'),
+        render: (row) => amountCell(row.openingBalance, 'var(--color-gray-900)'),
       },
       ...incomingCols,
       ...outgoingCols,
@@ -138,7 +138,7 @@ const CashFlowPage = () => {
         render: (row) =>
           amountCell(
             row.netCashFlow,
-            Number(row.netCashFlow) >= 0 ? '#059669' : '#dc2626',
+            Number(row.netCashFlow) >= 0 ? 'var(--amount-positive)' : 'var(--amount-negative)',
             true
           ),
       },
@@ -146,7 +146,7 @@ const CashFlowPage = () => {
         header: 'الرصيد الختامي',
         key: 'closingBalance',
         type: 'custom',
-        render: (row) => amountCell(row.closingBalance, 'var(--color-primary)', true),
+        render: (row) => amountCell(row.closingBalance, 'var(--accent-content)', true),
       },
     ];
   }, []);

@@ -159,18 +159,18 @@ const ChequeInvoiceSelector = ({
       className="overflow-hidden rounded-xl border border-primary/15 bg-white"
       aria-label="فواتير الشيك"
     >
-      <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[1fr_minmax(320px,440px)] lg:items-center">
+      <div className="grid gap-5 bg-main p-4 text-white sm:p-5 lg:grid-cols-[1fr_minmax(320px,440px)] lg:items-center">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20 text-white">
               <FileText size={20} aria-hidden="true" />
             </span>
-            <h2 className="text-lg font-bold text-gray-900">فواتير الشيك</h2>
-            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+            <h2 className="text-lg font-bold text-white">فواتير الشيك</h2>
+            <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white">
               المحدد: {payments.length}
             </span>
           </div>
-          {!disabled && <p className="mt-2 text-sm text-gray-500">
+          {!disabled && <p className="mt-2 text-sm text-white/70">
             ابحث برقم الفاتورة أو الدفعة واختر الفاتورة لتعبئة {chequeType === '0' ? 'العميل' : 'المورد'}{' '}
             تلقائياً، ثم حدد المبلغ كاملاً أو جزئياً.
           </p>}
@@ -178,13 +178,14 @@ const ChequeInvoiceSelector = ({
         {!disabled && <div>
           <label
             htmlFor="cheque-invoice-number"
-            className="mb-1.5 block text-sm font-medium text-gray-700"
+            className="mb-1.5 block text-sm font-medium text-white"
           >
             رقم الفاتورة أو الدفعة
           </label>
           <div className="flex items-start gap-2">
             <FormInput
               id="cheque-invoice-number"
+              inputClass="bg-white text-gray-900"
               icon={Search}
               value={invoiceNumber}
               onChange={(event) => {
@@ -210,7 +211,7 @@ const ChequeInvoiceSelector = ({
               type="button"
               onClick={() => searchInvoice()}
               disabled={disabled || isLoading}
-              className="flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
+              className="flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-white/20 px-4 py-2.5 text-sm font-medium text-white hover:bg-white/30 disabled:opacity-50"
             >
               <Search size={16} />
               {isLoading ? 'جاري التحميل...' : 'بحث'}
@@ -220,7 +221,7 @@ const ChequeInvoiceSelector = ({
             <p
               id="cheque-invoice-search-error"
               role="alert"
-              className="mt-2 text-sm text-red-600"
+              className="mt-2 text-sm text-red-100"
             >
               {error}
             </p>
