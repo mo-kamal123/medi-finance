@@ -216,7 +216,7 @@ const OutstandingChequesPage = () => {
 
       <div className="relative space-y-4 rounded-xl border border-gray-200 bg-white p-4">
         <ResetFiltersButton filters={filters} onReset={handleReset} />
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <SearchableSelect
             label="البنك"
             value={filters.bankId || ''}

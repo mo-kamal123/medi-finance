@@ -5,14 +5,12 @@ import SearchableSelect from '../../../../shared/ui/searchable-select';
 import FilterBar from '../../../../shared/ui/filter-bar';
 import { useDebounce } from '../../../../shared/lib/use-debounce';
 import { useFinancialPeriods } from '../../invoices/shared/hooks/invoices.queries';
-import useAccountsTree from '../../../accounting/tree/accouts-tree/hooks/use-accounts-tree';
 import { useJournalEntryStatuses } from '../hooks/entries.queries';
 import {
   countActiveJournalEntryFilters,
   DEFAULT_JOURNAL_ENTRY_FILTERS,
 } from '../utils/journal-entry-filters.utils';
 import {
-  buildAccountOptions,
   JOURNAL_TYPES,
 } from '../utils/journal-entry.utils';
 import { Search } from 'lucide-react';
@@ -25,7 +23,6 @@ const FILTER_FIELDS = {
   fromDate: true,
   toDate: true,
   financialPeriodId: true,
-  accountId: true,
 };
 
 const JournalEntryFilters = ({
@@ -72,7 +69,6 @@ const JournalEntryFilters = ({
 
   const { data: statuses = [] } = useJournalEntryStatuses();
   const { data: financialPeriods = [] } = useFinancialPeriods();
-  const { data: accountsTree = [] } = useAccountsTree();
 
   const visibleFields = useMemo(
     () => ({
@@ -107,11 +103,6 @@ const JournalEntryFilters = ({
         label: period.nameAr || period.financialPeriodNameAr || period.nameEn,
       })),
     [financialPeriods]
-  );
-
-  const accountOptions = useMemo(
-    () => buildAccountOptions(accountsTree),
-    [accountsTree]
   );
 
   const activeFilterCount = useMemo(
@@ -238,19 +229,6 @@ const JournalEntryFilters = ({
         }
         placeholder="كل الفترات"
         options={periodOptions}
-      />
-    );
-  }
-
-  if (visibleFields.accountId) {
-    extraFilters.push(
-      <SearchableSelect
-        key="account"
-        label="الحساب"
-        value={filters.accountId || ''}
-        onChange={(event) => handleChange('accountId', event.target.value)}
-        placeholder="كل الحسابات"
-        options={accountOptions}
       />
     );
   }
