@@ -71,6 +71,11 @@ export const getBankAccountById = async (id) => {
   return data;
 };
 
+export const getBankAccountKinds = async () => {
+  const { data } = await axiosInstance.get('/BankAccounts/account-kinds');
+  return extractArray(data);
+};
+
 export const deleteBank = async (id) => {
   const { data } = await axiosInstance.delete(`/Banks/${id}`);
   return data;

@@ -42,6 +42,9 @@ const ThemePicker = () => {
               checked={colorMode === 'dark'}
               onChange={(event) => {
                 const mode = event.target.checked ? 'dark' : 'light';
+                if (mode === 'dark') {
+                  selectTheme(COLOR_THEMES[0]);
+                }
                 saveColorMode(mode);
                 setColorMode(mode);
               }}

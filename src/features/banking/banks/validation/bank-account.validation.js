@@ -33,7 +33,7 @@ export const bankAccountSchema = z.object({
     .trim()
     .min(1, 'رقم الحساب مطلوب')
     .regex(/^[0-9]+$/, 'رقم الحساب يجب أن يحتوي على أرقام فقط'),
-  branch: z.string().trim().min(1, 'الفرع مطلوب'),
+  branch: z.string().trim().optional().default(''),
   iban: optionalIban,
   accountNameAr: z.string().optional(),
   accountNameEn: z.string().optional(),
@@ -42,7 +42,9 @@ export const bankAccountSchema = z.object({
     .or(z.number())
     .refine((val) => Number(val) > 0, 'العملة مطلوبة'),
   openingBalance: nonNegativeAmount,
-  minBalance: nonNegativeAmount,
+  accountKind: z.coerce.number().pipe(z.union([z.literal(1), z.literal(2)], {
+    error: 'اختر نوع الحساب',
+  })),
   isActive: z.boolean().default(true),
   isDefault: z.boolean().default(false),
 });

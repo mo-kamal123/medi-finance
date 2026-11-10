@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
 import FormInput from '../../../../shared/ui/input';
 import Toggle from '../../../../shared/ui/toggle';
+import { useBankAccountKinds } from '../hooks/banks.queries';
 import { useCurrencies } from '../../../transactions/commercial-papers/hooks/commercial-papers.queries';
 import {
   useCreateBankAccount,
@@ -32,7 +33,7 @@ const getInitialValues = (account = {}, isEditMode) => ({
         isOpeningBalanceDebit: account.isOpeningBalanceDebit ?? true,
         accountType: String(account.accountType ?? 1),
       }),
-  minBalance: account.minBalance ?? '',
+  accountKind: account.accountKind != null ? String(account.accountKind) : '',
   isActive: account.isActive ?? true,
   isDefault: account.isDefault ?? false,
 });
@@ -46,6 +47,7 @@ const BankAccountModal = ({
   onSaved,
 }) => {
   const { data: currencies = [] } = useCurrencies();
+  const { data: accountKinds = [], isLoading: isLoadingKinds, isError: isKindsError } = useBankAccountKinds(isOpen);
   const createMutation = useCreateBankAccount(bankId);
   const updateMutation = useUpdateBankAccount(bankId);
   const mutation = isEditMode ? updateMutation : createMutation;
@@ -121,7 +123,6 @@ const BankAccountModal = ({
             accountNameAr: data.accountNameAr || '',
             accountNameEn: data.accountNameEn || '',
             accountID: account?.accountID ?? 0,
-            minBalance: Number(data.minBalance) || 0,
           }
         : {
             openingBalance: Number(data.openingBalance) || 0,
@@ -129,6 +130,7 @@ const BankAccountModal = ({
             accountType: Number(data.accountType),
           }),
       currencyID: Number(data.currencyID),
+      accountKind: Number(data.accountKind),
       isActive: Boolean(data.isActive),
       isDefault: Boolean(data.isActive) && Boolean(data.isDefault),
     };
@@ -190,7 +192,29 @@ const BankAccountModal = ({
               placeholder="مثال: فرع وسط البلد"
               {...registerBlur('branch')}
               error={errors.branch?.message}
-              required
+            />
+            <Controller
+              name="accountKind"
+              control={control}
+              render={({ field }) => (
+                <FormInput
+                  as="select"
+                  label="نوع الحساب"
+                  placeholder={isLoadingKinds ? 'جاري تحميل أنواع الحسابات...' : 'اختر نوع الحساب'}
+                  {...field}
+                  onChange={(event) => {
+                    field.onChange(event.target.value);
+                    trigger('accountKind');
+                  }}
+                  disabled={isLoadingKinds || isKindsError}
+                  error={isKindsError ? 'تعذر تحميل أنواع الحسابات' : errors.accountKind?.message}
+                  required
+                >
+                  {accountKinds.map((kind) => (
+                    <option key={kind.id} value={String(kind.id)}>{kind.name}</option>
+                  ))}
+                </FormInput>
+              )}
             />
             <Controller
               name="currencyID"
@@ -235,12 +259,6 @@ const BankAccountModal = ({
                   placeholder="مثال: الحساب الجاري"
                   {...registerBlur('accountNameAr')}
                   error={errors.accountNameAr?.message}
-                />
-                <FormInput
-                  label="اسم الحساب بالإنجليزية"
-                  placeholder="مثال: Current Account"
-                  {...registerBlur('accountNameEn')}
-                  error={errors.accountNameEn?.message}
                 />
               </>
             )}
@@ -287,12 +305,11 @@ const BankAccountModal = ({
 
             {isEditMode && (
               <FormInput
-                type="number"
-                min="0"
-                label="الحد الأدنى للرصيد"
-                placeholder="مثال: 500"
-                {...registerBlur('minBalance')}
-                error={errors.minBalance?.message}
+                label="الرصيد الحالي"
+                value={account?.currentBalance ?? 0}
+                readOnly
+                dir="ltr"
+                inputClass="bg-gray-50"
               />
             )}
           </div>
