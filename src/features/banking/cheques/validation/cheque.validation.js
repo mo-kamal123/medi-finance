@@ -22,7 +22,7 @@ export const chequeSchema = z
     currencyID: z.string().optional().default(''),
     exchangeRate: z.coerce.number().optional().default(1),
     bankID: z.string().min(1, 'البنك مطلوب'),
-    bankAccountID: z.string().min(1, 'الحساب البنكي مطلوب'),
+    bankAccountID: z.string().optional().default(''),
     bankBranchName: z.string().optional().default(''),
     cardNumber: z.string().optional().default(''),
     underDeliveryAccountID: z.string().optional().default(''),
@@ -47,6 +47,13 @@ export const chequeSchema = z
     notes: z.string().optional().default(''),
   })
   .superRefine((data, ctx) => {
+    if (data.chequeType === '0' && !data.bankAccountID) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['bankAccountID'],
+        message: 'الحساب البنكي مطلوب',
+      });
+    }
     if (data.chequeType === '0' && !(Number(data.customerID) > 0)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

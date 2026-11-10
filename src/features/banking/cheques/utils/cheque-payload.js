@@ -29,7 +29,7 @@ export const buildChequePayload = (data) => {
     currencyID: payments.length ? 1 : optionalId(data.currencyID),
     exchangeRate: payments.length ? 1 : Number(data.exchangeRate) || 1,
     bankID: optionalId(data.bankID),
-    bankAccountID: optionalId(data.bankAccountID),
+    bankAccountID: String(data.chequeType) === '0' ? optionalId(data.bankAccountID) : null,
     collectionAccountID: optionalId(data.collectionAccountID),
     counterAccountID: optionalId(data.counterAccountID),
     costCenterID: optionalId(data.costCenterID),

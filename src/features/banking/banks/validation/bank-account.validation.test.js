@@ -45,10 +45,12 @@ test('branch is optional for both new and existing accounts', () => {
 });
 
 test('account kind accepts lookup IDs and converts them to numeric payload values', () => {
-  for (const accountKind of ['1', '2', 1, 2]) {
-    assert.equal(createBankAccountSchema.parse({ ...validAccount, accountKind }).accountKind, Number(accountKind));
+  for (const accountKind of ['1', '2', '3', '42', '9876', 1, 2, 3, 42, 9876]) {
+    for (const schema of [createBankAccountSchema, bankAccountSchema]) {
+      assert.equal(schema.parse({ ...validAccount, accountKind }).accountKind, Number(accountKind));
+    }
   }
-  for (const accountKind of ['', undefined, null, 0, 3, 1.5, 'invalid']) {
+  for (const accountKind of ['', undefined, null, 0, -1, 1.5, 'invalid']) {
     assert.equal(createBankAccountSchema.safeParse({ ...validAccount, accountKind }).success, false);
   }
 });

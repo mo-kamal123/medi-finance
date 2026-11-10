@@ -77,6 +77,17 @@ test('beneficiary name is required and trimmed for receipt and payment cheques',
   }
 });
 
+test('payment cheques use the Egypt bank ID without requiring a bank account', () => {
+  const form = parse({ chequeType: '1', bankID: '42', bankAccountID: '' });
+  const payload = buildChequePayload(form);
+  assert.equal(payload.bankID, 42);
+  assert.equal(payload.bankAccountID, null);
+  assert.equal(valid({ chequeType: '1', bankAccountID: undefined }), true);
+  assert.equal(valid({ chequeType: '1', bankID: '' }), false);
+  assert.equal(valid({ chequeType: '0', bankAccountID: '' }), false);
+  assert.equal(buildChequePayload(parse({ chequeType: '1' })).bankAccountID, null);
+});
+
 test('receipt and payment cheques can be created without invoices and only use the correct party', () => {
   for (const chequeType of ['0', '1']) {
     const body = buildChequePayload(parse({ chequeType }));

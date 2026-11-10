@@ -3,12 +3,20 @@ import {
   getAllCheques,
   getChequeById,
   getChequeBanks,
+  getEgyptChequeBanks,
   getChequeCustomers,
   getChequeStatuses,
   getSupplierList,
   getCurrencies,
 } from '../api/cheques.api';
 import { chequesKeys } from './cheques.keys';
+
+export const useEgyptChequeBanks = (enabled = true) =>
+  useQuery({
+    queryKey: [...chequesKeys.banks(), 'egypt', { isActive: true }],
+    queryFn: getEgyptChequeBanks,
+    enabled,
+  });
 
 export const useCheques = (filters) => {
   return useQuery({

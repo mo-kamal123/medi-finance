@@ -42,9 +42,9 @@ export const bankAccountSchema = z.object({
     .or(z.number())
     .refine((val) => Number(val) > 0, 'العملة مطلوبة'),
   openingBalance: nonNegativeAmount,
-  accountKind: z.coerce.number().pipe(z.union([z.literal(1), z.literal(2)], {
-    error: 'اختر نوع الحساب',
-  })),
+  accountKind: z.coerce.number({ error: 'اختر نوع الحساب' })
+    .int('اختر نوع الحساب')
+    .positive('اختر نوع الحساب'),
   isActive: z.boolean().default(true),
   isDefault: z.boolean().default(false),
 });

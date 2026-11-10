@@ -94,6 +94,13 @@ export const getChequeBanks = async () => {
   return extractArray(res.data);
 };
 
+export const getEgyptChequeBanks = async () => {
+  const { data } = await axiosInstance.get('/Banks/egypt', {
+    params: { isActive: true },
+  });
+  return extractArray(data);
+};
+
 export const getChequeCustomers = async () => {
   const { data } = await axiosInstance.get('/customers', {
     params: { pageNumber: 1, pageSize: 200 },

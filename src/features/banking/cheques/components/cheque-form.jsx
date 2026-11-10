@@ -11,8 +11,8 @@ import PartySearchSelect from '../../../../shared/ui/party-search-select';
 import ChequeInvoiceSelector from './cheque-invoice-selector';
 import { buildChequePayload, totalInvoicePayments, getChequeErrorMessage, getChequeInvoiceParty } from '../utils/cheque-payload';
 import { useCreateCheque } from '../hooks/cheques.mutations';
-import { useChequeBanks, useChequeCurrencies } from '../hooks/cheques.queries';
-import { useBankAccounts, useBankAccountOptions } from '../../banks/hooks/banks.queries';
+import { useChequeBanks, useChequeCurrencies, useEgyptChequeBanks } from '../hooks/cheques.queries';
+import { useBankAccounts } from '../../banks/hooks/banks.queries';
 import { chequeSchema } from '../validation/cheque.validation';
 
 const toDateValue = (value) => {
@@ -142,29 +142,19 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
 
   const { data: bankAccountsRes = [], isLoading: loadingBankAccounts } =
     useBankAccounts(chequeType === '0' ? watchedBankID : undefined);
-  const { data: paymentBankAccounts = [], isLoading: loadingPaymentBanks, isError: paymentBanksError } =
-    useBankAccountOptions(chequeType === '1');
+  const { data: egyptBanks = [], isLoading: loadingPaymentBanks, isError: paymentBanksError } =
+    useEgyptChequeBanks(chequeType === '1');
 
   const paymentBankOptions = useMemo(() => {
-    const options = paymentBankAccounts.map((account) => {
-      const bank = banks.find((item) => String(item.bankID) === String(account.bankID ?? account.bankId));
-      return {
-        value: String(account.bankAccountID ?? account.id),
-        label: [
-          account.bankNameAr || account.bankNameEn || bank?.bankNameAr,
-          account.accountNumberWithBranch || account.accountNumber || account.accountNameAr || account.name,
-        ].filter(Boolean).join(' - ') || String(account.bankAccountID ?? account.id),
-      };
-    });
-    // Existing cheques can reference an account that is no longer active.
-    if (defaultValues?.bankAccountID && !options.some((option) => option.value === String(defaultValues.bankAccountID))) {
-      options.push({
-        value: String(defaultValues.bankAccountID),
-        label: [defaultValues.bankNameAr, defaultValues.accountNumberWithBranch || defaultValues.accountNumber].filter(Boolean).join(' - ') || String(defaultValues.bankAccountID),
-      });
+    const options = egyptBanks.map((bank) => ({
+      value: String(bank.bankID ?? bank.id),
+      label: bank.bankNameAr || bank.bankNameEn || bank.nameAr || bank.name || String(bank.bankID ?? bank.id),
+    }));
+    if (defaultValues?.bankID && !options.some((option) => option.value === String(defaultValues.bankID))) {
+      options.push({ value: String(defaultValues.bankID), label: defaultValues.bankNameAr || defaultValues.bankNameEn || String(defaultValues.bankID) });
     }
     return options;
-  }, [paymentBankAccounts, banks, defaultValues]);
+  }, [egyptBanks, defaultValues]);
 
   const bankAccountOptions = useMemo(() => {
     const list = Array.isArray(bankAccountsRes) ? bankAccountsRes : [];
@@ -180,6 +170,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
 
   useEffect(() => {
     if (
+      chequeType !== '0' ||
       !bankIdFromUrl ||
       isViewMode ||
       mode === 'edit' ||
@@ -194,7 +185,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
     if (exists) {
       setValue('bankID', String(bankIdFromUrl));
     }
-  }, [bankIdFromUrl, banks, setValue, isViewMode, mode]);
+  }, [bankIdFromUrl, banks, setValue, isViewMode, mode, chequeType]);
 
   const bankOptions = toOptions(banks, 'bankID', 'bankNameAr');
   const currencyOptions = toOptions(currencies, 'currencyID', 'currencyNameAr');
@@ -325,6 +316,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
                 setValue('customerID', '');
                 setValue('supplierID', '');
                 setValue('bankAccountID', '');
+                setValue('bankID', '');
                 clearInvoicePayments();
               },
             })}
@@ -375,17 +367,12 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               placeholder: 'اختر الحساب البنكي',
               disabled: !watchedBankID || loadingBankAccounts,
             })}
-            </> : renderSelect('bankAccountID', 'البنك', paymentBankOptions, {
+            </> : renderSelect('bankID', 'البنك', paymentBankOptions, {
               required: true,
-              placeholder: loadingPaymentBanks ? 'جاري تحميل البنوك...' : 'اختر البنك والحساب',
+              placeholder: loadingPaymentBanks ? 'جاري تحميل البنوك...' : 'اختر البنك',
               disabled: loadingPaymentBanks || paymentBanksError,
-              error: paymentBanksError ? 'تعذر تحميل البنوك والحسابات' : errors.bankAccountID?.message || errors.bankID?.message,
-              onChange: (value) => {
-                const account = paymentBankAccounts.find((item) => String(item.bankAccountID ?? item.id) === value)
-                  || (String(defaultValues?.bankAccountID) === value ? defaultValues : undefined);
-                const bankID = account?.bankID ?? account?.bankId;
-                setValue('bankID', bankID != null ? String(bankID) : '', { shouldDirty: true, shouldValidate: true });
-              },
+              error: paymentBanksError ? 'تعذر تحميل البنوك' : errors.bankID?.message,
+              onChange: () => setValue('bankAccountID', ''),
             })}
             {renderSelect('currencyID', 'العملة', currencyOptions, {
               disabled: invoicePayments.length > 0,
