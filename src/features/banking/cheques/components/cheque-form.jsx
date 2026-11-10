@@ -12,7 +12,7 @@ import ChequeInvoiceSelector from './cheque-invoice-selector';
 import { buildChequePayload, totalInvoicePayments, getChequeErrorMessage, getChequeInvoiceParty } from '../utils/cheque-payload';
 import { useCreateCheque } from '../hooks/cheques.mutations';
 import { useChequeBanks, useChequeCurrencies } from '../hooks/cheques.queries';
-import { useBankAccounts } from '../../banks/hooks/banks.queries';
+import { useBankAccounts, useBankAccountOptions } from '../../banks/hooks/banks.queries';
 import { chequeSchema } from '../validation/cheque.validation';
 
 const toDateValue = (value) => {
@@ -39,8 +39,7 @@ const getInitialValues = (defaultValues) => {
   return {
     chequeType: derivedChequeType,
     chequeNumber: defaultValues?.chequeNumber ?? '',
-    chequeDate: toDateValue(defaultValues?.chequeDate),
-    receiptDate: toDateValue(defaultValues?.receiptDate),
+    receiptDate: toDateValue(defaultValues?.receiptDate || defaultValues?.chequeDate),
     dueDate: toDateValue(defaultValues?.dueDate),
     voucherDate: toDateValue(defaultValues?.voucherDate),
     amount: defaultValues?.amount ?? '',
@@ -142,7 +141,30 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
   const watchedBankID = useWatch({ control, name: 'bankID' });
 
   const { data: bankAccountsRes = [], isLoading: loadingBankAccounts } =
-    useBankAccounts(watchedBankID);
+    useBankAccounts(chequeType === '0' ? watchedBankID : undefined);
+  const { data: paymentBankAccounts = [], isLoading: loadingPaymentBanks, isError: paymentBanksError } =
+    useBankAccountOptions(chequeType === '1');
+
+  const paymentBankOptions = useMemo(() => {
+    const options = paymentBankAccounts.map((account) => {
+      const bank = banks.find((item) => String(item.bankID) === String(account.bankID ?? account.bankId));
+      return {
+        value: String(account.bankAccountID ?? account.id),
+        label: [
+          account.bankNameAr || account.bankNameEn || bank?.bankNameAr,
+          account.accountNumberWithBranch || account.accountNumber || account.accountNameAr || account.name,
+        ].filter(Boolean).join(' - ') || String(account.bankAccountID ?? account.id),
+      };
+    });
+    // Existing cheques can reference an account that is no longer active.
+    if (defaultValues?.bankAccountID && !options.some((option) => option.value === String(defaultValues.bankAccountID))) {
+      options.push({
+        value: String(defaultValues.bankAccountID),
+        label: [defaultValues.bankNameAr, defaultValues.accountNumberWithBranch || defaultValues.accountNumber].filter(Boolean).join(' - ') || String(defaultValues.bankAccountID),
+      });
+    }
+    return options;
+  }, [paymentBankAccounts, banks, defaultValues]);
 
   const bankAccountOptions = useMemo(() => {
     const list = Array.isArray(bankAccountsRes) ? bankAccountsRes : [];
@@ -237,7 +259,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
             opts.onChange?.(e.target.value);
           }}
           onBlur={field.onBlur}
-          error={errors[name]?.message}
+          error={opts.error ?? errors[name]?.message}
           disabled={isViewMode || opts.disabled}
           options={options}
           placeholder={opts.placeholder ?? 'اختر'}
@@ -302,11 +324,11 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               onChange: () => {
                 setValue('customerID', '');
                 setValue('supplierID', '');
+                setValue('bankAccountID', '');
                 clearInvoicePayments();
               },
             })}
-            {renderDate('chequeDate', 'تاريخ الشيك', true)}
-            {renderDate('receiptDate', 'تاريخ الاستلام', true)}
+            {renderDate('receiptDate', 'تاريخ الشيك', true)}
             {renderDate('dueDate', 'تاريخ الاستحقاق', true)}
           </div>
         </div>
@@ -342,6 +364,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
                 </div>
               )}
             />
+            {isReceipt ? <>
             {renderSelect('bankID', 'البنك', bankOptions, {
               required: true,
               placeholder: 'اختر البنك',
@@ -351,6 +374,18 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               required: true,
               placeholder: 'اختر الحساب البنكي',
               disabled: !watchedBankID || loadingBankAccounts,
+            })}
+            </> : renderSelect('bankAccountID', 'البنك', paymentBankOptions, {
+              required: true,
+              placeholder: loadingPaymentBanks ? 'جاري تحميل البنوك...' : 'اختر البنك والحساب',
+              disabled: loadingPaymentBanks || paymentBanksError,
+              error: paymentBanksError ? 'تعذر تحميل البنوك والحسابات' : errors.bankAccountID?.message || errors.bankID?.message,
+              onChange: (value) => {
+                const account = paymentBankAccounts.find((item) => String(item.bankAccountID ?? item.id) === value)
+                  || (String(defaultValues?.bankAccountID) === value ? defaultValues : undefined);
+                const bankID = account?.bankID ?? account?.bankId;
+                setValue('bankID', bankID != null ? String(bankID) : '', { shouldDirty: true, shouldValidate: true });
+              },
             })}
             {renderSelect('currencyID', 'العملة', currencyOptions, {
               disabled: invoicePayments.length > 0,
@@ -375,7 +410,9 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput
               label="اسم المستفيد"
+              required
               {...register('beneficiaryName')}
+              error={errors.beneficiaryName?.message}
               readOnly={isViewMode}
               placeholder="أدخل اسم المستفيد"
             />

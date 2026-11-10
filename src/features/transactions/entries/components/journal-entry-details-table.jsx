@@ -33,8 +33,7 @@ const JournalEntryDetailsTable = ({
           <th className="p-3 text-right">دائن</th>
           <th className="p-3 text-right">الحساب</th>
           <th className="p-3 text-right">مركز التكلفة</th>
-          <th className="p-3 text-right">العميل</th>
-          <th className="p-3 text-right">المورد</th>
+          <th className="p-3 text-right">المتعامل</th>
           <th className="p-3 text-right">الوصف</th>
           <th className="p-3 text-right">تاريخ السجل</th>
           <th className="p-3 text-right">رقم المستند</th>
@@ -52,8 +51,9 @@ const JournalEntryDetailsTable = ({
               Number(row.creditAmount || 0).toFixed(2),
               [row.accountCode, row.accountNameAr || row.accountName || row.accountNameEn].filter(Boolean).join(' - ') || '-',
               [row.costCenterCode, row.costCenterNameAr || row.costCenterNameEn].filter(Boolean).join(' - ') || '-',
-              row.customerNameAr || row.customerName || row.customerNameEn || '-',
-              row.supplierNameAr || row.supplierName || row.supplierNameEn || '-',
+              row.supplierID
+                ? row.supplierNameAr || row.supplierName || row.supplierNameEn || row.supplierID
+                : row.customerNameAr || row.customerName || row.customerNameEn || row.supplierNameAr || row.supplierName || row.supplierNameEn || '-',
               row.description || '-',
               row.recordDate || '-',
               row.documentNumber || '-',
@@ -66,7 +66,7 @@ const JournalEntryDetailsTable = ({
                       type="text"
                       value={value}
                       readOnly
-                      aria-label={['مدين', 'دائن', 'الحساب', 'مركز التكلفة', 'العميل', 'المورد', 'الوصف', 'تاريخ السجل', 'رقم المستند'][columnIndex]}
+                      aria-label={['مدين', 'دائن', 'الحساب', 'مركز التكلفة', 'المتعامل', 'الوصف', 'تاريخ السجل', 'رقم المستند'][columnIndex]}
                       title={String(value)}
                       size={Math.max(String(value).length + 2, 8)}
                       className={`${journalEntryInputClass} h-10 overflow-hidden leading-normal`}
@@ -158,33 +158,27 @@ const JournalEntryDetailsTable = ({
                   control={control}
                   render={({ field: f }) => (
                     <PartySearchSelect
-                      type="customer"
-                      value={f.value ?? ''}
-                      onChange={(e) =>
-                        handleCustomerChange(index, e.target.value, e.target.entityName)
-                      }
-                      disabled={
-                        readOnly || Boolean(watchedDetails[index]?.supplierID)
-                      }
-                    />
-                  )}
-                />
-              </td>
-
-              <td className="min-w-60 p-2">
-                <Controller
-                  name={`details.${index}.supplierID`}
-                  control={control}
-                  render={({ field: f }) => (
-                    <PartySearchSelect
-                      type="supplier"
-                      value={f.value ?? ''}
-                      onChange={(e) =>
-                        handleSupplierChange(index, e.target.value, e.target.entityName)
-                      }
-                      disabled={
-                        readOnly || Boolean(watchedDetails[index]?.customerID)
-                      }
+                      type="all"
+                      partyType={row.supplierID ? 'supplier' : 'customer'}
+                      value={row.supplierID || f.value || ''}
+                      selectedOption={{
+                        value: row.supplierID || f.value || '',
+                        label: row.supplierID
+                          ? row.supplierNameAr || row.supplierName || row.supplierNameEn
+                          : row.customerNameAr || row.customerName || row.customerNameEn,
+                      }}
+                      onChange={(e) => {
+                        const { value, entityName, partyType } = e.target;
+                        if (!value) {
+                          handleCustomerChange(index, '', '');
+                          handleSupplierChange(index, '', '');
+                        } else if (partyType === 'supplier') {
+                          handleSupplierChange(index, value, entityName);
+                        } else {
+                          handleCustomerChange(index, value, entityName);
+                        }
+                      }}
+                      disabled={readOnly}
                     />
                   )}
                 />
@@ -270,7 +264,7 @@ const JournalEntryDetailsTable = ({
         <tr>
           <td className="p-3 text-green-600">{totalDebit.toFixed(2)}</td>
           <td className="p-3 text-red-600">{totalCredit.toFixed(2)}</td>
-          <td colSpan={readOnly ? 7 : 9} className="p-3" />
+          <td colSpan={readOnly ? 6 : 8} className="p-3" />
         </tr>
       </tfoot>
     </table>

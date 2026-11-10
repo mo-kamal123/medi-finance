@@ -5,6 +5,7 @@ import {
   getAllBankAccounts,
   getBankAccountById,
   getBankAccountKinds,
+  getBankAccountOptions,
   getBankById,
   getBankTransactions,
   getBankTransfers,
@@ -12,6 +13,13 @@ import {
   getBankTransactionFilterOptions,
 } from '../api/banks.api';
 import { banksKeys } from './banks.keys';
+
+export const useBankAccountOptions = (enabled = true) =>
+  useQuery({
+    queryKey: [...banksKeys.all, 'account-options'],
+    queryFn: getBankAccountOptions,
+    enabled,
+  });
 
 export const useBankAccountKinds = (enabled = true) =>
   useQuery({

@@ -11,8 +11,7 @@ export const chequeSchema = z
       .string()
       .trim()
       .min(1, 'رقم الشيك مطلوب'),
-    chequeDate: z.iso.date({ error: 'تاريخ الشيك غير صالح' }),
-    receiptDate: z.iso.date({ error: 'تاريخ الاستلام غير صالح' }),
+    receiptDate: z.iso.date({ error: 'تاريخ الشيك غير صالح' }),
     dueDate: z.iso.date({ error: 'تاريخ الاستحقاق غير صالح' }),
     amount: z
       .union([z.string(), z.number()])
@@ -43,7 +42,7 @@ export const chequeSchema = z
     isNonCashable: z.boolean().optional().default(false),
     isBearerOnly: z.boolean().optional().default(false),
     hasAttachmentPage: z.boolean().optional().default(false),
-    beneficiaryName: z.string().optional().default(''),
+    beneficiaryName: z.string({ error: 'اسم المستفيد مطلوب' }).trim().min(1, 'اسم المستفيد مطلوب'),
     branchName: z.string().optional().default(''),
     notes: z.string().optional().default(''),
   })
@@ -91,24 +90,6 @@ export const chequeSchema = z
     }
     // Date ordering (YYYY-MM-DD strings compare chronologically)
     if (
-      data.chequeDate &&
-      data.receiptDate &&
-      data.receiptDate < data.chequeDate
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['receiptDate'],
-        message: 'تاريخ الاستلام يجب ألا يكون قبل تاريخ الشيك',
-      });
-    }
-    if (data.chequeDate && data.dueDate && data.dueDate < data.chequeDate) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['dueDate'],
-        message: 'تاريخ الاستحقاق يجب ألا يكون قبل تاريخ الشيك',
-      });
-    }
-    if (
       data.receiptDate &&
       data.dueDate &&
       data.dueDate < data.receiptDate
@@ -116,7 +97,7 @@ export const chequeSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['dueDate'],
-        message: 'تاريخ الاستحقاق يجب ألا يكون قبل تاريخ الاستلام',
+        message: 'تاريخ الاستحقاق يجب ألا يكون قبل تاريخ الشيك',
       });
     }
   });

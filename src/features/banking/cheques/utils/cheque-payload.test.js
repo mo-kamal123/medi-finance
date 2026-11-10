@@ -49,6 +49,7 @@ const receipt = {
   exchangeRate: 1,
   bankID: '1087',
   bankAccountID: '1110',
+  beneficiaryName: 'المستفيد',
 };
 const payment = {
   invoiceID: 1261,
@@ -59,6 +60,22 @@ const payment = {
 const parse = (changes = {}) => chequeSchema.parse({ ...receipt, ...changes });
 const valid = (changes) =>
   chequeSchema.safeParse({ ...receipt, ...changes }).success;
+
+test('only the displayed cheque date is required and it is sent as receiptDate', () => {
+  const form = parse({ chequeDate: undefined, receiptDate: '2026-10-19' });
+  assert.equal(buildChequePayload(form).receiptDate, '2026-10-19T00:00:00');
+  assert.equal(valid({ chequeDate: undefined, receiptDate: '' }), false);
+  assert.equal(valid({ chequeDate: undefined, dueDate: '2026-10-17' }), false);
+});
+
+test('beneficiary name is required and trimmed for receipt and payment cheques', () => {
+  for (const chequeType of ['0', '1']) {
+    for (const beneficiaryName of ['', '   ', undefined]) {
+      assert.equal(valid({ chequeType, beneficiaryName }), false);
+    }
+    assert.equal(parse({ chequeType, beneficiaryName: '  المستفيد  ' }).beneficiaryName, 'المستفيد');
+  }
+});
 
 test('receipt and payment cheques can be created without invoices and only use the correct party', () => {
   for (const chequeType of ['0', '1']) {

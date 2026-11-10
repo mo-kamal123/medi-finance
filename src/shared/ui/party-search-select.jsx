@@ -41,11 +41,16 @@ const PartySearchSelect = ({
   disabled,
   error,
   type = 'customer',
+  partyType = 'customer',
   placeholder,
   searchHint,
   selectedOption,
 }) => {
-  const isCustomer = type === 'customer';
+  const isCombined = type === 'all';
+  const selectedType = isCombined ? partyType : type;
+  const isCustomer = selectedType === 'customer';
+  const resultType = (entity) => entity.__partyType || selectedType;
+  const resultId = (entity) => getEntityId(entity, resultType(entity) === 'customer' ? 'customerID' : 'supplierID');
 
   const [searchText, setSearchText] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -56,11 +61,20 @@ const PartySearchSelect = ({
   const [dropdownStyle, setDropdownStyle] = useState(null);
   const debouncedSearch = useDebounce(searchText, 700);
 
-  const searchFn = isCustomer
+  const searchFn = isCombined
+    ? async (params) => {
+        const [customers, suppliers] = await Promise.all([getCustomers(params), getSuppliers(params)]);
+        return [
+          ...customers.items.map((entity) => ({ ...entity, __partyType: 'customer' })),
+          ...suppliers.items.map((entity) => ({ ...entity, __partyType: 'supplier' })),
+        ];
+      }
+    : isCustomer
     ? (params) => getCustomers(params).then((r) => r.items)
     : (params) => getSuppliers(params).then((r) => r.items);
   const getByIdFn = isCustomer ? getCustomerById : getSupplier;
-  const queryKey = isCustomer ? 'customers' : 'suppliers';
+  const selectedQueryKey = isCustomer ? 'customers' : 'suppliers';
+  const queryKey = isCombined ? 'parties' : selectedQueryKey;
 
   const idKey = isCustomer ? 'customerID' : 'supplierID';
 
@@ -73,20 +87,20 @@ const PartySearchSelect = ({
   const selectedInResults = useMemo(
     () =>
       searchResults.find(
-        (r) => String(getEntityId(r, idKey)) === String(value)
+        (r) => (!isCombined || r.__partyType === selectedType) && String(getEntityId(r, idKey)) === String(value)
       ),
-    [searchResults, value, idKey]
+    [searchResults, value, idKey, isCombined, selectedType]
   );
 
   const suppliedName = String(selectedOption?.value) === String(value)
     ? selectedOption?.label?.trim() || ''
     : '';
-  const lastSelectedName = lastSelected && String(lastSelected.id) === String(value)
+  const lastSelectedName = lastSelected && String(lastSelected.id) === String(value) && lastSelected.type === selectedType
     ? lastSelected.name
     : '';
 
   const { data: selectedEntity } = useQuery({
-    queryKey: [queryKey, value],
+    queryKey: [selectedQueryKey, value],
     queryFn: async () => {
       const res = await getByIdFn(value);
       return res?.data ?? res;
@@ -156,16 +170,18 @@ const PartySearchSelect = ({
   }, [isOpen]);
 
   const handleSelect = (entity) => {
-    const entityId = String(getEntityId(entity, idKey));
+    const entityId = String(resultId(entity));
+    const entityType = resultType(entity);
     const entityName = getEntityName(entity);
     onChange({
       target: {
         value: entityId,
-        name: type === 'customer' ? 'customerID' : 'supplierID',
+        name: entityType === 'customer' ? 'customerID' : 'supplierID',
+        partyType: entityType,
         entityName,
       },
     });
-    setLastSelected({ id: entityId, name: entityName });
+    setLastSelected({ id: entityId, name: entityName, type: entityType });
     setSearchText('');
     setIsOpen(false);
   };
@@ -174,7 +190,8 @@ const PartySearchSelect = ({
     onChange({
       target: {
         value: '',
-        name: type === 'customer' ? 'customerID' : 'supplierID',
+        name: selectedType === 'customer' ? 'customerID' : 'supplierID',
+        partyType: selectedType,
         entityName: '',
       },
     });
@@ -205,7 +222,7 @@ const PartySearchSelect = ({
           onBlur={(event) => {
             onBlur?.(event);
           }}
-          placeholder={placeholder || (isCustomer ? 'ابحث عن عميل' : 'ابحث عن مورد')}
+          placeholder={placeholder || (isCombined ? 'ابحث عن المتعامل' : isCustomer ? 'ابحث عن عميل' : 'ابحث عن مورد')}
           disabled={disabled}
           dir="rtl"
           className={cn(
@@ -236,7 +253,7 @@ const PartySearchSelect = ({
               {debouncedSearch.length === 0 ? (
                 <div className="p-3 text-sm text-gray-500">
                   {searchHint ||
-                    (isCustomer
+                    (isCombined ? 'اكتب اسم العميل أو المورد للبحث' : isCustomer
                       ? 'اكتب اسم العميل للبحث'
                       : 'اكتب اسم المورد للبحث')}
                 </div>
@@ -246,18 +263,22 @@ const PartySearchSelect = ({
                 <div className="p-3 text-sm text-gray-500">لا توجد نتائج</div>
               ) : (
                 searchResults.map((entity) => {
-                  const entityId = getEntityId(entity, idKey);
+                  const entityId = resultId(entity);
+                  const entityType = resultType(entity);
                   const entityName = getEntityName(entity);
                   return (
                     <div
-                      key={entityId}
+                      key={`${entityType}:${entityId}`}
                       onMouseDown={() => handleSelect(entity)}
                       className={cn(
                         'cursor-pointer border-b border-gray-100 p-3 last:border-b-0 hover:bg-gray-50',
-                        String(entityId) === String(value) && 'bg-primary/10'
+                        entityType === selectedType && String(entityId) === String(value) && 'bg-primary/10'
                       )}
                     >
-                      <div className="text-sm font-medium">{entityName}</div>
+                      <div className="flex items-center justify-between gap-2 text-sm font-medium">
+                        {entityName}
+                        {isCombined && <span className="shrink-0 text-xs text-gray-500">{entityType === 'customer' ? 'عميل' : 'مورد'}</span>}
+                      </div>
                     </div>
                   );
                 })
