@@ -14,6 +14,27 @@ export const totalInvoicePayments = (payments) =>
 const optionalId = (value) =>
   Number.isInteger(Number(value)) && Number(value) > 0 ? Number(value) : null;
 
+export const emptyPaymentCheque = () => ({
+  chequeNumber: '', chequeDate: '', dueDate: '', amount: '', beneficiaryName: '', invoicePayments: [],
+});
+
+export const buildPaymentChequesPayload = (data) => ({
+  bankId: optionalId(data.bankID),
+  bankAccountId: optionalId(data.bankAccountID),
+  supplierId: optionalId(data.supplierID),
+  voucherDate: data.voucherDate,
+  currencyId: optionalId(data.currencyID),
+  costCenterId: optionalId(data.costCenterID),
+  cheques: data.cheques.map((cheque) => ({
+    chequeNumber: cheque.chequeNumber,
+    chequeDate: cheque.chequeDate,
+    dueDate: cheque.dueDate,
+    amount: Number(cheque.amount),
+    beneficiaryName: cheque.beneficiaryName,
+    ...(cheque.invoicePayments?.length ? { invoicePayments: cheque.invoicePayments.map((payment) => ({ invoiceID: Number(payment.invoiceID), amount: Number(payment.amount) })) } : {}),
+  })),
+});
+
 export const buildChequePayload = (data) => {
   const payments = data.invoicePayments ?? [];
   return {

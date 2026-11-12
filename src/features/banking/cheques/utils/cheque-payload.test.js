@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { chequeSchema } from '../validation/cheque.validation.js';
+import { chequeSchema, paymentChequesSchema } from '../validation/cheque.validation.js';
 import {
   buildChequePayload,
+  buildPaymentChequesPayload,
   buildChequeInvoiceQuery,
   normalizeChequeInvoices,
   getChequeErrorMessage,
@@ -12,6 +13,49 @@ import {
   getInvoiceRemaining,
   findChequeInvoiceByNumber,
 } from './cheque-payload.js';
+
+const paymentBatch = {
+  bankID: '12', bankAccountID: '25', supplierID: '100',
+  voucherDate: '2026-11-12', currencyID: '1', costCenterID: '3',
+  cheques: [
+    { chequeNumber: '000451', chequeDate: '2026-11-12', dueDate: '2026-12-01', amount: '5000', beneficiaryName: 'شركة مثال' },
+    { chequeNumber: '000452', chequeDate: '2026-11-12', dueDate: '2026-12-15', amount: '7500', beneficiaryName: 'شركة مثال' },
+  ],
+};
+
+test('payment batch sends the exact shared header and cheque rows without legacy fields', () => {
+  const data = paymentChequesSchema.parse({ ...paymentBatch, type: 1, invoicePayments: [{ invoiceID: 9, amount: 12500 }], notes: 'legacy' });
+  assert.deepEqual(buildPaymentChequesPayload(data), {
+    bankId: 12, bankAccountId: 25, supplierId: 100,
+    voucherDate: '2026-11-12', currencyId: 1, costCenterId: 3,
+    cheques: paymentBatch.cheques.map((row) => ({ ...row, amount: Number(row.amount) })),
+  });
+});
+
+test('payment batch accepts one cheque and an optional cost center', () => {
+  const body = buildPaymentChequesPayload(paymentChequesSchema.parse({ ...paymentBatch, costCenterID: undefined, cheques: [paymentBatch.cheques[0]] }));
+  assert.equal(body.cheques.length, 1);
+  assert.equal(body.costCenterId, null);
+});
+
+test('payment batch requires a supplier, bank, bank account, currency, voucher date and at least one cheque', () => {
+  for (const name of ['supplierID', 'bankID', 'bankAccountID', 'currencyID', 'voucherDate']) {
+    assert.equal(paymentChequesSchema.safeParse({ ...paymentBatch, [name]: '' }).success, false, name);
+  }
+  assert.equal(paymentChequesSchema.safeParse({ ...paymentBatch, cheques: [] }).success, false);
+});
+
+test('payment batch validates every row and reports duplicate numbers and date ordering at the row', () => {
+  for (const changes of [
+    { chequeNumber: '' }, { beneficiaryName: '   ' }, { chequeDate: '' },
+    { dueDate: '2026-11-11' }, { amount: 0 }, { amount: -1 }, { amount: '1.001' },
+    { chequeNumber: ' 000451 ' },
+  ]) {
+    const result = paymentChequesSchema.safeParse({ ...paymentBatch, cheques: [paymentBatch.cheques[0], { ...paymentBatch.cheques[1], ...changes }] });
+    assert.equal(result.success, false, JSON.stringify(changes));
+    assert.equal(result.error.issues.some((issue) => issue.path[0] === 'cheques' && issue.path[1] === 1), true);
+  }
+});
 
 test('number lookup does not fetch for an empty input', async () => {
   let calls = 0;
@@ -375,4 +419,31 @@ test('API rejection details and validation errors remain visible', () => {
     }),
     new RegExp(message)
   );
+});
+
+
+test('batch invoice allocations remain on their own cheque in the request', () => {
+  const data = paymentChequesSchema.parse({ ...paymentBatch, cheques: [
+    { ...paymentBatch.cheques[0], invoicePayments: [{ invoiceID: 10, amount: '5000', supplierID: 100, remainingAmount: 9000 }] },
+    { ...paymentBatch.cheques[1], invoicePayments: [{ invoiceID: 20, amount: '7500', supplierID: 100, remainingAmount: 9000 }] },
+  ] });
+  const body = buildPaymentChequesPayload(data);
+  assert.deepEqual(body.cheques[0].invoicePayments, [{ invoiceID: 10, amount: 5000 }]);
+  assert.deepEqual(body.cheques[1].invoicePayments, [{ invoiceID: 20, amount: 7500 }]);
+  assert.equal('invoicePayments' in body, false);
+});
+
+test('batch allocations validate cheque totals, shared supplier, currency and aggregate invoice availability', () => {
+  const invoice = { invoiceID: 10, amount: 5000, supplierID: 100, availableAmount: 12500 };
+  const data = { ...paymentBatch, cheques: [
+    { ...paymentBatch.cheques[0], invoicePayments: [invoice] },
+    { ...paymentBatch.cheques[1], invoicePayments: [{ ...invoice, amount: 7500 }] },
+  ] };
+  assert.equal(paymentChequesSchema.safeParse(data).success, true);
+  for (const change of [{ supplierId: 999 }, { amount: 4999 }, { availableAmount: 12499 }]) {
+    const updated = { ...invoice, ...change, supplierID: change.supplierId ?? invoice.supplierID };
+    assert.equal(paymentChequesSchema.safeParse({ ...data, cheques: [{ ...data.cheques[0], invoicePayments: [updated] }, data.cheques[1]] }).success, false);
+  }
+  assert.equal(paymentChequesSchema.safeParse({ ...data, currencyID: '2' }).success, false);
+  assert.equal(paymentChequesSchema.safeParse({ ...data, cheques: [{ ...data.cheques[0], amount: 10000, invoicePayments: [invoice, invoice] }] }).success, false);
 });

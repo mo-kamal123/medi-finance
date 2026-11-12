@@ -2,6 +2,72 @@
 
 import { isMoneyAmount, toCents } from '../utils/cheque-payload.js';
 
+const requiredId = (message) => z.string().refine(
+  (value) => Number.isInteger(Number(value)) && Number(value) > 0,
+  message
+);
+
+const paymentInvoiceSchema = z.object({
+  invoiceID: z.number().int().positive(),
+  amount: z.union([z.string(), z.number()]).refine(isMoneyAmount, 'مبلغ الفاتورة يجب أن يكون موجباً وبحد أقصى منزلتين عشريتين'),
+  remainingAmount: z.number().optional(),
+  availableAmount: z.number().optional(),
+  supplierID: z.number().optional(),
+});
+
+export const paymentChequesSchema = z.object({
+  bankID: requiredId('البنك مطلوب'),
+  bankAccountID: requiredId('الحساب البنكي مطلوب'),
+  supplierID: requiredId('يجب اختيار مورد'),
+  voucherDate: z.iso.date({ error: 'تاريخ السند غير صالح' }),
+  currencyID: requiredId('العملة مطلوبة'),
+  costCenterID: z.string().optional().default(''),
+  cheques: z.array(z.object({
+    invoicePayments: z.array(paymentInvoiceSchema).default([]),
+    chequeNumber: z.string().trim().min(1, 'رقم الشيك مطلوب'),
+    chequeDate: z.iso.date({ error: 'تاريخ الشيك غير صالح' }),
+    dueDate: z.iso.date({ error: 'تاريخ الاستحقاق غير صالح' }),
+    amount: z.union([z.string(), z.number()]).refine(isMoneyAmount, 'القيمة يجب أن تكون موجبة وبحد أقصى منزلتين عشريتين'),
+    beneficiaryName: z.string().trim().min(1, 'اسم المستفيد مطلوب'),
+  }).superRefine((cheque, ctx) => {
+    if (cheque.dueDate < cheque.chequeDate) {
+      ctx.addIssue({ code: 'custom', path: ['dueDate'], message: 'تاريخ الاستحقاق يجب ألا يكون قبل تاريخ الشيك' });
+    }
+  })).min(1, 'أضف شيكاً واحداً على الأقل'),
+}).superRefine((data, ctx) => {
+  const numbers = new Set();
+  const allocated = new Map();
+  data.cheques.forEach((cheque) => cheque.invoicePayments.forEach((payment) => {
+    allocated.set(payment.invoiceID, (allocated.get(payment.invoiceID) ?? 0) + toCents(payment.amount));
+  }));
+  data.cheques.forEach((cheque, index) => {
+    if (numbers.has(cheque.chequeNumber)) {
+      ctx.addIssue({ code: 'custom', path: ['cheques', index, 'chequeNumber'], message: 'لا يمكن تكرار رقم الشيك' });
+    }
+    numbers.add(cheque.chequeNumber);
+    const issue = (path, message) => ctx.addIssue({ code: 'custom', path: ['cheques', index, ...path], message });
+    const payments = cheque.invoicePayments;
+    if (payments.length) {
+      if (new Set(payments.map((payment) => payment.invoiceID)).size !== payments.length) {
+        issue(['invoicePayments'], 'لا يمكن تكرار الفاتورة');
+      }
+      if (payments.reduce((sum, payment) => sum + toCents(payment.amount), 0) !== toCents(cheque.amount)) {
+        issue(['amount'], 'مجموع مبالغ الفواتير يجب أن يساوي مبلغ الشيك');
+      }
+      if (Number(data.currencyID) !== 1) issue(['invoicePayments'], 'ربط الفواتير متاح بالجنيه المصري فقط');
+      payments.forEach((payment, paymentIndex) => {
+        if (payment.supplierID != null && payment.supplierID !== Number(data.supplierID)) {
+          issue(['invoicePayments'], 'يجب أن تكون الفواتير لنفس المورد المحدد');
+        }
+        const limit = payment.availableAmount ?? payment.remainingAmount;
+        if (limit != null && allocated.get(payment.invoiceID) > toCents(limit)) {
+          issue(['invoicePayments', paymentIndex, 'amount'], 'إجمالي المبالغ المخصصة للفاتورة في الشيكات يتجاوز المتاح');
+        }
+      });
+    }
+  });
+});
+
 export const chequeSchema = z
   .object({
     chequeType: z.enum(['0', '1'], { error: 'نوع الشيك مطلوب' }),

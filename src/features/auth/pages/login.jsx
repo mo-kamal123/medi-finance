@@ -73,17 +73,6 @@ const Login = () => {
         onSubmit={handleSubmit}
         isPending={isPending}
       />
-
-      {/* Footer */}
-      <div className="text-center text-sm text-gray-600">
-        ليس لديك حساب؟{' '}
-        <a
-          href="/auth/register"
-          className="text-primary font-medium hover:text-primary/80 transition-colors duration-200"
-        >
-          إنشاء حساب
-        </a>
-      </div>
     </div>
   );
 };

@@ -10,6 +10,7 @@ const TABS = [
 
 const NewCheque = () => {
   const [activeTab, setActiveTab] = useState('info');
+  const [isBatchPayment, setIsBatchPayment] = useState(false);
   const [invoiceSelectionContainer, setInvoiceSelectionContainer] = useState(null);
 
   return (
@@ -23,9 +24,9 @@ const NewCheque = () => {
       <div ref={setInvoiceSelectionContainer} className="empty:hidden" />
       <div className="rounded-xl border border-gray-200 bg-white">
         <div className="flex gap-1 overflow-x-auto border-b border-gray-200 px-4 pt-3">
-          {TABS.map((tab) => {
+          {TABS.filter((tab) => !isBatchPayment || tab.key === 'info').map((tab) => {
             const Icon = tab.icon;
-            const isActive = activeTab === tab.key;
+            const isActive = (isBatchPayment ? 'info' : activeTab) === tab.key;
             return (
               <button
                 key={tab.key}
@@ -45,7 +46,7 @@ const NewCheque = () => {
         </div>
 
         <div className="p-6">
-          <ChequeForm activeTab={activeTab} invoiceSelectionContainer={invoiceSelectionContainer} />
+          <ChequeForm activeTab={isBatchPayment ? 'info' : activeTab} invoiceSelectionContainer={invoiceSelectionContainer} onBatchModeChange={setIsBatchPayment} />
         </div>
       </div>
     </div>

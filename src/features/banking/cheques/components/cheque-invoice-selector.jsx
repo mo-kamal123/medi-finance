@@ -22,6 +22,7 @@ import {
 
 const ChequeInvoiceSelector = ({
   chequeType,
+  selectedPartyID,
   payments,
   onChange,
   onLoadingChange,
@@ -117,6 +118,10 @@ const ChequeInvoiceSelector = ({
         return;
       }
       const party = getChequeInvoiceParty(invoice, chequeType);
+      if (selectedPartyID && party.id !== Number(selectedPartyID)) {
+        setError('يجب أن تكون جميع الفواتير لنفس المورد المحدد');
+        return;
+      }
       const remainingAmount = getInvoiceRemaining(invoice);
       const availableAmount =
         invoice.availableAmount != null

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useForm, useWatch, Controller } from 'react-hook-form';
+import { useForm, useWatch, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import FormInput from '../../../../shared/ui/input';
@@ -9,11 +9,13 @@ import Toggle from '../../../../shared/ui/toggle';
 import NormalSelect from '../../../../shared/ui/NormalSelect';
 import PartySearchSelect from '../../../../shared/ui/party-search-select';
 import ChequeInvoiceSelector from './cheque-invoice-selector';
-import { buildChequePayload, totalInvoicePayments, getChequeErrorMessage, getChequeInvoiceParty } from '../utils/cheque-payload';
+import PaymentChequeRows from './payment-cheque-rows';
+import CostCenterSearchSelect from '../../../transactions/entries/components/cost-center-search-select';
+import { emptyPaymentCheque, buildChequePayload, buildPaymentChequesPayload, totalInvoicePayments, getChequeErrorMessage, getChequeInvoiceParty } from '../utils/cheque-payload';
 import { useCreateCheque } from '../hooks/cheques.mutations';
 import { useChequeBanks, useChequeCurrencies, useEgyptChequeBanks } from '../hooks/cheques.queries';
 import { useBankAccounts } from '../../banks/hooks/banks.queries';
-import { chequeSchema } from '../validation/cheque.validation';
+import { chequeSchema, paymentChequesSchema } from '../validation/cheque.validation';
 
 const toDateValue = (value) => {
   if (!value) return '';
@@ -38,6 +40,7 @@ const getInitialValues = (defaultValues) => {
   } : {};
   return {
     chequeType: derivedChequeType,
+    cheques: [emptyPaymentCheque()],
     chequeNumber: defaultValues?.chequeNumber ?? '',
     receiptDate: toDateValue(defaultValues?.receiptDate || defaultValues?.chequeDate),
     dueDate: toDateValue(defaultValues?.dueDate),
@@ -105,7 +108,7 @@ const toOptions = (list, valueKey, labelKey) => {
   ];
 };
 
-const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activeTab, invoiceSelectionContainer }) => {
+const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activeTab, invoiceSelectionContainer, onBatchModeChange }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const bankIdFromUrl = searchParams.get('bankId');
@@ -124,24 +127,38 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
     register,
     control,
     handleSubmit,
+    getValues,
     setValue,
     formState: { errors },
   } = useForm({
     defaultValues: formDefaults,
-    resolver: zodResolver(chequeSchema),
+    resolver: (values, context, options) => zodResolver(
+      mode === 'create' && values.chequeType === '1' ? paymentChequesSchema : chequeSchema
+    )(values, context, options),
     mode: 'onBlur',
     reValidateMode: 'onChange',
   });
 
+  const { fields: chequeFields, append: appendCheque, remove: removeCheque } = useFieldArray({ control, name: 'cheques' });
+  const [selectedChequeId, setSelectedChequeId] = useState(null);
+  const selectedChequeIndex = Math.max(0, chequeFields.findIndex((row) => row.id === selectedChequeId));
+  const activeChequeId = chequeFields[selectedChequeIndex]?.id;
+  const cheques = useWatch({ control, name: 'cheques' }) ?? [];
   const chequeType = useWatch({ control, name: 'chequeType' });
+  const isBatchPayment = mode === 'create' && chequeType === '1';
+  useEffect(() => {
+    onBatchModeChange?.(isBatchPayment);
+  }, [isBatchPayment, onBatchModeChange]);
   const customerID = useWatch({ control, name: 'customerID' });
   const supplierID = useWatch({ control, name: 'supplierID' });
-  const invoicePayments = useWatch({ control, name: 'invoicePayments' }) ?? [];
+  const singleInvoicePayments = useWatch({ control, name: 'invoicePayments' }) ?? [];
+  const invoicePayments = isBatchPayment ? cheques[selectedChequeIndex]?.invoicePayments ?? [] : singleInvoicePayments;
+  const allInvoicePayments = isBatchPayment ? cheques.flatMap((row) => row.invoicePayments ?? []) : invoicePayments;
   const partyID = chequeType === '0' ? customerID : supplierID;
   const watchedBankID = useWatch({ control, name: 'bankID' });
 
   const { data: bankAccountsRes = [], isLoading: loadingBankAccounts } =
-    useBankAccounts(chequeType === '0' ? watchedBankID : undefined);
+    useBankAccounts(chequeType === '0' || isBatchPayment ? watchedBankID : undefined);
   const { data: egyptBanks = [], isLoading: loadingPaymentBanks, isError: paymentBanksError } =
     useEgyptChequeBanks(chequeType === '1');
 
@@ -202,17 +219,21 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
       if (party) {
         setValue(chequeType === '0' ? 'customerID' : 'supplierID', String(party.id), { shouldDirty: true, shouldValidate: true });
         setValue(chequeType === '0' ? 'supplierID' : 'customerID', '');
+        const beneficiaryField = isBatchPayment ? `cheques.${selectedChequeIndex}.beneficiaryName` : 'beneficiaryName';
+        if (chequeType === '1' && !getValues(beneficiaryField)?.trim()) {
+          setValue(beneficiaryField, party.name, { shouldDirty: true, shouldValidate: true });
+        }
       }
       setValue('currencyID', '1', { shouldValidate: true });
       setValue('exchangeRate', 1, { shouldValidate: true });
     }
-    setValue('invoicePayments', payments, { shouldDirty: true, shouldValidate: true });
-    setValue('amount', payments.length ? totalInvoicePayments(payments) : '', { shouldDirty: true, shouldValidate: true });
+    setValue(isBatchPayment ? `cheques.${selectedChequeIndex}.invoicePayments` : 'invoicePayments', payments, { shouldDirty: true, shouldValidate: true });
+    setValue(isBatchPayment ? `cheques.${selectedChequeIndex}.amount` : 'amount', payments.length ? totalInvoicePayments(payments) : '', { shouldDirty: true, shouldValidate: true });
     createMutation.reset();
   };
 
   const handleFormSubmit = (data) => {
-    const payload = buildChequePayload(data);
+    const payload = isBatchPayment ? buildPaymentChequesPayload(data) : buildChequePayload(data);
     if (onSubmit) {
       onSubmit(payload);
     } else {
@@ -261,15 +282,19 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
 
   const isTabMode = !!activeTab;
   const invoiceSelector = (mode === 'create' || invoicePayments.length > 0) ? (
+    <div className="space-y-3">
+      {isBatchPayment && <NormalSelect label="تطبيق الفواتير على الشيك" value={activeChequeId ?? ''} onChange={(event) => setSelectedChequeId(event.target.value)} options={chequeFields.map((row, index) => ({ value: row.id, label: `شيك ${index + 1}${cheques[index]?.chequeNumber ? ` - ${cheques[index].chequeNumber}` : ''}` }))} />}
     <ChequeInvoiceSelector
-      key={`${chequeType}-${partyID || ''}`}
+      key={`${chequeType}-${partyID || ''}-${isBatchPayment ? activeChequeId : ''}`}
       chequeType={chequeType}
       payments={invoicePayments}
       onChange={handleInvoicePaymentsChange}
       onLoadingChange={setIsResolvingInvoice}
-      errors={errors.invoicePayments}
+      errors={isBatchPayment ? errors.cheques?.[selectedChequeIndex]?.invoicePayments : errors.invoicePayments}
+      selectedPartyID={isBatchPayment ? supplierID : undefined}
       disabled={mode !== 'create'}
     />
+    </div>
   ) : null;
 
   const renderInfoTab = () => {
@@ -277,8 +302,8 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
     const partyField = isReceipt ? 'customerID' : 'supplierID';
     const partyLabel = isReceipt ? 'العميل' : 'المورد';
     const defaultParty = getChequeInvoiceParty(defaultValues, chequeType);
-    const selectedPartyOption = invoicePayments.length
-      ? { value: partyID, label: invoicePayments[0].partyName }
+    const selectedPartyOption = allInvoicePayments.length
+      ? { value: partyID, label: allInvoicePayments[0].partyName }
       : defaultParty
         ? { value: String(defaultParty.id), label: defaultParty.name }
         : undefined;
@@ -288,6 +313,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
         <div>
           <SectionHeader title="بيانات الشيك الأساسية" />
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {!isBatchPayment && <>
             <FormInput
               label="رقم الشيك"
               required
@@ -306,6 +332,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               step="0.01"
               placeholder="أدخل قيمة الشيك"
             />
+            </>}
             {renderSelect('chequeType', 'نوع الشيك', [
               { value: '0', label: 'شيك قبض' },
               { value: '1', label: 'شيك صرف' },
@@ -317,11 +344,14 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
                 setValue('supplierID', '');
                 setValue('bankAccountID', '');
                 setValue('bankID', '');
+                cheques.forEach((_, index) => setValue(`cheques.${index}.invoicePayments`, []));
                 clearInvoicePayments();
               },
             })}
-            {renderDate('receiptDate', 'تاريخ الشيك', true)}
-            {renderDate('dueDate', 'تاريخ الاستحقاق', true)}
+            {isBatchPayment ? renderDate('voucherDate', 'تاريخ السند', true) : <>
+              {renderDate('receiptDate', 'تاريخ الشيك', true)}
+              {renderDate('dueDate', 'تاريخ الاستحقاق', true)}
+            </>}
           </div>
         </div>
 
@@ -351,15 +381,17 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
                       }
                     }}
                     error={errors[partyField]?.message}
-                    disabled={isViewMode || invoicePayments.length > 0}
+                    disabled={isViewMode || allInvoicePayments.length > 0}
                   />
                 </div>
               )}
             />
-            {isReceipt ? <>
-            {renderSelect('bankID', 'البنك', bankOptions, {
+            {isReceipt || isBatchPayment ? <>
+            {renderSelect('bankID', 'البنك', isBatchPayment ? paymentBankOptions : bankOptions, {
               required: true,
-              placeholder: 'اختر البنك',
+              placeholder: isBatchPayment && loadingPaymentBanks ? 'جاري تحميل البنوك...' : 'اختر البنك',
+              disabled: isBatchPayment && (loadingPaymentBanks || paymentBanksError),
+              error: isBatchPayment && paymentBanksError ? 'تعذر تحميل البنوك' : errors.bankID?.message,
               onChange: () => setValue('bankAccountID', ''),
             })}
             {renderSelect('bankAccountID', 'الحساب البنكي', bankAccountOptions, {
@@ -375,10 +407,11 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               onChange: () => setValue('bankAccountID', ''),
             })}
             {renderSelect('currencyID', 'العملة', currencyOptions, {
-              disabled: invoicePayments.length > 0,
+              required: isBatchPayment,
+              disabled: allInvoicePayments.length > 0,
               placeholder: 'اختر العملة',
             })}
-            <FormInput
+            {!isBatchPayment && <FormInput
               type="number"
               step="0.01"
               label="سعر الصرف"
@@ -386,13 +419,19 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               error={errors.exchangeRate?.message}
               readOnly={isViewMode || invoicePayments.length > 0}
               placeholder="1"
-            />
+            />}
+            {isBatchPayment && <Controller name="costCenterID" control={control} render={({ field }) => (
+              <div>
+                <label className="mb-1 block text-[15px] font-medium text-gray-700">مركز التكلفة</label>
+                <CostCenterSearchSelect value={field.value} onChange={(event) => field.onChange(event.target.value)} error={errors.costCenterID?.message} />
+              </div>
+            )} />}
           </div>
         </div>
 
-        {!invoiceSelectionContainer ? invoiceSelector : null}
+        {isBatchPayment || !invoiceSelectionContainer ? invoiceSelector : null}
 
-        <div>
+        {isBatchPayment ? <PaymentChequeRows control={control} register={register} errors={errors} fields={chequeFields} append={appendCheque} remove={removeCheque} selectedId={activeChequeId} onSelect={setSelectedChequeId} /> : <div>
           <SectionHeader title="بيانات إضافية" />
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput
@@ -410,7 +449,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
               placeholder="أدخل اسم الفرع"
             />
           </div>
-        </div>
+        </div>}
       </div>
     );
   };
@@ -457,6 +496,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
   );
 
   const renderTabContent = () => {
+    if (isBatchPayment) return renderInfoTab();
     if (!isTabMode) {
       return (
         <>
@@ -477,7 +517,7 @@ const ChequeForm = ({ defaultValues, mode = 'create', onSubmit, isPending, activ
 
   return (
     <div className={isTabMode ? '' : 'p-6 bg-white rounded-xl border border-gray-200 space-y-6'}>
-      {invoiceSelectionContainer ? createPortal(invoiceSelector, invoiceSelectionContainer) : null}
+      {invoiceSelectionContainer && !isBatchPayment ? createPortal(invoiceSelector, invoiceSelectionContainer) : null}
       {!isTabMode && (
         <div>
           <h2 className="text-xl font-bold">
