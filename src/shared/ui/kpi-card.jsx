@@ -15,7 +15,7 @@ const KpiCard = ({
   className,
 }) => (
   <dl
-    className={cn('min-w-0 rounded-xl border border-gray-200 p-6', className)}
+    className={cn('min-w-0 rounded-xl bg-white border border-gray-200 p-6', className)}
   >
     <dt className="flex items-center gap-2 text-xs text-gray-600">
       {Icon ? (
