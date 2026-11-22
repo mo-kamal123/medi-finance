@@ -97,7 +97,7 @@ const CashTransactionsPage = () => {
             <p className="text-sm text-gray-600">إدارة الإيداعات والسحوبات النقدية</p>
           </PageHeading>
         </div>
-        <button onClick={() => navigate('/cash-vouchers/new', { state: { fromCashTransactions: true } })} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary/90">
+        <button onClick={() => navigate('/cash-transactions/new')} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary/90">
           <Plus size={16} /> إضافة حركة نقدية
         </button>
       </div>
