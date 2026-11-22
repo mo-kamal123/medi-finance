@@ -5,7 +5,6 @@ import FormInput from '../../../../shared/ui/input';
 import DateInput from '../../../../shared/ui/date-input';
 import SearchableSelect from '../../../../shared/ui/searchable-select';
 import AccountSearchSelect from '../../entries/components/account-search-select';
-import PartySearchSelect from '../../../../shared/ui/party-search-select';
 import Toggle from '../../../../shared/ui/toggle';
 import useCostTree from '../../../accounting/tree/cost-tree/hooks/use-cost-tree';
 import { useFinancialPeriods } from '../../invoices/shared/hooks/invoices.queries';
@@ -28,10 +27,7 @@ const emptyEditDetail = {
   descriptionAr: '',
   currencyID: '',
   exchangeRate: '',
-  customerID: '',
-  supplierID: '',
   paymentPermit: '',
-  isCash: false,
 };
 
 const getFinalNodes = (nodes = []) => {
@@ -51,7 +47,7 @@ const toDateInputValue = (value) => {
 
 const getEditInitialDetails = (details = []) => {
   if (!details.length) {
-    return [{ ...emptyEditDetail }, { ...emptyEditDetail, isCash: true }];
+    return [{ ...emptyEditDetail }, { ...emptyEditDetail }];
   }
 
   return details.map((detail) => ({
@@ -63,26 +59,15 @@ const getEditInitialDetails = (details = []) => {
     descriptionAr: detail.descriptionAr ?? '',
     currencyID: detail.currencyID ? String(detail.currencyID) : '',
     exchangeRate: detail.exchangeRate ?? '',
-    customerID: detail.customerID ? String(detail.customerID) : '',
-    supplierID: detail.supplierID ? String(detail.supplierID) : '',
     paymentPermit: detail.paymentPermit ?? '',
-    isCash: Boolean(detail.isCash),
   }));
 };
 
-const normalizeCreateDetailPayload = (detail, transactionType) => ({
+const normalizeCreateDetailPayload = (detail) => ({
   accountID: Number(detail.accountID),
   debitAmount: Number(detail.debitAmount) || 0,
   creditAmount: Number(detail.creditAmount) || 0,
   descriptionAr: detail.descriptionAr || '',
-  ...(transactionType === 'Deposit'
-    ? detail.customerID
-      ? { customerID: Number(detail.customerID) }
-      : {}
-    : detail.supplierID
-      ? { supplierID: Number(detail.supplierID) }
-      : {}),
-  isCash: Boolean(detail.isCash),
   paymentPermit: detail.paymentPermit || '',
 });
 
@@ -94,12 +79,9 @@ const normalizeEditDetailPayload = (detail) => ({
   creditAmount: Number(detail.creditAmount) || 0,
   descriptionAr: detail.descriptionAr || '',
   descriptionEn: '',
-  customerID: detail.customerID ? Number(detail.customerID) : null,
-  supplierID: detail.supplierID ? Number(detail.supplierID) : null,
   paymentPermit: detail.paymentPermit || '',
   currencyID: detail.currencyID ? Number(detail.currencyID) : null,
   exchangeRate: detail.exchangeRate === '' ? null : Number(detail.exchangeRate),
-  isCash: Boolean(detail.isCash),
 });
 
 const getInitialValues = (defaultValues = {}) => ({
@@ -214,16 +196,7 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
     isEditValid &&
     formData.details.length >= 2 &&
     formData.transactionDate &&
-    Number(formData.financialPeriodID) > 0 &&
-    formData.details.some((row) => row.isCash) &&
-    formData.details.some((row) => !row.isCash) &&
-    formData.details
-      .filter((row) => row.isCash)
-      .every((row) =>
-        formData.transactionType === 'Deposit'
-          ? Number(row.debitAmount) > 0
-          : Number(row.creditAmount) > 0
-      );
+    Number(formData.financialPeriodID) > 0;
   const canSubmit = isCreateMode ? isCreateValid : isEditValid;
 
   const rowErrors = formData.details.map((row) => {
@@ -240,14 +213,6 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
           : !((debit > 0 && credit === 0) || (credit > 0 && debit === 0))
             ? 'أدخل مبلغاً أكبر من صفر في المدين أو الدائن فقط'
             : '',
-      cash:
-        isCreateMode &&
-        row.isCash &&
-        (formData.transactionType === 'Deposit' ? !(debit > 0) : !(credit > 0))
-          ? formData.transactionType === 'Deposit'
-            ? 'الحساب النقدي يجب أن يكون مديناً في سند القبض'
-            : 'الحساب النقدي يجب أن يكون دائناً في سند الدفع'
-          : '',
     };
   });
   const validationMessages = [
@@ -265,12 +230,6 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
     ),
     ...(Math.abs(editTotals.debit - editTotals.credit) >= 0.0001
       ? ['يجب أن يتساوى إجمالي المدين والدائن']
-      : []),
-    ...(isCreateMode && !formData.details.some((row) => row.isCash)
-      ? ['حدد حساباً نقدياً واحداً على الأقل']
-      : []),
-    ...(isCreateMode && !formData.details.some((row) => !row.isCash)
-      ? ['يجب إدخال حساب مقابل غير نقدي']
       : []),
   ];
 
@@ -290,9 +249,7 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
         referenceNumber: formData.referenceNumber || '',
         descriptionAr: formData.descriptionAr || '',
         postImmediately: formData.postImmediately,
-        details: formData.details.map((row) =>
-          normalizeCreateDetailPayload(row, formData.transactionType)
-        ),
+        details: formData.details.map(normalizeCreateDetailPayload),
       };
 
       createMutation.mutate(payload, {
@@ -345,8 +302,7 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
       >
         <p className="text-sm text-gray-600">
           الحقول المميزة بـ <span className="text-red-500">*</span> مطلوبة. أدخل
-          الحساب ومبلغاً في المدين أو الدائن لكل سطر. العميل / المورد وإذن القبض
-          / الصرف اختياريان.
+          الحساب ومبلغاً في المدين أو الدائن لكل سطر. إذن القبض / الصرف اختياري.
         </p>
         {showErrors && validationMessages.length > 0 && (
           <div
@@ -484,14 +440,12 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
                     )}
                     <th className="p-3 text-right">
                       {formData.transactionType === 'Deposit'
-                        ? 'العميل'
-                        : 'المورد'}
+                        ? 'إذن القبض'
+                        : 'إذن الصرف'}
                     </th>
-                    <th className="p-3 text-right">إذن القبض / الصرف</th>
                     <th className="p-3 text-right">الوصف عربي</th>
                     <th className="p-3 text-right">مدين</th>
                     <th className="p-3 text-right">دائن</th>
-                    <th className="p-3 text-right">نقدي</th>
                     {isCreateMode && (
                       <th className="p-3 text-right">إجراءات</th>
                     )}
@@ -535,35 +489,13 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
                           />
                         </td>
                       )}
-                      <td className="min-w-[220px] p-2">
-                        <PartySearchSelect
-                          key={formData.transactionType}
-                          type={
-                            formData.transactionType === 'Deposit'
-                              ? 'customer'
-                              : 'supplier'
-                          }
-                          value={
-                            row[
-                              formData.transactionType === 'Deposit'
-                                ? 'customerID'
-                                : 'supplierID'
-                            ]
-                          }
-                          onChange={(e) =>
-                            handleEditRowChange(
-                              index,
-                              formData.transactionType === 'Deposit'
-                                ? 'customerID'
-                                : 'supplierID',
-                              e.target.value
-                            )
-                          }
-                        />
-                      </td>
                       <td className="min-w-[200px] p-2">
                         <input
-                          aria-label="إذن القبض / الصرف"
+                          aria-label={
+                            formData.transactionType === 'Deposit'
+                              ? 'إذن القبض'
+                              : 'إذن الصرف'
+                          }
                           value={row.paymentPermit}
                           onChange={(e) =>
                             handleEditRowChange(
@@ -637,20 +569,6 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
                         )}
                       </td>
 
-                      <td className="p-2 text-center">
-                        <Toggle
-                          aria-label={`نقدي - السطر ${index + 1}`}
-                          className="mx-auto"
-                          checked={row.isCash}
-                          onChange={(e) =>
-                            handleEditRowChange(
-                              index,
-                              'isCash',
-                              e.target.checked
-                            )
-                          }
-                        />
-                      </td>
                       {isCreateMode && (
                         <td className="p-2">
                           <button
