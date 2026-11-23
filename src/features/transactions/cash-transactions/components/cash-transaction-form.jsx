@@ -1,5 +1,5 @@
 ﻿import { useMemo, useState } from 'react';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import FormInput from '../../../../shared/ui/input';
 import DateInput from '../../../../shared/ui/date-input';
@@ -47,7 +47,7 @@ const toDateInputValue = (value) => {
 
 const getEditInitialDetails = (details = []) => {
   if (!details.length) {
-    return [{ ...emptyEditDetail }, { ...emptyEditDetail }];
+    return [{ ...emptyEditDetail }];
   }
 
   return details.map((detail) => ({
@@ -84,7 +84,7 @@ const normalizeEditDetailPayload = (detail) => ({
   exchangeRate: detail.exchangeRate === '' ? null : Number(detail.exchangeRate),
 });
 
-const getInitialValues = (defaultValues = {}) => ({
+const getInitialValues = (defaultValues = {}, mode = 'create') => ({
   transactionType: defaultValues.transactionType ?? 'Deposit',
   transactionDate: toDateInputValue(
     defaultValues.transactionDate || defaultValues.entryDate
@@ -97,7 +97,11 @@ const getInitialValues = (defaultValues = {}) => ({
   journalEntryID: defaultValues.journalEntryID ?? null,
   journalEntryNumber: defaultValues.journalEntryNumber ?? '',
   postImmediately: defaultValues.postImmediately ?? true,
-  details: getEditInitialDetails(defaultValues.details),
+  details: getEditInitialDetails(
+    mode === 'create'
+      ? defaultValues.details?.slice(0, 1)
+      : defaultValues.details
+  ),
 });
 
 const SelectField = ({
@@ -177,7 +181,7 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
     [formData.details]
   );
 
-  const isEditValid =
+  const areDetailsValid =
     formData.details.length > 0 &&
     formData.details.every(
       (row) =>
@@ -188,13 +192,16 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
         Number(row.creditAmount) >= 0 &&
         ((Number(row.debitAmount) > 0 && Number(row.creditAmount) === 0) ||
           (Number(row.creditAmount) > 0 && Number(row.debitAmount) === 0))
-    ) &&
+    );
+
+  const isEditValid =
+    areDetailsValid &&
     editTotals.debit > 0 &&
     Math.abs(editTotals.debit - editTotals.credit) < 0.0001;
 
   const isCreateValid =
-    isEditValid &&
-    formData.details.length >= 2 &&
+    areDetailsValid &&
+    formData.details.length === 1 &&
     formData.transactionDate &&
     Number(formData.financialPeriodID) > 0;
   const canSubmit = isCreateMode ? isCreateValid : isEditValid;
@@ -220,15 +227,15 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
     ...(isCreateMode && !(Number(formData.financialPeriodID) > 0)
       ? ['الفترة المالية مطلوبة']
       : []),
-    ...(isCreateMode && formData.details.length < 2
-      ? ['يجب إدخال سطرين على الأقل']
+    ...(isCreateMode && formData.details.length !== 1
+      ? ['يجب إدخال حساب واحد فقط']
       : []),
     ...rowErrors.flatMap((errors, index) =>
       Object.values(errors)
         .filter(Boolean)
         .map((message) => `السطر ${index + 1}: ${message}`)
     ),
-    ...(Math.abs(editTotals.debit - editTotals.credit) >= 0.0001
+    ...(isEditMode && Math.abs(editTotals.debit - editTotals.credit) >= 0.0001
       ? ['يجب أن يتساوى إجمالي المدين والدائن']
       : []),
   ];
@@ -289,7 +296,7 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
           </h1>
           <p className="text-sm text-gray-600">
             {isCreateMode
-              ? 'إدخال حركة نقدية متوازنة بحساب الصندوق والحساب المقابل'
+              ? 'إدخال حركة نقدية بحساب واحد'
               : 'عرض وتعديل تفاصيل الحركة كقيد محاسبي'}
           </p>
         </div>
@@ -411,21 +418,6 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
               <h2 className="text-lg font-semibold text-gray-900">
                 تفاصيل الحركة
               </h2>
-              {isCreateMode && (
-                <button
-                  type="button"
-                  className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2"
-                  onClick={() =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      details: [...prev.details, { ...emptyEditDetail }],
-                    }))
-                  }
-                >
-                  <Plus size={16} aria-hidden="true" />
-                  إضافة سطر
-                </button>
-              )}
             </div>
 
             <div className="overflow-x-auto">
@@ -446,9 +438,6 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
                     <th className="p-3 text-right">الوصف عربي</th>
                     <th className="p-3 text-right">مدين</th>
                     <th className="p-3 text-right">دائن</th>
-                    {isCreateMode && (
-                      <th className="p-3 text-right">إجراءات</th>
-                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -568,28 +557,6 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
                           </p>
                         )}
                       </td>
-
-                      {isCreateMode && (
-                        <td className="p-2">
-                          <button
-                            type="button"
-                            disabled={formData.details.length <= 2}
-                            aria-label={`حذف السطر ${index + 1}`}
-                            title="حذف السطر"
-                            className="rounded-lg p-2 text-red-600 hover:bg-red-50 disabled:opacity-40"
-                            onClick={() =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                details: prev.details.filter(
-                                  (_, rowIndex) => rowIndex !== index
-                                ),
-                              }))
-                            }
-                          >
-                            <Trash2 size={18} aria-hidden="true" />
-                          </button>
-                        </td>
-                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -604,8 +571,12 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
               }`}
             >
               {canSubmit
-                ? 'القيد متوازن'
-                : 'القيد غير متوازن أو توجد بيانات ناقصة'}
+                ? isCreateMode
+                  ? 'بيانات الحركة صحيحة'
+                  : 'القيد متوازن'
+                : isCreateMode
+                  ? 'أدخل الحساب ومبلغاً صحيحاً والتاريخ والفترة المالية'
+                  : 'القيد غير متوازن أو توجد بيانات ناقصة'}
               <span className="mr-3">
                 إجمالي المدين: {editTotals.debit.toFixed(2)}
               </span>
