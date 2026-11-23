@@ -5,6 +5,7 @@ const routeResources = new Map([
   ['invoices', 'Invoices'],
   ['customers-invoices', 'Invoices'],
   ['suppliers-invoices', 'Invoices'],
+  ['general-invoices', 'Invoices'],
   ['batches-invoices', 'Invoices'],
   ['entries', 'Journal'],
   ['cash-transactions', 'CashTransactions'],

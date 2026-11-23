@@ -51,17 +51,17 @@ const AuthenticatedLayout = () => {
   const user = profile.data;
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="fixed inset-0 flex min-h-0 min-w-0 overflow-hidden">
       {/* Sidebar */}
       <Sidebar profile={user} />
 
       {/* Right side (Navbar + Content) */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <Navbar />
 
-        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
-          <div className="flex min-h-full flex-col">
-            <div className="flex-1 p-4 sm:p-6">
+        <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain">
+          <div className="flex min-h-full min-w-0 flex-col">
+            <div className="min-w-0 flex-1 p-4 sm:p-6">
               {canViewRoute(user.permissions, pathname) ? (
                 <Outlet context={user.permissions} />
               ) : (

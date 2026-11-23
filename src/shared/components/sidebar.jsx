@@ -37,7 +37,7 @@ const Sidebar = ({ profile }) => {
   return (
     <aside
       className={`
-        bg-primary h-screen shrink-0 text-white flex flex-col
+        bg-primary h-full min-h-0 shrink-0 text-white flex flex-col
         transition-all duration-300 ease-in-out overflow-hidden
         ${openSidebar ? 'w-78 px-4 pb-4  shadow-2xl' : 'w-0 p-0'}
       `}
