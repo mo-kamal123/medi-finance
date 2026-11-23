@@ -22,6 +22,7 @@ const emptyEditDetail = {
   journalEntryDetailID: null,
   accountID: '',
   costCenterID: '',
+  amount: '',
   debitAmount: '',
   creditAmount: '',
   descriptionAr: '',
@@ -54,6 +55,7 @@ const getEditInitialDetails = (details = []) => {
     journalEntryDetailID: detail.journalEntryDetailID ?? null,
     accountID: detail.accountID ? String(detail.accountID) : '',
     costCenterID: detail.costCenterID ? String(detail.costCenterID) : '',
+    amount: detail.amount ?? '',
     debitAmount: detail.debitAmount ?? '',
     creditAmount: detail.creditAmount ?? '',
     descriptionAr: detail.descriptionAr ?? '',
@@ -65,8 +67,7 @@ const getEditInitialDetails = (details = []) => {
 
 const normalizeCreateDetailPayload = (detail) => ({
   accountID: Number(detail.accountID),
-  debitAmount: Number(detail.debitAmount) || 0,
-  creditAmount: Number(detail.creditAmount) || 0,
+  amount: Number(detail.amount),
   descriptionAr: detail.descriptionAr || '',
   paymentPermit: detail.paymentPermit || '',
 });
@@ -200,8 +201,13 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
     Math.abs(editTotals.debit - editTotals.credit) < 0.0001;
 
   const isCreateValid =
-    areDetailsValid &&
     formData.details.length === 1 &&
+    formData.details.every(
+      (row) =>
+        Number(row.accountID) > 0 &&
+        Number.isFinite(Number(row.amount)) &&
+        Number(row.amount) > 0
+    ) &&
     formData.transactionDate &&
     Number(formData.financialPeriodID) > 0;
   const canSubmit = isCreateMode ? isCreateValid : isEditValid;
@@ -211,11 +217,14 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
     const credit = Number(row.creditAmount);
     return {
       account: Number(row.accountID) > 0 ? '' : 'الحساب مطلوب',
-      amount:
-        !Number.isFinite(debit) ||
-        !Number.isFinite(credit) ||
-        debit < 0 ||
-        credit < 0
+      amount: isCreateMode
+        ? !Number.isFinite(Number(row.amount)) || Number(row.amount) <= 0
+          ? 'أدخل مبلغاً صحيحاً أكبر من صفر'
+          : ''
+        : !Number.isFinite(debit) ||
+            !Number.isFinite(credit) ||
+            debit < 0 ||
+            credit < 0
           ? 'أدخل مبلغاً صحيحاً غير سالب'
           : !((debit > 0 && credit === 0) || (credit > 0 && debit === 0))
             ? 'أدخل مبلغاً أكبر من صفر في المدين أو الدائن فقط'
@@ -253,7 +262,6 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
         transactionType: formData.transactionType,
         transactionDate: `${formData.transactionDate}T00:00:00`,
         financialPeriodID: Number(formData.financialPeriodID),
-        referenceNumber: formData.referenceNumber || '',
         descriptionAr: formData.descriptionAr || '',
         postImmediately: formData.postImmediately,
         details: formData.details.map(normalizeCreateDetailPayload),
@@ -309,7 +317,7 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
       >
         <p className="text-sm text-gray-600">
           الحقول المميزة بـ <span className="text-red-500">*</span> مطلوبة. أدخل
-          الحساب ومبلغاً في المدين أو الدائن لكل سطر. إذن القبض / الصرف اختياري.
+          الحساب ومبلغاً أكبر من صفر. إذن القبض / الصرف اختياري.
         </p>
         {showErrors && validationMessages.length > 0 && (
           <div
@@ -363,14 +371,15 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
             readOnly={isEditMode}
           />
 
-          <FormInput
-            label="رقم المرجع"
-            value={formData.referenceNumber}
-            onChange={(event) =>
-              handleFieldChange('referenceNumber', event.target.value)
-            }
-          />
-
+          {isEditMode && (
+            <FormInput
+              label="رقم المرجع"
+              value={formData.referenceNumber}
+              onChange={(event) =>
+                handleFieldChange('referenceNumber', event.target.value)
+              }
+            />
+          )}
           <FormInput
             label="الوصف عربي"
             value={formData.descriptionAr}
@@ -436,8 +445,16 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
                         : 'إذن الصرف'}
                     </th>
                     <th className="p-3 text-right">الوصف عربي</th>
-                    <th className="p-3 text-right">مدين</th>
-                    <th className="p-3 text-right">دائن</th>
+                    {isCreateMode ? (
+                      <th className="p-3 text-right">
+                        المبلغ <span className="text-red-200">*</span>
+                      </th>
+                    ) : (
+                      <>
+                        <th className="p-3 text-right">مدين</th>
+                        <th className="p-3 text-right">دائن</th>
+                      </>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -511,52 +528,83 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
                         />
                       </td>
 
-                      <td className="min-w-[140px] p-2">
-                        <input
-                          type="number"
-                          min="0"
-                          step="any"
-                          aria-label={`مدين - السطر ${index + 1}`}
-                          aria-invalid={
-                            showErrors && Boolean(rowErrors[index].amount)
-                          }
-                          value={row.debitAmount}
-                          onChange={(e) =>
-                            handleEditRowChange(
-                              index,
-                              'debitAmount',
-                              e.target.value
-                            )
-                          }
-                          className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                        />
-                      </td>
+                      {isCreateMode ? (
+                        <td className="min-w-[160px] p-2">
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            aria-label="المبلغ"
+                            aria-required="true"
+                            aria-invalid={
+                              showErrors && Boolean(rowErrors[index].amount)
+                            }
+                            value={row.amount}
+                            onChange={(e) =>
+                              handleEditRowChange(
+                                index,
+                                'amount',
+                                e.target.value
+                              )
+                            }
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                          />
+                          {showErrors && rowErrors[index].amount && (
+                            <p className="mt-1 text-sm text-red-500">
+                              {rowErrors[index].amount}
+                            </p>
+                          )}
+                        </td>
+                      ) : (
+                        <>
+                          <td className="min-w-[140px] p-2">
+                            <input
+                              type="number"
+                              min="0"
+                              step="any"
+                              aria-label={`مدين - السطر ${index + 1}`}
+                              aria-invalid={
+                                showErrors && Boolean(rowErrors[index].amount)
+                              }
+                              value={row.debitAmount}
+                              onChange={(e) =>
+                                handleEditRowChange(
+                                  index,
+                                  'debitAmount',
+                                  e.target.value
+                                )
+                              }
+                              className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                            />
+                          </td>
 
-                      <td className="min-w-[140px] p-2">
-                        <input
-                          type="number"
-                          min="0"
-                          step="any"
-                          aria-label={`دائن - السطر ${index + 1}`}
-                          aria-invalid={
-                            showErrors && Boolean(rowErrors[index].amount)
-                          }
-                          value={row.creditAmount}
-                          onChange={(e) =>
-                            handleEditRowChange(
-                              index,
-                              'creditAmount',
-                              e.target.value
-                            )
-                          }
-                          className="w-full rounded-lg border border-gray-200 px-3 py-2"
-                        />
-                        {showErrors && rowErrors[index].amount && (
-                          <p className="mt-1 text-sm text-red-500">
-                            {rowErrors[index].amount}
-                          </p>
-                        )}
-                      </td>
+                          <td className="min-w-[140px] p-2">
+                            <input
+                              type="number"
+                              min="0"
+                              step="any"
+                              aria-label={`دائن - السطر ${index + 1}`}
+                              aria-invalid={
+                                showErrors && Boolean(rowErrors[index].amount)
+                              }
+                              value={row.creditAmount}
+                              onChange={(e) =>
+                                handleEditRowChange(
+                                  index,
+                                  'creditAmount',
+                                  e.target.value
+                                )
+                              }
+                              className="w-full rounded-lg border border-gray-200 px-3 py-2"
+                            />
+                            {showErrors && rowErrors[index].amount && (
+                              <p className="mt-1 text-sm text-red-500">
+                                {rowErrors[index].amount}
+                              </p>
+                            )}
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -577,12 +625,21 @@ const CashTransactionForm = ({ defaultValues, mode = 'create' }) => {
                 : isCreateMode
                   ? 'أدخل الحساب ومبلغاً صحيحاً والتاريخ والفترة المالية'
                   : 'القيد غير متوازن أو توجد بيانات ناقصة'}
-              <span className="mr-3">
-                إجمالي المدين: {editTotals.debit.toFixed(2)}
-              </span>
-              <span className="mr-3">
-                إجمالي الدائن: {editTotals.credit.toFixed(2)}
-              </span>
+              {isCreateMode ? (
+                <span className="mr-3">
+                  المبلغ:{' '}
+                  {(Number(formData.details[0]?.amount) || 0).toFixed(2)}
+                </span>
+              ) : (
+                <>
+                  <span className="mr-3">
+                    إجمالي المدين: {editTotals.debit.toFixed(2)}
+                  </span>
+                  <span className="mr-3">
+                    إجمالي الدائن: {editTotals.credit.toFixed(2)}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         }
