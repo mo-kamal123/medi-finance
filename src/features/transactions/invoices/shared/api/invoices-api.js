@@ -6,7 +6,9 @@ export const normalizeInvoiceResponse = (response) => {
   if (response?.success === false) {
     throw new Error(response.message || 'تعذر تحميل الفاتورة');
   }
-  return response?.data?.invoice ?? response?.invoice ?? response?.data ?? response;
+  return (
+    response?.data?.invoice ?? response?.invoice ?? response?.data ?? response
+  );
 };
 
 export const normalizeInvoicesResponse = (data) => {
@@ -21,7 +23,14 @@ export const normalizePaginatedResponse = (response) => {
   return {
     items,
     totalCount: response?.totalCount ?? items.length,
-    totalPages: response?.totalPages ?? Math.max(1, Math.ceil((response?.totalCount ?? items.length) / (response?.pageSize || 10))),
+    totalPages:
+      response?.totalPages ??
+      Math.max(
+        1,
+        Math.ceil(
+          (response?.totalCount ?? items.length) / (response?.pageSize || 10)
+        )
+      ),
     pageNumber: response?.pageNumber ?? 1,
     pageSize: response?.pageSize ?? 10,
   };
@@ -48,6 +57,13 @@ export const getAllInvoices = async (params = {}, type) => {
     delete requestParams.showOnlySuppliersInvoices;
   }
 
+  if (type === 'general') {
+    requestParams.invoiceTypeId = 8;
+    delete requestParams.showOnlyCustomersInvoices;
+    delete requestParams.showOnlySuppliersInvoices;
+    delete requestParams.hasBatchOnly;
+  }
+
   const { data } = await axiosInstance.get('/invoices', {
     params: requestParams,
   });
@@ -61,7 +77,9 @@ export const getInvoiceById = async (id) => {
 };
 
 export const getInvoiceByNumber = async (invoiceNumber) => {
-  const { data } = await axiosInstance.get(`/invoices/by-number/${invoiceNumber}`);
+  const { data } = await axiosInstance.get(
+    `/invoices/by-number/${invoiceNumber}`
+  );
   return data;
 };
 
@@ -83,19 +101,27 @@ export const createInvoice = async (formData) => {
 };
 
 export const getBatchByNumber = async (batchNumber) => {
-  const { data } = await axiosInstance.get(`/batches/${encodeURIComponent(batchNumber)}`);
+  const { data } = await axiosInstance.get(
+    `/batches/${encodeURIComponent(batchNumber)}`
+  );
   return data;
 };
 
 export const createBatchInvoice = async (formData) => {
-  const { data } = await axiosInstance.post('/batches/create-invoice', formData, {
-    headers: { 'Content-Type': 'application/json' },
-  });
+  const { data } = await axiosInstance.post(
+    '/batches/create-invoice',
+    formData,
+    {
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
   return normalizeInvoiceResponse(data);
 };
 
 export const closeBatch = async (batchNumber) => {
-  const { data } = await axiosInstance.post(`/batches/${encodeURIComponent(batchNumber)}/close`);
+  const { data } = await axiosInstance.post(
+    `/batches/${encodeURIComponent(batchNumber)}/close`
+  );
   if (data?.success === false) {
     throw new Error(data.message || 'تعذر إنشاء قيد إقفال الدفعة');
   }

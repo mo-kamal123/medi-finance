@@ -50,6 +50,11 @@ export const links = [
               icon: FileClock,
             },
             {
+              name: 'الفواتير العامة',
+              link: '/general-invoices',
+              icon: FileText,
+            },
+            {
               name: 'فواتير المطالبات',
               link: '/batches-invoices',
               icon: FileClock,

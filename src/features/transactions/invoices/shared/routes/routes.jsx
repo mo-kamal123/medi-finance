@@ -4,6 +4,20 @@ import { lazyPage } from '../../../../../shared/lib/lazy-page';
 
 const InvoicesRoutes = [
   {
+    path: '/general-invoices',
+    element: lazyPage(
+      () => import('../../general-invoices/invoices-page'),
+      'جاري تحميل الفواتير العامة...'
+    ),
+  },
+  {
+    path: '/general-invoices/new',
+    element: lazyPage(
+      () => import('../../general-invoices/new-invoice'),
+      'جاري تحميل نموذج الفاتورة العامة...'
+    ),
+  },
+  {
     path: '/suppliers-invoices',
     element: lazyPage(
       () => import('../../suppliers-invoices/invoices-page'),

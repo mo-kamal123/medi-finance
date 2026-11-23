@@ -14,6 +14,8 @@ import { useUpdateInvoice } from '../hooks/invoices.mutations';
 import { useInvoice } from '../hooks/invoices.queries';
 import ReturnBatchButton from '../../../../master-data/batches/components/return-batch-button';
 import BatchInvoiceDetails from '../components/batch-invoice-details';
+import GeneralInvoiceForm from '../../general-invoices/general-invoice-form';
+import { GENERAL_INVOICE_TYPE_ID } from '../../general-invoices/general-invoice-utils';
 
 const TABS = [
   { key: 'details', label: 'تفاصيل الفاتورة', icon: FileText },
@@ -63,6 +65,8 @@ const EditInvoice = () => {
 
   const updateInvoiceMutation = useUpdateInvoice();
   const isBatchInvoice = Boolean(invoice?.batchID || invoice?.batchNumber);
+  const isGeneralInvoice =
+    Number(invoice?.invoiceTypeID) === GENERAL_INVOICE_TYPE_ID;
 
   const remainingAmount =
     invoice?.remainingAmount ??
@@ -71,12 +75,16 @@ const EditInvoice = () => {
   const invoiceTypeName =
     invoice?.invoiceTypeNameAr ||
     invoice?.invoiceTypeNameEn ||
-    (invoice?.customerID ? 'فاتورة عميل' : 'فاتورة مورد');
+    (isGeneralInvoice
+      ? 'فاتورة عامة'
+      : invoice?.customerID
+        ? 'فاتورة عميل'
+        : 'فاتورة مورد');
   const isCollection = Boolean(
     invoice?.customerID ||
-      (!invoice?.supplierID &&
-        (/مبيعات|عميل/.test(invoice?.invoiceTypeNameAr ?? '') ||
-          /sales?|customer/i.test(invoice?.invoiceTypeNameEn ?? '')))
+    (!invoice?.supplierID &&
+      (/مبيعات|عميل/.test(invoice?.invoiceTypeNameAr ?? '') ||
+        /sales?|customer/i.test(invoice?.invoiceTypeNameEn ?? '')))
   );
   const partyName =
     invoice?.customerNameAr ||
@@ -94,11 +102,13 @@ const EditInvoice = () => {
         ...data,
       });
 
-      const redirectPath = invoice?.customerID
-        ? '/customers-invoices'
-        : invoice?.supplierID
-          ? '/suppliers-invoices'
-          : '/customers-invoices';
+      const redirectPath = isGeneralInvoice
+        ? '/general-invoices'
+        : invoice?.customerID
+          ? '/customers-invoices'
+          : invoice?.supplierID
+            ? '/suppliers-invoices'
+            : '/customers-invoices';
 
       navigate(redirectPath);
     } catch (error) {
@@ -128,20 +138,25 @@ const EditInvoice = () => {
     );
   }
 
-  const breadcrumbItems = isBatchInvoice
+  const breadcrumbItems = isGeneralInvoice
     ? [
-        { label: 'فواتير المطالبات', to: '/batches-invoices' },
+        { label: 'الفواتير العامة', to: '/general-invoices' },
         { label: invoice.invoiceNumber || 'تفاصيل الفاتورة' },
       ]
-    : invoice?.customerID
+    : isBatchInvoice
       ? [
-          { label: 'فواتير العملاء', to: '/customers-invoices' },
-          { label: invoice?.invoiceNumber || 'تفاصيل الفاتورة' },
+          { label: 'فواتير المطالبات', to: '/batches-invoices' },
+          { label: invoice.invoiceNumber || 'تفاصيل الفاتورة' },
         ]
-      : [
-          { label: 'فواتير الموردين', to: '/suppliers-invoices' },
-          { label: invoice?.invoiceNumber || 'تفاصيل الفاتورة' },
-        ];
+      : invoice?.customerID
+        ? [
+            { label: 'فواتير العملاء', to: '/customers-invoices' },
+            { label: invoice?.invoiceNumber || 'تفاصيل الفاتورة' },
+          ]
+        : [
+            { label: 'فواتير الموردين', to: '/suppliers-invoices' },
+            { label: invoice?.invoiceNumber || 'تفاصيل الفاتورة' },
+          ];
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
@@ -161,15 +176,21 @@ const EditInvoice = () => {
             </div>
             <div className="flex flex-wrap items-center gap-3">
               {isBatchInvoice && (
-                <ReturnBatchButton batchNumber={invoice.batchNumber} statusID={invoice.batchStatusID ?? invoice.batchStatusId} className="rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/30" />
+                <ReturnBatchButton
+                  batchNumber={invoice.batchNumber}
+                  statusID={invoice.batchStatusID ?? invoice.batchStatusId}
+                  className="rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/30"
+                />
               )}
-              <button
-                onClick={() => setIsPayModalOpen(true)}
-                className="flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/30"
-              >
-                <DollarSign size={16} />
-                {isCollection ? 'تحصيل الفاتورة' : 'دفع الفاتورة'}
-              </button>
+              {!isGeneralInvoice && (
+                <button
+                  onClick={() => setIsPayModalOpen(true)}
+                  className="flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/30"
+                >
+                  <DollarSign size={16} />
+                  {isCollection ? 'تحصيل الفاتورة' : 'دفع الفاتورة'}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -177,6 +198,7 @@ const EditInvoice = () => {
 
       <InvoiceSummaryCards
         invoice={invoice}
+        showPayments={!isGeneralInvoice}
         totals={
           !isBatchInvoice && summary?.invoice === invoice
             ? summary.totals
@@ -220,7 +242,14 @@ const EditInvoice = () => {
 
         <div className="p-6">
           {selectedTab === 'details' &&
-            (isBatchInvoice ? (
+            (isGeneralInvoice ? (
+              <GeneralInvoiceForm
+                initialData={invoice}
+                onSubmit={handleUpdate}
+                isLoading={updateInvoiceMutation.isPending}
+                onTotalsChange={handleTotalsChange}
+              />
+            ) : isBatchInvoice ? (
               <BatchInvoiceDetails invoice={invoice} />
             ) : (
               <InvoiceForm
