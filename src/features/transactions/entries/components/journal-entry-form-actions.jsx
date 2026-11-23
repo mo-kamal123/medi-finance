@@ -1,7 +1,7 @@
 // Bottom actions: back link and save/submit button
 const JournalEntryFormActions = ({
   navigate,
-  isBalanced,
+  readOnly,
   isEditMode,
   createMutation,
   updateMutation,
@@ -17,7 +17,7 @@ const JournalEntryFormActions = ({
     <button
       type="submit"
       disabled={
-        !isBalanced || createMutation.isPending || updateMutation.isPending
+        readOnly || createMutation.isPending || updateMutation.isPending
       }
       className="rounded-lg bg-primary px-6 py-2 text-white disabled:opacity-50"
     >

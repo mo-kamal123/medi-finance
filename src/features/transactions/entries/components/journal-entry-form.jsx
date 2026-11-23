@@ -34,7 +34,6 @@ const JournalEntryForm = ({
     reverseMutation,
     totalDebit,
     totalCredit,
-    isBalanced,
     isPosted,
     isReversed,
     readOnly,
@@ -76,6 +75,7 @@ const JournalEntryForm = ({
       />
 
       <form
+        noValidate
         onSubmit={submitHandler}
         className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 md:space-y-6 md:p-6"
       >
@@ -111,7 +111,7 @@ const JournalEntryForm = ({
 
         <JournalEntryFormActions
           navigate={navigate}
-          isBalanced={isBalanced}
+          readOnly={readOnly}
           isEditMode={isEditMode}
           createMutation={createMutation}
           updateMutation={updateMutation}

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { calculateJournalEntryBalance } from '../utils/journal-entry-balance.js';
 
 /**
  * Validates each detail row:
@@ -50,9 +51,7 @@ export const journalEntrySchema = z.object({
   exchangeRate: z.string().optional().default(''),
   details: z.array(detailSchema).min(1, 'يجب إضافة سطر واحد على الأقل'),
 }).superRefine((data, ctx) => {
-  const totalDebit = data.details.reduce((s, r) => s + (Number(r.debitAmount) || 0), 0);
-  const totalCredit = data.details.reduce((s, r) => s + (Number(r.creditAmount) || 0), 0);
-  if (totalDebit !== totalCredit || totalDebit === 0) {
+  if (!calculateJournalEntryBalance(data.details).isBalanced) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'يجب أن يكون مجموع المدين مساوياً للدائن',

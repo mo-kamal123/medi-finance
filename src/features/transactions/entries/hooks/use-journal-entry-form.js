@@ -7,6 +7,7 @@ import { toast } from '../../../../shared/lib/toast';
 import { useCurrencies } from '../../commercial-papers/hooks/commercial-papers.queries';
 import { useFinancialPeriods } from '../../invoices/shared/hooks/invoices.queries';
 import { journalEntrySchema } from '../validation/journal-entry.validation';
+import { calculateJournalEntryBalance } from '../utils/journal-entry-balance';
 import {
   useCreateJournalEntry,
   usePostJournalEntry,
@@ -169,16 +170,10 @@ const useJournalEntryForm = ({ defaultValues = {}, mode = 'create', viewOnly = f
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currencies, isEditMode]);
 
-  const totalDebit = useMemo(
-    () => watchedDetails.reduce((s, r) => s + (Number(r?.debitAmount) || 0), 0),
+  const { totalDebit, totalCredit, isBalanced } = useMemo(
+    () => calculateJournalEntryBalance(watchedDetails),
     [watchedDetails]
   );
-  const totalCredit = useMemo(
-    () =>
-      watchedDetails.reduce((s, r) => s + (Number(r?.creditAmount) || 0), 0),
-    [watchedDetails]
-  );
-  const isBalanced = totalDebit === totalCredit && totalDebit > 0;
 
   const selectedStatus = statusOptions.find(
     (s) => s.value === String(watchedStatusID)
@@ -345,7 +340,9 @@ const useJournalEntryForm = ({ defaultValues = {}, mode = 'create', viewOnly = f
     register,
     control,
     errors,
-    submitHandler: handleSubmit(onSubmit),
+    submitHandler: handleSubmit(onSubmit, (validationErrors) => {
+      toast.error(validationErrors.balance?.message || 'تعذر حفظ القيد. راجع الحقول المطلوبة والأخطاء الموضحة في النموذج.');
+    }),
     fields,
     append,
     remove,

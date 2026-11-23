@@ -49,6 +49,9 @@ const JournalEntryDetails = ({
       totalDebit={totalDebit}
       totalCredit={totalCredit}
     />
+    {errors.balance?.message && (
+      <p role="alert" className="text-sm text-red-500">{errors.balance.message}</p>
+    )}
   </div>
 );
 

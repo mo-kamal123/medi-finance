@@ -15,7 +15,7 @@ const FINANCE_DISCOUNTS = [
   { type: 2, label: 'خصم منبع', name: 'خصم منبع' },
 ];
 
-export const initializeDiscountRows = (batchDiscounts) => [
+export const initializeDiscountRows = (batchDiscounts, isEligibleForDiscounts = true) => isEligibleForDiscounts === false ? [] : [
   ...BATCH_DISCOUNT_FIELDS.map(({ key, label }) => ({
     discountType: label,
     amount: Number(batchDiscounts?.[key]) || 0,
@@ -31,7 +31,7 @@ export const initializeDiscountRows = (batchDiscounts) => [
   })),
 ];
 
-export const buildFinanceDiscountPayload = (discounts) => discounts
+export const buildFinanceDiscountPayload = (discounts, isEligibleForDiscounts = true) => (isEligibleForDiscounts === false ? [] : discounts)
   .filter((discount) => discount.isFinance)
   .map((discount) => ({
     name: FINANCE_DISCOUNTS.find((definition) => definition.type === discount.type).name,
