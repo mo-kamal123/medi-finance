@@ -686,7 +686,7 @@ const NewBatchInvoicePage = ({ initialBatch = null, previewOnly = false }) => {
 
       {batchData ? (
         <form noValidate onSubmit={handleSubmit} className="space-y-6">
-          <div className={`grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 my-10 ${isEligibleForDiscounts ? 'xl:grid-cols-5' : ''}`}>
+          <div className="my-10 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
             {/* <div className="rounded-xl border border-gray-200 bg-white p-4">
               <p className="text-sm text-gray-500">عدد المطالبات</p>
               <p className="mt-2 text-lg font-semibold text-gray-900">
@@ -694,12 +694,14 @@ const NewBatchInvoicePage = ({ initialBatch = null, previewOnly = false }) => {
               </p>
             </div> */}
 
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <p className="text-sm text-gray-500">قيمة الدفعة</p>
-              <p className="mt-2 text-lg font-semibold text-gray-900">
-                {formatCurrency(formData.batchAmount)}
+            {(batchData.financeBatchAmount ?? batchData.amount) != null && <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <p className="text-sm text-gray-500">
+                {batchData.financeBatchAmount != null ? 'قيمة الدفعة المالية' : 'قيمة الدفعة'}
               </p>
-            </div>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {formatCurrency(batchData.financeBatchAmount ?? batchData.amount)}
+              </p>
+            </div>}
 
             {isEligibleForDiscounts && <div className="rounded-xl border border-gray-200 bg-white p-4">
               <p className="text-sm text-gray-500">خصم المطالبه</p>
@@ -728,6 +730,20 @@ const NewBatchInvoicePage = ({ initialBatch = null, previewOnly = false }) => {
                 {formatCurrency(netAmount)}
               </p>
             </div>
+
+            {batchData.agingPaidAmount != null && <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <p className="text-sm text-gray-500">المبلغ المدفوع</p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {formatCurrency(batchData.agingPaidAmount)}
+              </p>
+            </div>}
+
+            {batchData.agingRemainingAmount != null && <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <p className="text-sm text-gray-500">المبلغ المتبقي</p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {formatCurrency(batchData.agingRemainingAmount)}
+              </p>
+            </div>}
           </div>
 
           {batchData.invoiceID ? (
