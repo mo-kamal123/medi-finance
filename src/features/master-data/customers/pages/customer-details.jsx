@@ -6,10 +6,13 @@ import {
   Users,
   GitBranch,
   FileSpreadsheet,
+  FileText,
 } from 'lucide-react';
 import PageLoader from '../../../../shared/ui/page-loader';
 import Pagination from '../../../../shared/ui/pagination';
 import Breadcrumb from '../../../../shared/ui/breadcrumb';
+import Table from '../../../../shared/ui/table';
+import { formatDate } from '../../../../shared/utils/formatters';
 import { useCustomer } from '../hooks/customers.queries';
 import CustomerConsumptionPanel from '../components/customer-consumption-panel';
 import { canViewRoute } from '../../../auth/route-permissions';
@@ -52,7 +55,29 @@ const TABS = [
   { key: 'basic', label: 'المعلومات الأساسية', icon: Building2 },
   { key: 'contacts', label: 'جهات الاتصال', icon: Users },
   { key: 'branches', label: 'الفروع', icon: GitBranch },
+  { key: 'policies', label: 'Policy', icon: FileText },
   { key: 'consumption', label: 'الاستهلاكات', icon: FileSpreadsheet },
+];
+
+const POLICY_COLUMNS = [
+  { header: 'رقم الوثيقة', key: 'policyId' },
+  {
+    header: 'تاريخ البداية', key: 'startDate', type: 'custom',
+    render: (policy) => formatDate(policy.startDate),
+  },
+  {
+    header: 'تاريخ النهاية', key: 'endDate', type: 'custom',
+    render: (policy) => formatDate(policy.endDate),
+  },
+  {
+    header: 'مع الوطنية', key: 'isWithWataniya', type: 'custom',
+    render: (policy) => policy.isWithWataniya == null ? '-' : policy.isWithWataniya ? 'نعم' : 'لا',
+  },
+  {
+    header: 'مؤمن عليه', key: 'isInsured', type: 'custom',
+    render: (policy) => policy.isInsured == null ? '-' : policy.isInsured ? 'نعم' : 'لا',
+  },
+  { header: 'شركة التأمين', key: 'insuranceCompanyName' },
 ];
 
 const CustomerDetails = () => {
@@ -76,6 +101,7 @@ const CustomerDetails = () => {
 
   const contacts = customer.contacts || [];
   const branches = customer.branches || [];
+  const policies = Array.isArray(customer.policies) ? customer.policies : [];
 
   const contactsTotalPages = Math.max(Math.ceil(contacts.length / contactsPageSize), 1);
   const branchesTotalPages = Math.max(Math.ceil(branches.length / branchesPageSize), 1);
@@ -260,6 +286,14 @@ const CustomerDetails = () => {
                 }}
               />
             </div>
+          )}
+
+          {activeTab === 'policies' && (
+            <Table
+              columns={POLICY_COLUMNS}
+              data={policies}
+              emptyMessage="لا توجد وثائق لهذا العميل"
+            />
           )}
 
           {activeTab === 'consumption' && canViewConsumption && (
